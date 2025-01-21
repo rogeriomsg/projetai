@@ -67,12 +67,12 @@ exports.create = async (req, res) => {
             },
             {
             "code": 2,
-            "name": "Escrit�rio",
+            "name": "Escritório",
             "description": "Unidade consumidora comercial",
             "address": {
                 "street": "Avenida Paulista",
                 "number": 1000,
-                "city": "S�o Paulo",
+                "city": "São Paulo",
                 "state": "SP",
                 "zip": 13100000
             },
@@ -92,11 +92,11 @@ exports.create = async (req, res) => {
         name: req.body.name,                   // Nome do cliente
         cpf: req.body.cpf,                     // CPF (opcional)
         identity: req.body.identity,           // Identidade (opcional)
-        client_code: req.body.client_code,     // C�digo do cliente (obrigat�rio)
+        client_code: req.body.client_code,     // Código do cliente (obrigat�rio)
         email: req.body.email,                 // Email (opcional)
         phone: req.body.phone,                 // Telefone (opcional)
         consumerUnit: req.body.consumerUnit,   // consumerUnit deve ser um array de objetos
-        is_active: req.body.is_active || true  // Ativo por padr�o
+        is_active: req.body.is_active || true  // Ativo por padrão
       });
 
     await Models.Client.create(client).then(data => {      
@@ -121,7 +121,7 @@ exports.update = async (req, res) => {
     const {id} = req.params ;
     /*
      {
-        "name": "Jo�o da Silva",
+        "name": "João da Silva",
         "cpf": "123.456.789-00",
         "identity": "MG1234567",
         "client_code": 1001,
@@ -148,12 +148,12 @@ exports.update = async (req, res) => {
             },
             {
             "code": 2,
-            "name": "Escrit�rio",
+            "name": "Escritório",
             "description": "Unidade consumidora comercial",
             "address": {
                 "street": "Avenida Paulista",
                 "number": 1000,
-                "city": "S�o Paulo",
+                "city": "São Paulo",
                 "state": "SP",
                 "zip": 13100000
             },
