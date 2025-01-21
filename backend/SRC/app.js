@@ -5,10 +5,7 @@ const { errors } = require('celebrate');
 const { ValidationErrorMessage } = require('./MIDDLEWARES/message');
 
 app.use(express.json())
-app.use("/device",router.Device)
 app.use("/user",router.User)
-app.use("/gateway",router.Gateway)
-app.use("/device_category",router.DeviceCategory)
 app.use("/api",router.WebhookToMQTT)
 app.use("/project",router.Project)
 app.use("/client",router.Client)

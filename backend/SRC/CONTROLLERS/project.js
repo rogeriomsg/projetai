@@ -3,15 +3,14 @@ const Services = require("../SERVICES")
 
 exports.search = async (req, res) => {
     //console.log(req.query)
-    const {name = '', id, status, client_unit_code, client_name = '', client_code, is_active} = req.query ;
-    console.log(name, id, status, client_unit_code, client_name, client_code, is_active);
+    const {name = '', id, client_id, dealership = '', status, service_voltage, is_active} = req.query ;
+    console.log(name, id, client_id, dealership, status, service_voltage, is_active);
     const filtros = {} ;
     filtros.name = { $regex: name , $options: 'i' }; // 'i' para case-insensitive = name ;
     if(id) filtros._id = id ;
-    if(status) filtros.status = { $regex: status , $options: 'i' } ;// 'i' para case-insensitive = status ;
-    if(client_unit_code) filtros.client_unit_code = client_unit_code ;
-    filtros.client_name = { $regex: client_name , $options: 'i' }; // 'i' para case-insensitive = name ;
-    if(client_code) filtros.client_code = client_code ;
+    if(client_id) filtros.client_id = client_id ;
+    if(status) filtros.status = status ;
+    if(service_voltage) filtros.service_voltage = service_voltage ;
     if(is_active) filtros.is_active = is_active ;
 
     await Models.Project.find(filtros).then(data => { 
@@ -39,24 +38,72 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     console.log(req.body);
     /*
-    {   
-        name: {type : String , require : true},
-        client_name :  { type : String , require : true },
-        client_unit_code :  { type : Number , require : true  },
-        client_code : { type : Number , require : true  },
-        status : {type: String , enum :['Cadastrado', 'Aguardando' , 'Aprovado' ] , default : 'Cadastrado'},
-        is_active: { type: Boolean , default: true},
+    {
+        "client_id": "64dfb4c2e7e1ab00123abc45", 
+        "name": "Projeto Solar Residencial",
+        "dealership": "Distribuidora Solar SP", //Nome da distribuidora de energia responsável.
+        "status": "Em cadastro",
+        "description": "Projeto de instalação de energia solar para residência.",
+        "is_active": true,
+        "circuit_breaker": 50,
+        "installed_power": 5.0,
+        "service_voltage": 220,
+        "inverters": [
+            {
+            "model": "INV-5000X",
+            "brand": "SolarTech",
+            "power": 5000,
+            "quantity": 1,
+            "description": "Inversor de alta eficiência para uso residencial."
+            }
+        ],
+        "modules": [
+            {
+            "model": "MOD-450P",
+            "brand": "SunPower",
+            "power": 450,
+            "quantity": 12,
+            "width": 1.1,
+            "height": 2.0,
+            "description": "Módulos solares monocristalinos com alta eficiência."
+            },
+            {
+            "model": "MOD-300P",
+            "brand": "EcoSolar",
+            "power": 300,
+            "quantity": 8,
+            "width": 1.2,
+            "height": 1.8,
+            "description": "Painéis solares econômicos para complementar o sistema."
+            }
+        ],
+        "path_meter_pole": "/uploads/documents/meter_pole.pdf",
+        "path_meter": "/uploads/documents/meter_image.png",
+        "path_bill": "/uploads/documents/electric_bill.pdf",
+        "path_identity": "/uploads/documents/identity_card.pdf",
+        "path_procuration": "/uploads/documents/procuration.pdf"
     }
     */
-
-    const Device = new Models.Project({
+    const project = new Models.Project({
+        client_id: req.body.client_id, // ID do cliente, deve ser válido no banco de dados
         name: req.body.name,
-        client_name :  req.body.client_name,
-        client_unit_code:  req.body.client_unit_code ,        
-        client_code: req.body.client_code ,
-     });
+        dealership: req.body.dealership,
+        status: req.body.status, // Opcional, padrão é 'Em cadastro'
+        description: req.body.description,
+        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Padrão é true
+        circuit_breaker: req.body.circuit_breaker,
+        installed_power: req.body.installed_power,
+        service_voltage: req.body.service_voltage,
+        inverters: req.body.inverters, // Array de inversores, conforme o schema `inverterSchema`
+        modules: req.body.modules, // Array de módulos, conforme o schema `moduleSchema`
+        path_meter_pole: req.body.path_meter_pole, // Caminho para arquivo (opcional)
+        path_meter: req.body.path_meter, // Caminho para arquivo (opcional)
+        path_bill: req.body.path_bill, // Caminho para arquivo (opcional)
+        path_identity: req.body.path_identity, // Caminho para arquivo (opcional)
+        path_procuration: req.body.path_procuration // Caminho para arquivo (opcional)
+    });
 
-    await Models.Project.create(Device).then(data => {      
+    await Models.Project.create(project).then(data => {      
         res.status(Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.code).json({ message: Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.message,});   
     }).catch(err => {
         res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code ).json({message: err.message });
@@ -76,38 +123,27 @@ exports.delete = async (req, res) => {
 
 exports.update = async (req, res) => {
     const {id} = req.params ;
-    /*
-    name: {type : String , require : true},
-    deviceId :  { type : Number , require : true },
-    device_type:  { type: String , default : "Fotocï¿½lula" },
-    geolocation:  { 
-      lat: { type : Number , default : 0 },
-      lng: { type : Number , default : 0 },
-      alt: { type : Number , default : 0 },
-    },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: 'deviceCategory' },
-    operating_mode : {type: String , enum :['Convencional', 'Comandado' , 'Agendado' ] , default : 'Convencional'},
-    description: {type : String ,default: ""} ,
-    rx:  { 
-      hopCount: { type : Number , default : 5 }
-    },
-    is_active: { type: Boolean , default: false},
-    gateway: { type: mongoose.Schema.Types.ObjectId, ref: 'gateway'},
-    */
-
-    const project = {
-        name: req.body.name,
-        deviceId:  req.body.devId,
-        device_type:  req.body.device_type,
-        geolocation:  req.body.geolocation,
-        category: req.body.category,
-        operating_mode : req.body.operating_mode,
-        description: req.body.description,
-        rx: req.body.rx,
-        is_active: req.body.is_active,
-        gateway: req.body.gateway,                       
+    
+    // Prepara o objeto de atualização com base no corpo da requisição
+    const projectUpdateData = {
+        name: req.body.name, // Nome do projeto
+        dealership: req.body.dealership, // Nome da concessionária (opcional)
+        status: req.body.status || 'Em cadastro', // Status do projeto (opcional, com valor padrão)
+        description: req.body.description, // Descrição do projeto (opcional)
+        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Ativo por padrão
+        circuit_breaker: req.body.circuit_breaker, // Disjuntor (obrigatório)
+        installed_power: req.body.installed_power, // Potência instalada (obrigatório)
+        service_voltage: req.body.service_voltage, // Tensão de serviço (obrigatório)
+        inverters: req.body.inverters, // Lista de inversores (opcional)
+        modules: req.body.modules, // Lista de módulos fotovoltaicos (opcional)
+        path_meter_pole: req.body.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
+        path_meter: req.body.path_meter, // Caminho para a foto do medidor (opcional)
+        path_bill: req.body.path_bill, // Caminho para a fatura de energia (opcional)
+        path_identity: req.body.path_identity, // Caminho para a identidade (opcional)
+        path_procuration: req.body.path_procuration, // Caminho para a procuração (opcional)
     };
-    await Models.Project.findByIdAndUpdate(id, project , {new: true}).then(data => {        
+
+    await Models.Project.findByIdAndUpdate(id, projectUpdateData , {new: true}).then(data => {        
         res.status(Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.code).json({ message: Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.message});             
     }).catch( err => {
         res.status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code).json({message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message });
