@@ -40,7 +40,7 @@ exports.create = async (req, res) => {
     console.log(req.body);
     /*
     {
-        "name": "Jo„o da Silva",
+        "name": "JoÔøΩo da Silva",
         "cpf": "123.456.789-00",
         "identity": "MG1234567",
         "client_code": 1001,
@@ -67,12 +67,12 @@ exports.create = async (req, res) => {
             },
             {
             "code": 2,
-            "name": "EscritÛrio",
+            "name": "EscritÔøΩrio",
             "description": "Unidade consumidora comercial",
             "address": {
                 "street": "Avenida Paulista",
                 "number": 1000,
-                "city": "S„o Paulo",
+                "city": "SÔøΩo Paulo",
                 "state": "SP",
                 "zip": 13100000
             },
@@ -92,11 +92,11 @@ exports.create = async (req, res) => {
         name: req.body.name,                   // Nome do cliente
         cpf: req.body.cpf,                     // CPF (opcional)
         identity: req.body.identity,           // Identidade (opcional)
-        client_code: req.body.client_code,     // CÛdigo do cliente (obrigatÛrio)
+        client_code: req.body.client_code,     // CÔøΩdigo do cliente (obrigatÔøΩrio)
         email: req.body.email,                 // Email (opcional)
         phone: req.body.phone,                 // Telefone (opcional)
         consumerUnit: req.body.consumerUnit,   // consumerUnit deve ser um array de objetos
-        is_active: req.body.is_active || true  // Ativo por padr„o
+        is_active: req.body.is_active || true  // Ativo por padrÔøΩo
       });
 
     await Models.Client.create(client).then(data => {      
@@ -121,7 +121,7 @@ exports.update = async (req, res) => {
     const {id} = req.params ;
     /*
      {
-        "name": "Jo„o da Silva",
+        "name": "JoÔøΩo da Silva",
         "cpf": "123.456.789-00",
         "identity": "MG1234567",
         "client_code": 1001,
@@ -148,12 +148,12 @@ exports.update = async (req, res) => {
             },
             {
             "code": 2,
-            "name": "EscritÛrio",
+            "name": "EscritÔøΩrio",
             "description": "Unidade consumidora comercial",
             "address": {
                 "street": "Avenida Paulista",
                 "number": 1000,
-                "city": "S„o Paulo",
+                "city": "SÔøΩo Paulo",
                 "state": "SP",
                 "zip": 13100000
             },
@@ -173,11 +173,11 @@ exports.update = async (req, res) => {
         name: req.body.name,                   // Nome do cliente
         cpf: req.body.cpf,                     // CPF (opcional)
         identity: req.body.identity,           // Identidade (opcional)
-        client_code: req.body.client_code,     // CÛdigo do cliente (obrigatÛrio)
+        client_code: req.body.client_code,     // CÔøΩdigo do cliente (obrigatÔøΩrio)
         email: req.body.email,                 // Email (opcional)
         phone: req.body.phone,                 // Telefone (opcional)
         consumerUnit: req.body.consumerUnit,   // consumerUnit deve ser um array de objetos
-        is_active: req.body.is_active || true  // Ativo por padr„o                    
+        is_active: req.body.is_active || true  // Ativo por padrÔøΩo                    
     };
 
     await Models.Client.findByIdAndUpdate(id, clientUpdateData , {new: true}).then(data => {        
@@ -187,4 +187,32 @@ exports.update = async (req, res) => {
     }); 
 };
 
+exports.consumerUnitCreate = async (req, res) => {
+    const {id} = req.params ;
+    const newConsumerUnit = req.body;
+    console.log(id,req.body);
+
+    try {
+        // Acha o cliente pelo ID
+        const client = await Models.Client.findById(id);
+
+        if (!client) {
+            res.status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code ).json({message: "Cliente n√£o encontrado" });
+        }
+
+        // Adiciona o novo consumerUnit ao array
+        client.consumerUnit.push(newConsumerUnit);
+
+        // Salva o cliente com a nova consumerUnit
+        await client.save();
+
+        // Responde com sucesso
+        res.status(Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.code).json({ message: Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.message, 
+            data: newConsumerUnit
+        });  
+
+    } catch (err) {
+        res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code ).json({message: "Erro ao adicionar ConsumerUnit", error: err.message});
+    }
+ };
  

@@ -13,7 +13,7 @@ exports.search = async (req, res) => {
     if(service_voltage) filtros.service_voltage = service_voltage ;
     if(is_active) filtros.is_active = is_active ;
 
-    await Models.Project.find(filtros).then(data => { 
+    await Models.Project.find(filtros).populate('client_id').then(data => { 
         if(data.length === 0)
             res.status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code).json({ message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message});        
         else

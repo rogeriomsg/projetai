@@ -19,4 +19,8 @@ router.post(`/create`,  Controllers.Client.create );
 
 router.patch(`/:id`,  Controllers.Client.update );
 
+router.post(`/:id/consumer_unit_create`,Controllers.Client.consumerUnitCreate);
+
+router.get(`/:id/consumer_unit_search`,Controllers.Client.search);
+
 module.exports = router;
