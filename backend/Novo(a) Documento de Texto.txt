@@ -1,0 +1,12 @@
+#.env, don't commit to repo
+EMAIL = "rogeriomsg@hotmail.com"
+SECRET = "lEz!3Fq?01"
+URI = "mongodb+srv://iluminacaoDBUser:Ro1,78m_o+@iluminacaop.9wtzz.mongodb.net/?retryWrites=true&w=majority&appName=iluminacaoP"
+TOKEN = 123
+SWAL_BACKGROUND = "#FF0001" 
+PORT = 3333
+
+#MQTT
+MQTT_PROTOCOL = 'mqtt'
+MQTT_HOST = 'broker.emqx.io'
+MQTT_PORT = '1883'
