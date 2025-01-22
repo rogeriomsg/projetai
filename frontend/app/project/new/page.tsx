@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty} from '@mantine/form';
-import { Stepper, Button, Group, NumberInput, TextInput, Box, LoadingOverlay,Fieldset,Grid,InputBase} from '@mantine/core';
+import { Stepper, Button, Group, NumberInput, TextInput, Box, LoadingOverlay,Fieldset,Grid,InputBase,Tooltip,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { Notification } from '@mantine/core';
@@ -15,7 +15,7 @@ import {
 import axios from "axios";
 
 export default function  NewProject() {
-  const [active, setActive] = useState(0);  
+  const [activeStep, setActiveStep] = useState(0);  
   const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,8 +41,8 @@ export default function  NewProject() {
     },
   });
 
-  const nextStep = () => setActive((current) => (form.validate().hasErrors ? current : current + 1));     
-  const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
+  const nextStep = () => { setActiveStep((current) => (form.validate().hasErrors ? current : current + 1))};     
+  const prevStep = () => setActiveStep((current) => (current > 0 ? current - 1 : current));
 
   const handleSubmit = async (_values: typeof form.values ) => {   
     
@@ -79,8 +79,8 @@ export default function  NewProject() {
     <form onSubmit={form.onSubmit(handleSubmit)}  >
       <LoadingOverlay visible={loading} />
       <Stepper 
-        active={active} 
-        onStepClick={setActive} 
+        active={activeStep} 
+        onStepClick={setActiveStep} 
         completedIcon={<IconCircleCheck size={20} />}
         mx="auto" mt="xl" ml="xl" mr="xl"      
       >
@@ -90,24 +90,28 @@ export default function  NewProject() {
           icon={<IconUserCheck size={18} />}
         >  
           <Grid mt="sm">
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Código do cliente"
-                placeholder="Código do cliente"
-                key={form.key("client_code")}
-                {...form.getInputProps("client_code")} 
-                required           
-              />
+            <Grid.Col span={2}>              
+                <NumberInput
+                  label="Código do cliente"
+                  placeholder="Código do cliente"
+                  key={form.key("client_code")}
+                  {...form.getInputProps("client_code")} 
+                  required           
+                />
+              
+              
             </Grid.Col>
             <Grid.Col span={10}>
-              <TextInput
-                label="Nome Completo"
-                placeholder="Nome"
-                key={form.key("name")}
-                {...form.getInputProps("name")}
-                onBlur={(e)=>{calcularResultado(e.target.value)}}
-                required
-              />
+              <Tooltip label="Nome do cliente da conta onde será instalada a usina" position="top-start" offset={24}>
+                <TextInput
+                  label="Nome completo do cliente titular UC"
+                  placeholder="Nome"
+                  key={form.key("name")}
+                  {...form.getInputProps("name")}
+                  onBlur={(e)=>{calcularResultado(e.target.value)}}
+                  required
+                />
+              </Tooltip>
             </Grid.Col>
             <Grid.Col span={6}>
               <InputBase
@@ -181,29 +185,31 @@ export default function  NewProject() {
           Step 4 content: teste
         </Stepper.Step>
         <Stepper.Completed>
-          <p>Confirme os dados antes de enviar:</p>
+          <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
           <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
           
-          <Button type='submit'>Enviar</Button>
+          
         </Stepper.Completed>
       </Stepper>
 
-      <Group justify="center" mt="xl">        
-        {active > 0 && (
+      <Group justify="right" mt="xl" mr="xl">        
+        {activeStep > 0 && (
+          <>
           <Button variant="default" onClick={prevStep}>
             Voltar
           </Button>
-        )}
-        {active > 0 && (
           <Button variant="default" onClick={prevStep} disabled={false}>
-            Salva rascunho
+          Salvar e continuar editando depois
+          </Button>
+          </>          
+        )}        
+        {activeStep < 4 && (
+          <Button onClick={nextStep} >
+            {activeStep === 3 ? "Conferir tudo" : "Próximo passo"}
           </Button>
         )} 
-        
-        {active < 4 && (
-          <Button onClick={nextStep} >
-            {active === 4 ? "Concluir" : "Próximo"}
-          </Button>
+        {activeStep === 4 && (
+          <Button type='submit'>Enviar para análise</Button>
         )} 
            
         
