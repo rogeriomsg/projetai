@@ -9,13 +9,11 @@ const Middlewares = require('../MIDDLEWARES');
 *   5XX = Erro do Servidor
 */
 
-router.get(`/`, Controllers.User.getAll);
-
-router.get(`/:id`, Controllers.User.getById);
-
-router.delete(`/:id`, Controllers.User.delete);
+router.get(`/`, Controllers.User.search);
 
 router.post(`/create`,  Controllers.User.create);
+
+router.delete(`/:id`, Controllers.User.delete);
 
 router.patch(`/:id`, Controllers.User.update);
 

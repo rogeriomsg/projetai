@@ -24,23 +24,12 @@ exports.search = async (req, res) => {
     });       
 };
 
-exports.getById = async (req, res) => {
-    const {id} = req.params ;
-
-    console.log(id)
-
-    await Models.Client.findById(id).then(data => {              
-        res.status(Services.HTTPStatus.SUCCESS.code).json(data);             
-    }).catch( err => {
-        res.status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code).json({ message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message});
-    });
-};
-
 exports.create = async (req, res) => {
     console.log(req.body);
     /*
+    Exemplo:
     {
-        "name": "Jo�o da Silva",
+        "name": "João da Silva",
         "cpf": "123.456.789-00",
         "identity": "MG1234567",
         "client_code": 1001,
@@ -92,7 +81,7 @@ exports.create = async (req, res) => {
         name: req.body.name,                   // Nome do cliente
         cpf: req.body.cpf,                     // CPF (opcional)
         identity: req.body.identity,           // Identidade (opcional)
-        client_code: req.body.client_code,     // Código do cliente (obrigat�rio)
+        client_code: req.body.client_code,     // Código do cliente (obrigatório)
         email: req.body.email,                 // Email (opcional)
         phone: req.body.phone,                 // Telefone (opcional)
         consumerUnit: req.body.consumerUnit,   // consumerUnit deve ser um array de objetos
@@ -120,6 +109,7 @@ exports.delete = async (req, res) => {
 exports.update = async (req, res) => {
     const {id} = req.params ;
     /*
+    Exemplo
      {
         "name": "João da Silva",
         "cpf": "123.456.789-00",
@@ -173,11 +163,11 @@ exports.update = async (req, res) => {
         name: req.body.name,                   // Nome do cliente
         cpf: req.body.cpf,                     // CPF (opcional)
         identity: req.body.identity,           // Identidade (opcional)
-        client_code: req.body.client_code,     // C�digo do cliente (obrigat�rio)
+        client_code: req.body.client_code,     // Código do cliente (obrigatório)
         email: req.body.email,                 // Email (opcional)
         phone: req.body.phone,                 // Telefone (opcional)
         consumerUnit: req.body.consumerUnit,   // consumerUnit deve ser um array de objetos
-        is_active: req.body.is_active || true  // Ativo por padr�o                    
+        is_active: req.body.is_active || true  // Ativo por padrão                    
     };
 
     await Models.Client.findByIdAndUpdate(id, clientUpdateData , {new: true}).then(data => {        
@@ -215,4 +205,27 @@ exports.consumerUnitCreate = async (req, res) => {
         res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code ).json({message: "Erro ao adicionar ConsumerUnit", error: err.message});
     }
  };
+
+ exports.consumerUnitSearch = async (req, res) => {
+    //console.log(req.query)
+    const {name = '', id, cpf, identity, client_code, email, is_active} = req.query ;
+    console.log(name, id, cpf, identity, client_code, is_active);
+    const filtros = {} ;
+    filtros.name = { $regex: name , $options: 'i' }; // 'i' para case-insensitive = name ;
+    if(id) filtros._id = id ;
+    if(cpf) filtros.cpf = cpf ;// 'i' para case-insensitive = status ;
+    if(identity) filtros.identity = identity ;
+    if(client_code) filtros.client_code = client_code ;
+    if(email) filtros.email = email ;
+    if(is_active) filtros.is_active = is_active ;
+
+    await Models.Client.find(filtros).then(data => { 
+        if(data.length === 0)
+            res.status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code).json({ message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message});        
+        else
+            res.status(Services.HTTPStatus.SUCCESS.code).json(data);          
+    }).catch( err => {
+        res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({ message: err.message});
+    });       
+};
  

@@ -11,16 +11,14 @@ const {Validations} = require('../MIDDLEWARES');
 
 router.get(`/search`,Controllers.Client.search);
 
-router.get(`/:id`,Controllers.Client.getById);
+router.post(`/create`,  Controllers.Client.create );
 
 router.delete(`/:id`,Controllers.Client.delete);
 
-router.post(`/create`,  Controllers.Client.create );
-
 router.patch(`/:id`,  Controllers.Client.update );
 
-router.post(`/:id/consumer_unit_create`,Controllers.Client.consumerUnitCreate);
+router.post(`/:id/consumer_unit`,Controllers.Client.consumerUnitCreate);
 
-router.get(`/:id/consumer_unit_search`,Controllers.Client.search);
+router.get(`/:id/consumer_unit/search`,Controllers.Client.consumerUnitSearch);
 
 module.exports = router;

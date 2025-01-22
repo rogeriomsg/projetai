@@ -23,27 +23,15 @@ exports.search = async (req, res) => {
     });       
 };
 
-exports.getById = async (req, res) => {
-    const {id} = req.params ;
-
-    console.log(id)
-
-    await Models.Project.findById(id).then(data => {              
-        res.status(Services.HTTPStatus.SUCCESS.code).json(data);             
-    }).catch( err => {
-        res.status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code).json({ message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message});
-    });
-};
-
 exports.create = async (req, res) => {
     console.log(req.body);
     /*
     {
         "client_id": "64dfb4c2e7e1ab00123abc45", 
         "name": "Projeto Solar Residencial",
-        "dealership": "Distribuidora Solar SP", //Nome da distribuidora de energia responsável.
+        "dealership": "Distribuidora Solar SP", //Nome da distribuidora de energia responsÃ¡vel.
         "status": "Em cadastro",
-        "description": "Projeto de instalação de energia solar para residência.",
+        "description": "Projeto de instalaÃ§Ã£o de energia solar para residÃªncia.",
         "is_active": true,
         "circuit_breaker": 50,
         "installed_power": 5.0,
@@ -54,7 +42,7 @@ exports.create = async (req, res) => {
             "brand": "SolarTech",
             "power": 5000,
             "quantity": 1,
-            "description": "Inversor de alta eficiência para uso residencial."
+            "description": "Inversor de alta eficiÃªncia para uso residencial."
             }
         ],
         "modules": [
@@ -65,7 +53,7 @@ exports.create = async (req, res) => {
             "quantity": 12,
             "width": 1.1,
             "height": 2.0,
-            "description": "Módulos solares monocristalinos com alta eficiência."
+            "description": "MÃ³dulos solares monocristalinos com alta eficiÃªncia."
             },
             {
             "model": "MOD-300P",
@@ -74,7 +62,7 @@ exports.create = async (req, res) => {
             "quantity": 8,
             "width": 1.2,
             "height": 1.8,
-            "description": "Painéis solares econômicos para complementar o sistema."
+            "description": "PainÃ©is solares econÃ´micos para complementar o sistema."
             }
         ],
         "path_meter_pole": "/uploads/documents/meter_pole.pdf",
@@ -85,17 +73,17 @@ exports.create = async (req, res) => {
     }
     */
     const project = new Models.Project({
-        client_id: req.body.client_id, // ID do cliente, deve ser válido no banco de dados
+        client_id: req.body.client_id, // ID do cliente, deve ser vÃ¡lido no banco de dados
         name: req.body.name,
         dealership: req.body.dealership,
-        status: req.body.status, // Opcional, padrão é 'Em cadastro'
+        status: req.body.status, // Opcional, padrÃ£o Ã© 'Em cadastro'
         description: req.body.description,
-        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Padrão é true
+        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // PadrÃ£o Ã© true
         circuit_breaker: req.body.circuit_breaker,
         installed_power: req.body.installed_power,
         service_voltage: req.body.service_voltage,
         inverters: req.body.inverters, // Array de inversores, conforme o schema `inverterSchema`
-        modules: req.body.modules, // Array de módulos, conforme o schema `moduleSchema`
+        modules: req.body.modules, // Array de mÃ³dulos, conforme o schema `moduleSchema`
         path_meter_pole: req.body.path_meter_pole, // Caminho para arquivo (opcional)
         path_meter: req.body.path_meter, // Caminho para arquivo (opcional)
         path_bill: req.body.path_bill, // Caminho para arquivo (opcional)
@@ -124,23 +112,23 @@ exports.delete = async (req, res) => {
 exports.update = async (req, res) => {
     const {id} = req.params ;
     
-    // Prepara o objeto de atualização com base no corpo da requisição
+    // Prepara o objeto de atualizaÃ§Ã£o com base no corpo da requisiÃ§Ã£oo
     const projectUpdateData = {
         name: req.body.name, // Nome do projeto
-        dealership: req.body.dealership, // Nome da concessionária (opcional)
-        status: req.body.status || 'Em cadastro', // Status do projeto (opcional, com valor padrão)
-        description: req.body.description, // Descrição do projeto (opcional)
-        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Ativo por padrão
-        circuit_breaker: req.body.circuit_breaker, // Disjuntor (obrigatório)
-        installed_power: req.body.installed_power, // Potência instalada (obrigatório)
-        service_voltage: req.body.service_voltage, // Tensão de serviço (obrigatório)
+        dealership: req.body.dealership, // Nome da concessionÃ¡ria (opcional)
+        status: req.body.status || 'Em cadastro', // Status do projeto (opcional, com valor padrÃ£o)
+        description: req.body.description, // DescriÃ§Ã£o do projeto (opcional)
+        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Ativo por padrÃ£o
+        circuit_breaker: req.body.circuit_breaker, // Disjuntor (obrigatÃ³rio)
+        installed_power: req.body.installed_power, // PotÃªncia instalada (obrigatÃ³rio)
+        service_voltage: req.body.service_voltage, // TensÃ£o de serviÃ§o (obrigatÃ³rio)
         inverters: req.body.inverters, // Lista de inversores (opcional)
-        modules: req.body.modules, // Lista de módulos fotovoltaicos (opcional)
+        modules: req.body.modules, // Lista de mÃ³dulos fotovoltaicos (opcional)
         path_meter_pole: req.body.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
         path_meter: req.body.path_meter, // Caminho para a foto do medidor (opcional)
         path_bill: req.body.path_bill, // Caminho para a fatura de energia (opcional)
         path_identity: req.body.path_identity, // Caminho para a identidade (opcional)
-        path_procuration: req.body.path_procuration, // Caminho para a procuração (opcional)
+        path_procuration: req.body.path_procuration, // Caminho para a procuraÃ§Ã£o (opcional)
     };
 
     await Models.Project.findByIdAndUpdate(id, projectUpdateData , {new: true}).then(data => {        

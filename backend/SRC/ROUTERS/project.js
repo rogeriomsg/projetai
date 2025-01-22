@@ -11,11 +11,9 @@ const {Validations} = require('../MIDDLEWARES');
 
 router.get(`/search`,Controllers.Project.search);
 
-router.get(`/:id`,Controllers.Project.getById);
+router.post(`/create`,  Controllers.Project.create );
 
 router.delete(`/:id`,Controllers.Project.delete);
-
-router.post(`/create`,  Controllers.Project.create );
 
 router.patch(`/:id`,  Controllers.Project.update );
 
