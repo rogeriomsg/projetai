@@ -45,8 +45,8 @@ export default function  Demo() {
         const data = { ...form.values };
         await axios.post("http://192.168.0.10:3333/project/create", data);
         alert("Cadastro realizado com sucesso!");
-      } catch (error) {
-        alert("Erro ao enviar os dados: " + error.message);
+      } catch (e) {
+        alert("Erro ao enviar os dados: " + e.message);
       } finally {
         setIsSubmitting(false);
       }
