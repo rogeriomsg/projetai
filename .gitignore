@@ -1,4 +1,5 @@
 BACKEND/node_modules
 FRONTEND/node_modules
+FRONTEND/.next
 BACKEND/.env*
 FRONTEND/.env*
