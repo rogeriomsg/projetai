@@ -40,20 +40,20 @@ export default function  Demo() {
       alert(JSON.stringify(form.values, null, 3))
 
       //setLoading(true);
-      setIsSubmitting(true);
-      try {
-        const data = { ...form.values };
-        await axios.post("http://192.168.0.10:3333/project/create", data);
-        alert("Cadastro realizado com sucesso!");
-      } catch (e) {
-        alert("Erro ao enviar os dados: " + e.message);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-    else{
-      alert("O formulário contem pendências!");
-    }
+    //   setIsSubmitting(true);
+    //   try {
+    //     const data = { ...form.values };
+    //     await axios.post("http://192.168.0.10:3333/project/create", data);
+    //     alert("Cadastro realizado com sucesso!");
+    //   } catch (e) {
+    //     alert("Erro ao enviar os dados: " + e.message);
+    //   } finally {
+    //     setIsSubmitting(false);
+    //   }
+    // }
+    // else{
+    //   alert("O formulário contem pendências!");
+   }
   };
 
 
