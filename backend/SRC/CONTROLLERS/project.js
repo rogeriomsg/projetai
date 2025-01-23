@@ -13,7 +13,7 @@ exports.search = async (req, res) => {
     if(service_voltage) filtros.service_voltage = service_voltage ;
     if(is_active) filtros.is_active = is_active ;
 
-    await Models.Project.find(filtros).populate('client_id').then(data => { 
+    await Models.Project.find(filtros).then(data => { 
         if(data.length === 0)
             res.status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code).json({ message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message});        
         else
@@ -27,68 +27,98 @@ exports.create = async (req, res) => {
     console.log(req.body);
     /*
     {
-        "client_id": "64dfb4c2e7e1ab00123abc45", 
-        "name": "Projeto Solar Residencial",
-        "dealership": "Distribuidora Solar SP", //Nome da distribuidora de energia responsável.
-        "status": "Em cadastro",
-        "description": "Projeto de instalação de energia solar para residência.",
         "is_active": true,
-        "circuit_breaker": 50,
-        "installed_power": 5.0,
-        "service_voltage": 220,
+        "name": "Solar Power Project A",
+        "description": "Residential solar power installation project.",
+        "dealership": "Neoenergia Brasília",
+        "client": {
+            "client_code": 12345,
+            "name": "Maria Fulana",
+            "cpf": "123.456.789-00",
+            "identity": "RG12345678",
+            "email": "maria.fulana@example.com",
+            "phone": "(12) 99456-7890",
+            "address": {
+            "street": "123 Solar St.",
+            "number": 456,
+            "city": "Brasília",
+            "state": "DF",
+            "zip": 70000000
+            },
+            "is_active": true
+        },
+        "plant": {
+            "consumer_unit_code": 67890,
+            "name": "Residential Solar Plant",
+            "description": "5 kW solar power plant installation.",
+            "circuit_breaker": 30,
+            "installed_power": 5,
+            "service_voltage": 220,
+            "address": {
+            "street": "123 Solar St.",
+            "number": 456,
+            "city": "Sunnyvale",
+            "state": "CA",
+            "zip": 94086
+            },
+            "geolocation": {
+            "lat": 37.36883,
+            "lng": -122.03635
+            }
+        },
+        "consumerUnit": [
+            {
+            "consumer_unit_code": 67890,
+            "name": "Main Consumer Unit",
+            "description": "Main unit for energy consumption.",
+            "percentage": 100,
+            "is_plant": true
+            }
+        ],
         "inverters": [
             {
-            "model": "INV-5000X",
-            "brand": "SolarTech",
+            "model": "Inv-5000",
+            "brand": "InverterCo",
             "power": 5000,
             "quantity": 1,
-            "description": "Inversor de alta eficiência para uso residencial."
+            "description": "High-efficiency inverter."
             }
         ],
         "modules": [
             {
-            "model": "MOD-450P",
-            "brand": "SunPower",
-            "power": 450,
-            "quantity": 12,
-            "width": 1.1,
-            "height": 2.0,
-            "description": "Módulos solares monocristalinos com alta eficiência."
-            },
-            {
-            "model": "MOD-300P",
-            "brand": "EcoSolar",
-            "power": 300,
-            "quantity": 8,
+            "model": "SolarMax-400",
+            "brand": "SolarTech",
+            "power": 400,
+            "quantity": 13,
             "width": 1.2,
-            "height": 1.8,
-            "description": "Painéis solares econômicos para complementar o sistema."
+            "height": 1.6,
+            "description": "High-efficiency solar module."
             }
         ],
-        "path_meter_pole": "/uploads/documents/meter_pole.pdf",
-        "path_meter": "/uploads/documents/meter_image.png",
-        "path_bill": "/uploads/documents/electric_bill.pdf",
-        "path_identity": "/uploads/documents/identity_card.pdf",
-        "path_procuration": "/uploads/documents/procuration.pdf"
+        "path_meter_pole": "/path/to/meter_pole.jpg",
+        "path_meter": "/path/to/meter.jpg",
+        "path_bill": "/path/to/bill.pdf",
+        "path_identity": "/path/to/identity.pdf",
+        "path_procuration": "/path/to/procuration.pdf",
+        "status": "Em cadastro"
     }
     */
     const project = new Models.Project({
-        client_id: req.body.client_id, // ID do cliente, deve ser válido no banco de dados
-        name: req.body.name,
-        dealership: req.body.dealership,
-        status: req.body.status, // Opcional, padrão é 'Em cadastro'
-        description: req.body.description,
         is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Padrão é true
-        circuit_breaker: req.body.circuit_breaker,
-        installed_power: req.body.installed_power,
-        service_voltage: req.body.service_voltage,
+        client: req.body.client, // ID do cliente, deve ser válido no banco de dados
+        name: req.body.name,
+        description: req.body.description,
+        dealership: req.body.dealership,
+        plant: req.body.plant,   
+        consumerUnit:   req.body.consumerUnit,  
         inverters: req.body.inverters, // Array de inversores, conforme o schema `inverterSchema`
         modules: req.body.modules, // Array de módulos, conforme o schema `moduleSchema`
         path_meter_pole: req.body.path_meter_pole, // Caminho para arquivo (opcional)
         path_meter: req.body.path_meter, // Caminho para arquivo (opcional)
         path_bill: req.body.path_bill, // Caminho para arquivo (opcional)
         path_identity: req.body.path_identity, // Caminho para arquivo (opcional)
-        path_procuration: req.body.path_procuration // Caminho para arquivo (opcional)
+        path_procuration: req.body.path_procuration, // Caminho para arquivo (opcional)
+        status: req.body.status, // Opcional, padrão é 'Em cadastro'
     });
 
     await Models.Project.create(project).then(data => {      
@@ -114,21 +144,21 @@ exports.update = async (req, res) => {
     
     // Prepara o objeto de atualização com base no corpo da requisiçãoo
     const projectUpdateData = {
-        name: req.body.name, // Nome do projeto
-        dealership: req.body.dealership, // Nome da concessionária (opcional)
-        status: req.body.status || 'Em cadastro', // Status do projeto (opcional, com valor padrão)
-        description: req.body.description, // Descrição do projeto (opcional)
-        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Ativo por padrão
-        circuit_breaker: req.body.circuit_breaker, // Disjuntor (obrigatório)
-        installed_power: req.body.installed_power, // Potência instalada (obrigatório)
-        service_voltage: req.body.service_voltage, // Tensão de serviço (obrigatório)
-        inverters: req.body.inverters, // Lista de inversores (opcional)
-        modules: req.body.modules, // Lista de módulos fotovoltaicos (opcional)
+        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Padrão é true
+        client: req.body.client, // Cliente associado ao projeto
+        name: req.body.name, // Nome do projeto (opcional)
+        description: req.body.description,// Descrição do projeto (opcional)
+        dealership: req.body.dealership,// Nome da concessionária ou revendedora (opcional)
+        plant: req.body.plant,   // Dados da usina associada ao projeto
+        consumerUnit:   req.body.consumerUnit,  // Lista de unidades consumidoras
+        inverters: req.body.inverters, // Lista de inversores usados no projeto
+        modules: req.body.modules, // Lista de módulos fotovoltaicos usados no projeto
         path_meter_pole: req.body.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
         path_meter: req.body.path_meter, // Caminho para a foto do medidor (opcional)
         path_bill: req.body.path_bill, // Caminho para a fatura de energia (opcional)
-        path_identity: req.body.path_identity, // Caminho para a identidade (opcional)
-        path_procuration: req.body.path_procuration, // Caminho para a procuração (opcional)
+        path_identity: req.body.path_identity, // Caminho para a identidade do cliente (opcional)
+        path_procuration: req.body.path_procuration, // Caminho para o arquivo de procuração (opcional)
+        status: req.body.status, // Status do projeto - Status padrão: "Em cadastro"
     };
 
     await Models.Project.findByIdAndUpdate(id, projectUpdateData , {new: true}).then(data => {        

@@ -25,16 +25,24 @@ export default function  NewProject() {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: { 
-      name: 'Paulo', 
-      client_code: 123 ,
-      cpf: "00349176086",
-      identity: '123',
-      identity_issuer : 'SSP-DF',
-      email: "rogeriomsg@hotmail.com", 
-      phone: 12982230206,
-      consumerUnit: [{ 
-        key: randomId(),
-        code: undefined , 
+      client: {
+        client_code: undefined,
+        name: "",
+        cpf: "",
+        identity: "",
+        email: "",
+        phone: "",
+        address: {
+          street: "",
+          number: undefined,
+          city: "",
+          state: "",
+          zip: undefined,
+        },
+        is_active: true
+      },      
+      plant: { 
+        consumer_unit_code: undefined , 
         name: '', 
         description: '', 
         address: { 
@@ -48,19 +56,47 @@ export default function  NewProject() {
           lat: undefined,
           lng: undefined
         }, 
+        circuit_breaker: undefined,
+        installed_load: undefined,
+			  installed_power: undefined,
+			  service_voltage: undefined,
+      },
+      consumerUnit: [{ 
+        key: randomId(),
+        consumer_unit_code: undefined , 
+        name: 'Unidade consumidora geradora', 
+        description: '',         
         percentage: 100,
-        is_generating: true
+        is_plant: true
       }], 
+      inverters: [{
+        key: randomId(),
+        model: undefined,
+        brand: undefined,
+        power: undefined,
+        quantity: 1,
+        description: ""
+      }],
+      modules: [{
+        key: randomId(),
+        model: undefined,
+        brand: undefined,
+        power: undefined,
+        quantity: 1,
+        width: undefined,
+        height: undefined,
+        description: ""
+      }],
       
     },
-    // functions will be used to validate values at corresponding key
-    validate: {
-      name: hasLength({ min: 2}, 'Nome deve ter ao menos 2 letras'),
-      email: (value) => (value === undefined? 'Email é obrigatório': (/^\S+@\S+$/.test(value) ? null : 'E-mail inválido') ),
-      cpf: hasLength({ min: 14 , max: 14}, 'CPF inválido'),
-      client_code: (value) => (value === undefined? 'Código do cliente deve ser diferente de 0': null),
-      phone: (value) => (value === undefined? 'Telefone é obrigatório' : null),
-    },
+    // // functions will be used to validate values at corresponding key
+    // validate: {
+    //   name: hasLength({ min: 2}, 'Nome deve ter ao menos 2 letras'),
+    //   email: (value) => (value === undefined? 'Email é obrigatório': (/^\S+@\S+$/.test(value) ? null : 'E-mail inválido') ),
+    //   cpf: hasLength({ min: 14 , max: 14}, 'CPF inválido'),
+    //   client_code: (value) => (value === undefined? 'Código do cliente deve ser diferente de 0': null),
+    //   phone: (value) => (value === undefined? 'Telefone é obrigatório' : null),
+    // },
   });
 
   const nextStep = () => { setActiveStep((current) => (form.validate().hasErrors ? current : current + 1))};     
@@ -89,28 +125,17 @@ export default function  NewProject() {
    }
   };
 
-  // const fields = form.getValues().consumerUnit.map((item, index) => (
-    
-  // ));
 
   const consumerUnits = form.getValues().consumerUnit.map((item, index) => (
     <Table.Tr key={item.key} >
       <Table.Td >           
-        <Grid ml="md" mr="md">
-          <Grid.Col span={12}>
-            <Switch             
-              label="A usina será instalada nesta Unidade?"
-              key={form.key(`consumerUnit.${index}.is_generating`)}
-              {...form.getInputProps(`consumerUnit.${index}.is_generating`, { type: 'checkbox' })}
-            />
-          </Grid.Col>
-          <Grid.Col span={1}>  
+        <Grid ml="md" mr="md" mb="sm">          
+          <Grid.Col span={2}>  
             <TextInput
               label="Código da UC"
               placeholder="Código da UC"
-              //style={{ flex: 1 }}
-              key={form.key(`consumerUnit.${index}.code`)}
-              {...form.getInputProps(`consumerUnit.${index}.code`)}
+              key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
+              {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)}
               required
             />
           </Grid.Col>
@@ -123,80 +148,170 @@ export default function  NewProject() {
               required           
             />
           </Grid.Col> 
-          <Grid.Col span={10} >
+          <Grid.Col span={9} >
             <TextInput
               placeholder="Digite um nome, por ex.: Casa a ser instalada a usina"
               label="Nome da UC"
               key={form.key(`consumerUnit.${index}.name`)}
               {...form.getInputProps(`consumerUnit.${index}.name`)}
             />
-          </Grid.Col>
-          {
-            form.values.consumerUnit[index].is_generating && (
-              <>
-                <Grid.Col span={8}>             
-                  <TextInput
-                    label="Endereço"
-                    key={form.key(`consumerUnit.${index}.address.street`)}
-                    {...form.getInputProps(`consumerUnit.${index}.address.street`)}
-                    required
-                  />    
-                </Grid.Col>
-                <Grid.Col span={2}>
-                  <NumberInput
-                    label="Número"
-                    key={form.key(`consumerUnit.${index}.address.number`)}
-                    {...form.getInputProps(`consumerUnit.${index}.address.number`)} 
-                  />
-                </Grid.Col>
-                <Grid.Col span={6}>
-                  <Autocomplete
-                    label="Estado"
-                    placeholder="Digite o estado"
-                    data={['Distrito Federal', 'Goiás', 'São Paulo', 'Rio Grande do Sul']}
-                    key={form.key(`consumerUnit.${index}.address.state`)}
-                    {...form.getInputProps(`consumerUnit.${index}.address.state`)} 
-                    required
-                  />
-                </Grid.Col>
-                <Grid.Col span={6}>
-                  <Autocomplete
-                    label="Município"
-                    placeholder="Digite o município"
-                    data={['Brasília','Uruguaiana','Taubaté','Porto Alegre']}
-                    key={form.key(`consumerUnit.${index}.address.city`)}
-                    {...form.getInputProps(`consumerUnit.${index}.address.city`)} 
-                    required
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Latitude"
-                    placeholder=""
-                    key={form.key(`consumerUnit.${index}.geolocation.lat`)}
-                    {...form.getInputProps(`consumerUnit.${index}.geolocation.lat`)} 
-                    required           
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Longitude"
-                    placeholder=""
-                    key={form.key(`consumerUnit.${index}.geolocation.lng`)}
-                    {...form.getInputProps(`consumerUnit.${index}.geolocation.lng`)} 
-                    required           
-                  />
-                </Grid.Col>
-              </>
-            )
-          }                                    
+          </Grid.Col>                                         
         </Grid>
       </Table.Td>
       <Table.Td>
-        <Group gap={0} justify="flex-end">                   
-          <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('consumerUnit', index)}>
-            <IconTrash size={28} stroke={1.8}/>
-          </ActionIcon>
+        <Group gap={0} justify="flex-end"> 
+          {
+            index===0 &&(
+              <>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('consumerUnit', index)} disabled >
+                <IconTrash size={28} stroke={1.8}/>
+              </ActionIcon>
+              </>
+            ) 
+          }
+          {
+            index!==0 &&(
+              <>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('consumerUnit', index)}>
+                <IconTrash size={28} stroke={1.8}/>
+              </ActionIcon>
+              </>
+            ) 
+          } 
+        </Group>
+      </Table.Td>
+    </Table.Tr>
+  ));
+
+  const invertersDataRows = form.getValues().inverters.map((item, index) => (
+    <Table.Tr key={item.key} >
+      <Table.Td >           
+        <Grid ml="md" mr="md" mb="sm">          
+          <Grid.Col span={2}>  
+            <TextInput
+              label="Modelo"
+              placeholder="Modelo do inversor"
+              key={form.key(`inverters.${index}.model`)}
+              {...form.getInputProps(`inverters.${index}.model`)}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={2}>  
+            <TextInput
+              label="Marca"
+              placeholder="Marca do inversor"
+              key={form.key(`inverters.${index}.brand`)}
+              {...form.getInputProps(`inverters.${index}.brand`)}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={1}>
+            <NumberInput
+              label="Potência"
+              placeholder="Potência em kw"
+              key={form.key(`inverters.${index}.power`)}
+              {...form.getInputProps(`inverters.${index}.power`)} 
+              required           
+            />
+          </Grid.Col> 
+          <Grid.Col span={1}>
+            <NumberInput
+              label="Quantidade"
+              placeholder="Quantidade de inversores"
+              key={form.key(`inverters.${index}.quantity`)}
+              {...form.getInputProps(`inverters.${index}.quantity`)} 
+              required           
+            />
+          </Grid.Col>                           
+        </Grid>
+      </Table.Td>
+      <Table.Td>
+        <Group gap={0} justify="flex-end"> 
+          {
+            index===0 &&(
+              <>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)} disabled >
+                <IconTrash size={28} stroke={1.8}/>
+              </ActionIcon>
+              </>
+            ) 
+          }
+          {
+            index!==0 &&(
+              <>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)}>
+                <IconTrash size={28} stroke={1.8}/>
+              </ActionIcon>
+              </>
+            ) 
+          } 
+        </Group>
+      </Table.Td>
+    </Table.Tr>
+  ));
+
+  const modulesDataRows = form.getValues().modules.map((item, index) => (
+    <Table.Tr key={item.key} >
+      <Table.Td >           
+        <Grid ml="md" mr="md" mb="sm">          
+          <Grid.Col span={2}>  
+            <TextInput
+              label="Modelo"
+              placeholder="Modelo do módulo fotovoltaico"
+              key={form.key(`module.${index}.model`)}
+              {...form.getInputProps(`module.${index}.model`)}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={2}>  
+            <TextInput
+              label="Marca"
+              placeholder="Marca do módulo fotovoltaico"
+              key={form.key(`module.${index}.brand`)}
+              {...form.getInputProps(`module.${index}.brand`)}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={1}>
+            <NumberInput
+              label="Potência"
+              placeholder="Potência em kw"
+              key={form.key(`inverters.${index}.power`)}
+              {...form.getInputProps(`inverters.${index}.power`)} 
+              required           
+            />
+          </Grid.Col> 
+          <Grid.Col span={1}>
+            <NumberInput
+              label="Quantidade"
+              placeholder="Quantidade de inversores"
+              key={form.key(`inverters.${index}.quantity`)}
+              {...form.getInputProps(`inverters.${index}.quantity`)} 
+              required           
+            />
+          </Grid.Col>                           
+        </Grid>
+      </Table.Td>
+      <Table.Td>
+        <Group gap={0} justify="flex-end"> 
+          {
+            index===0 &&(
+              <>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)} disabled >
+                <IconTrash size={28} stroke={1.8}/>
+              </ActionIcon>
+              </>
+            ) 
+          }
+          {
+            index!==0 &&(
+              <>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)}>
+                <IconTrash size={28} stroke={1.8}/>
+              </ActionIcon>
+              </>
+            ) 
+          } 
         </Group>
       </Table.Td>
     </Table.Tr>
@@ -224,8 +339,8 @@ export default function  NewProject() {
                 <NumberInput
                   label="Código do cliente"
                   placeholder="Código do cliente"
-                  key={form.key("client_code")}
-                  {...form.getInputProps("client_code")} 
+                  key={form.key("client.client_code")}
+                  {...form.getInputProps("client.client_code")} 
                   required           
                 />
             </Grid.Col>
@@ -234,111 +349,289 @@ export default function  NewProject() {
                 <TextInput
                   label="Nome completo do cliente titular UC"
                   placeholder="Nome"
-                  key={form.key("name")}
-                  {...form.getInputProps("name")}
+                  key={form.key("client.name")}
+                  {...form.getInputProps("client.name")}
                   onBlur={(e)=>{()=>{}}}
                   required
                 />
               </Tooltip>
             </Grid.Col>
-            <Grid.Col span={6}>
+            <Grid.Col span={2}>
               <InputBase
                 label="CPF"
                 component={IMaskInput}
                 mask="000.000.000-00"
                 placeholder="CPF"
-                key={form.key("cpf")}
-                {...form.getInputProps("cpf")}
+                key={form.key("client.cpf")}
+                {...form.getInputProps("client.cpf")}
                 required
               />
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={2}>
               <TextInput
                 label="RG"
                 placeholder="Numero da indentidade"
-                key={form.key("identity")}
-                {...form.getInputProps("identity")}  
+                key={form.key("client.identity")}
+                {...form.getInputProps("client.identity")}  
               /> 
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={2}>
               <TextInput
                 label="Orgão expedidor"
                 placeholder="Orgão"
-                key={form.key("identity_issuer")}
-                {...form.getInputProps("identity_issuer")}  
+                key={form.key("client.identity_issuer")}
+                {...form.getInputProps("client.identity_issuer")}  
               /> 
             </Grid.Col>
-            <Grid.Col span={8}>
+            <Grid.Col span={4}>
               <TextInput
                 label="E-mail"
                 placeholder="E-mail"
-                key={form.key("email")}
-                {...form.getInputProps("email")}
+                key={form.key("client.email")}
+                {...form.getInputProps("client.email")}
                 required
               />
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={2}>
               <InputBase
                 label="Telefone"
                 component={IMaskInput}
                 mask="(00) 00000-0000"
                 placeholder="Telefone"
-                key={form.key("phone")}
-                {...form.getInputProps("phone")}
+                key={form.key("client.phone")}
+                {...form.getInputProps("client.phone")}
                 required
               />
             </Grid.Col>
+            <Grid.Col span={2}>             
+              <TextInput
+                label="CEP"
+                placeholder='Digite o CEP'
+                key={form.key(`client.address.zip`)}
+                {...form.getInputProps(`client.address.zip`)}
+                required
+              />    
+            </Grid.Col>               
+            <Grid.Col span={8}>             
+              <TextInput
+                label="Logradouro"
+                key={form.key(`client.address.street`)}
+                {...form.getInputProps(`client.address.street`)}
+                required
+              />    
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <NumberInput
+                label="Número"
+                key={form.key(`client.address.number`)}
+                {...form.getInputProps(`client.address.number`)} 
+              />
+            </Grid.Col>
+            <Grid.Col span={4}>
+              <Autocomplete
+                label="Estado"
+                placeholder="Digite o estado"
+                data={['Distrito Federal', 'Goiás', 'São Paulo', 'Rio Grande do Sul']}
+                key={form.key(`client.address.state`)}
+                {...form.getInputProps(`client.address.state`)} 
+                required
+              />
+            </Grid.Col>
+            <Grid.Col span={4}>
+              <Autocomplete
+                label="Município"
+                placeholder="Digite o município"
+                data={['Brasília','Uruguaiana','Taubaté','Porto Alegre']}
+                key={form.key(`client.address.city`)}
+                {...form.getInputProps(`client.address.city`)} 
+                required
+              />
+            </Grid.Col>
+            <Grid.Col span={2}></Grid.Col>
           </Grid>             
         </Stepper.Step>
         <Stepper.Step 
           label="Passo 2" 
-          description="Unidades consumidoras"
+          description="Informações da usina"
           icon={<IconHomeBolt size={18} />}
-        > 
+        >                 
+          <Grid mt="sm" ml="md" mr="md">                
+            <Grid.Col span={2}>  
+              <TextInput
+                label="Código da UC"
+                placeholder="Código da UC"
+                //style={{ flex: 1 }}
+                key={form.key(`plant.consumer_unit_code`)}
+                {...form.getInputProps(`plant.consumer_unit_code`)}
+                required
+              />
+            </Grid.Col>                
+            <Grid.Col span={10} >
+              <TextInput
+                placeholder="Digite um nome, por ex.: usina instalada (opcional)"
+                label="Nome da usina"
+                key={form.key(`plant.name`)}
+                {...form.getInputProps(`plant.name`)}
+              />
+            </Grid.Col> 
+            <Grid.Col span={2}>             
+              <TextInput
+                label="CEP"
+                placeholder='Digite o CEP'
+                key={form.key(`plant.address.zip`)}
+                {...form.getInputProps(`plant.address.zip`)}
+                required
+              />    
+            </Grid.Col>               
+            <Grid.Col span={7}>             
+              <TextInput
+                label="Logradouro"
+                key={form.key(`plant.address.street`)}
+                {...form.getInputProps(`plant.address.street`)}
+                required
+              />    
+            </Grid.Col>
+            <Grid.Col span={3}>
+              <NumberInput
+                label="Número"
+                key={form.key(`plant.address.number`)}
+                {...form.getInputProps(`plant.address.number`)} 
+              />
+            </Grid.Col>
+            <Grid.Col span={4}>
+              <Autocomplete
+                label="Estado"
+                placeholder="Digite o estado"
+                data={['Distrito Federal', 'Goiás', 'São Paulo', 'Rio Grande do Sul']}
+                key={form.key(`plant,address.state`)}
+                {...form.getInputProps(`plant.address.state`)} 
+                required
+              />
+            </Grid.Col>
+            <Grid.Col span={4}>
+              <Autocomplete
+                label="Município"
+                placeholder="Digite o município"
+                data={['Brasília','Uruguaiana','Taubaté','Porto Alegre']}
+                key={form.key(`plant.address.city`)}
+                {...form.getInputProps(`plant.address.city`)} 
+                required
+              />
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <NumberInput
+                label="Latitude"
+                placeholder=""
+                key={form.key(`plant.geolocation.lat`)}
+                {...form.getInputProps(`plant.geolocation.lat`)} 
+                required           
+              />
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <NumberInput
+                label="Longitude"
+                placeholder=""
+                key={form.key(`plant.geolocation.lng`)}
+                {...form.getInputProps(`plant.geolocation.lng`)} 
+                required           
+              />
+            </Grid.Col> 
+            <Grid.Col span={2}>
+              <NumberInput
+                label="Tensão de atendimento "
+                placeholder="Em (kV)"
+                key={form.key(`plant.service_voltage`)}
+                {...form.getInputProps(`plant.service_voltage`)} 
+                required           
+              />
+            </Grid.Col>                                           
+            <Grid.Col span={2}>
+              <NumberInput
+                label="Disjuntor padrão de entrada"
+                placeholder="Em (A)"
+                key={form.key(`plant.circuit_breaker`)}
+                {...form.getInputProps(`plant.circuit_breaker`)} 
+                required           
+              />
+            </Grid.Col> 
+            <Grid.Col span={2}>
+              <NumberInput
+                label="Carga disponibilizada"
+                placeholder="Em (kW)"
+                key={form.key(`plant.installed_load`)}
+                {...form.getInputProps(`plant.installed_load`)} 
+                readOnly         
+              />
+            </Grid.Col>   
+            <Grid.Col span={2} offset={4}>
+              <NumberInput
+                label="Potência instalada da usina"
+                placeholder="Em (kWp)"
+                key={form.key(`plant.installed_power`)}
+                {...form.getInputProps(`plant.installed_power`)} 
+                readOnly          
+              />
+            </Grid.Col>   
+          </Grid> 
+        </Stepper.Step>
+        <Stepper.Step 
+          label="Passo 3" 
+          description="Unidades consumidoras"
+          icon={<IconExposure size={18} />}
+        >
           <Table.ScrollContainer minWidth={900}>
-            <Table verticalSpacing="xl" highlightOnHover withColumnBorders>
+            <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
               <Table.Tbody>{consumerUnits}</Table.Tbody>
             </Table>
-          </Table.ScrollContainer>
-          
+          </Table.ScrollContainer>         
 
           <Group justify="center" mt="md">            
             <Button
               onClick={() =>
                 form.insertListItem('consumerUnit', { 
                   key: randomId(),
-                  code: undefined , 
+                  consumer_unit_code: undefined , 
                   name: '', 
-                  description: '', 
-                  address: { 
-                    street: '',
-                    number: undefined,
-                    city: '',
-                    state: '',
-                    zip: undefined
-                  },
-                  geolocation: {
-                    lat: undefined,
-                    lng: undefined
-                  }, 
+                  description: '',         
                   percentage: 0,
-                  is_generating: false
+                  is_plant: false
                 })
               }
             >
               Adicionar unidade consumidora
             </Button>
-          </Group>  
-        </Stepper.Step>
-        <Stepper.Step 
-          label="Passo 3" 
-          description="Equipamentos"
-          icon={<IconExposure size={18} />}
-        >
-          Step 3 content: Get full access
+          </Group>
         </Stepper.Step>
         <Stepper.Step 
           label="Passo 4" 
+          description="Equipamentos"
+          icon={<IconFileUpload size={18} />}
+        >
+          <Table.ScrollContainer minWidth={900}>
+            <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+              <Table.Tbody>{invertersDataRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>         
+
+          <Group justify="center" mt="md">            
+            <Button
+              onClick={() =>
+                form.insertListItem('consumerUnit', { 
+                  key: randomId(),
+                  consumer_unit_code: undefined , 
+                  name: '', 
+                  description: '',         
+                  percentage: 0,
+                  is_plant: false
+                })
+              }
+            >
+              Adicionar unidade consumidora
+            </Button>
+          </Group>
+        </Stepper.Step>
+        <Stepper.Step 
+          label="Passo 5" 
           description="Documentos"
           icon={<IconFileUpload size={18} />}
         >
@@ -346,9 +639,7 @@ export default function  NewProject() {
         </Stepper.Step>
         <Stepper.Completed>
           <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
-          <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
-          
-          
+          <pre>{JSON.stringify(form.getValues(), null, 3)}</pre> 
         </Stepper.Completed>
       </Stepper>
 
@@ -363,20 +654,15 @@ export default function  NewProject() {
           </Button>
           </>          
         )}        
-        {activeStep < 4 && (
+        {activeStep < 5 && (
           <Button onClick={nextStep} >
-            {activeStep === 3 ? "Conferir tudo" : "Próximo passo"}
+            {activeStep === 4 ? "Conferir tudo" : "Próximo passo"}
           </Button>
         )} 
-        {activeStep === 4 && (
+        {activeStep === 5 && (
           <Button type='submit'>Enviar para análise</Button>
-        )} 
-           
-        
+        )}
       </Group>
-
-      
-      
     </form>
   );
 }
