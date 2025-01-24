@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty} from '@mantine/form';
-import { Affix,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea,} from '@mantine/core';
+import { SegmentedControl,Affix,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -72,17 +72,19 @@ export default function  NewProject() {
       inverters: [{
         key: randomId(),
         model: undefined,
-        brand: undefined,
+        manufacturer: undefined,
         power: undefined,
         quantity: 1,
+        total_power : undefined,
         description: ""
       }],
       modules: [{
         key: randomId(),
         model: undefined,
-        brand: undefined,
+        manufacturer: undefined,
         power: undefined,
         quantity: 1,
+        total_power : undefined,
         width: undefined,
         height: undefined,
         description: ""
@@ -187,28 +189,26 @@ export default function  NewProject() {
     <Table.Tr key={item.key} >
       <Table.Td >           
         <Grid ml="md" mr="md" mb="sm">          
-          <Grid.Col span={2}>  
+          <Grid.Col span={4}>  
             <TextInput
-              label="Modelo"
               placeholder="Modelo do inversor"
               key={form.key(`inverters.${index}.model`)}
               {...form.getInputProps(`inverters.${index}.model`)}
               required
             />
           </Grid.Col>
-          <Grid.Col span={2}>  
+          <Grid.Col span={4}>  
             <TextInput
-              label="Marca"
-              placeholder="Marca do inversor"
-              key={form.key(`inverters.${index}.brand`)}
-              {...form.getInputProps(`inverters.${index}.brand`)}
+              placeholder="Fabricante do inversor"
+              key={form.key(`inverters.${index}.manufacturer`)}
+              {...form.getInputProps(`inverters.${index}.manufacturer`)}
               required
             />
           </Grid.Col>
-          <Grid.Col span={1}>
+          <Grid.Col span={2}>
             <NumberInput
-              label="Potência"
               placeholder="Potência em kw"
+              min={1}
               key={form.key(`inverters.${index}.power`)}
               {...form.getInputProps(`inverters.${index}.power`)} 
               required           
@@ -216,11 +216,18 @@ export default function  NewProject() {
           </Grid.Col> 
           <Grid.Col span={1}>
             <NumberInput
-              label="Quantidade"
+              min={1}
               placeholder="Quantidade de inversores"
               key={form.key(`inverters.${index}.quantity`)}
               {...form.getInputProps(`inverters.${index}.quantity`)} 
               required           
+            />
+          </Grid.Col> 
+          <Grid.Col span={1}>
+            <NumberInput
+              key={form.key(`inverters.${index}.quantity`)}
+              {...form.getInputProps(`inverters.${index}.quantity`)} 
+              readOnly         
             />
           </Grid.Col>                           
         </Grid>
@@ -254,40 +261,43 @@ export default function  NewProject() {
     <Table.Tr key={item.key} >
       <Table.Td >           
         <Grid ml="md" mr="md" mb="sm">          
-          <Grid.Col span={2}>  
+          <Grid.Col span={4}>  
             <TextInput
-              label="Modelo"
               placeholder="Modelo do módulo fotovoltaico"
-              key={form.key(`module.${index}.model`)}
-              {...form.getInputProps(`module.${index}.model`)}
+              key={form.key(`modules.${index}.model`)}
+              {...form.getInputProps(`modules.${index}.model`)}
               required
             />
           </Grid.Col>
-          <Grid.Col span={2}>  
+          <Grid.Col span={4}>  
             <TextInput
-              label="Marca"
               placeholder="Marca do módulo fotovoltaico"
-              key={form.key(`module.${index}.brand`)}
-              {...form.getInputProps(`module.${index}.brand`)}
+              key={form.key(`modules.${index}.manufacturer`)}
+              {...form.getInputProps(`modules.${index}.manufacturer`)}
               required
             />
           </Grid.Col>
-          <Grid.Col span={1}>
+          <Grid.Col span={2}>
             <NumberInput
-              label="Potência"
               placeholder="Potência em kw"
-              key={form.key(`inverters.${index}.power`)}
-              {...form.getInputProps(`inverters.${index}.power`)} 
+              key={form.key(`modules.${index}.power`)}
+              {...form.getInputProps(`modules.${index}.power`)} 
               required           
             />
           </Grid.Col> 
           <Grid.Col span={1}>
             <NumberInput
-              label="Quantidade"
               placeholder="Quantidade de inversores"
-              key={form.key(`inverters.${index}.quantity`)}
-              {...form.getInputProps(`inverters.${index}.quantity`)} 
+              key={form.key(`modules.${index}.quantity`)}
+              {...form.getInputProps(`modules.${index}.quantity`)} 
               required           
+            />
+          </Grid.Col> 
+          <Grid.Col span={1}>
+            <NumberInput
+              key={form.key(`modules.${index}.total_power`)}
+              {...form.getInputProps(`modules.${index}.total_power`)} 
+              readOnly         
             />
           </Grid.Col>                           
         </Grid>
@@ -297,7 +307,7 @@ export default function  NewProject() {
           {
             index===0 &&(
               <>
-              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)} disabled >
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('modules', index)} disabled >
                 <IconTrash size={28} stroke={1.8}/>
               </ActionIcon>
               </>
@@ -306,7 +316,7 @@ export default function  NewProject() {
           {
             index!==0 &&(
               <>
-              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)}>
+              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('modules', index)}>
                 <IconTrash size={28} stroke={1.8}/>
               </ActionIcon>
               </>
@@ -536,14 +546,9 @@ export default function  NewProject() {
                 required           
               />
             </Grid.Col> 
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Tensão de atendimento "
-                placeholder="Em (kV)"
-                key={form.key(`plant.service_voltage`)}
-                {...form.getInputProps(`plant.service_voltage`)} 
-                required           
-              />
+            <Grid.Col span={3}>
+              <Text ml="md" fw={700}>Tensão de Atendimento kV</Text>
+              <SegmentedControl  color="blue" data={["0.22","0.38","1","6.9","13.8"]} fullWidth />
             </Grid.Col>                                           
             <Grid.Col span={2}>
               <NumberInput
@@ -563,7 +568,7 @@ export default function  NewProject() {
                 readOnly         
               />
             </Grid.Col>   
-            <Grid.Col span={2} offset={4}>
+            <Grid.Col span={2} offset={3}>
               <NumberInput
                 label="Potência instalada da usina"
                 placeholder="Em (kWp)"
@@ -607,8 +612,27 @@ export default function  NewProject() {
           description="Equipamentos"
           icon={<IconFileUpload size={18} />}
         >
-          <Table.ScrollContainer minWidth={900}>
+          <Table.ScrollContainer minWidth={900} type="native">
             <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+              <Table.Th>
+                <Grid ml="md" mr="md" >          
+                  <Grid.Col span={4}>  
+                    Modelo
+                  </Grid.Col>
+                  <Grid.Col span={4}>  
+                    Fabricante
+                  </Grid.Col>
+                  <Grid.Col span={2}>
+                    Potência
+                  </Grid.Col> 
+                  <Grid.Col span={1}>
+                    Quantidade
+                  </Grid.Col> 
+                  <Grid.Col span={1}>
+                    Total
+                  </Grid.Col>                           
+                </Grid>
+              </Table.Th >
               <Table.Tbody>{invertersDataRows}</Table.Tbody>
             </Table>
           </Table.ScrollContainer>         
@@ -616,17 +640,59 @@ export default function  NewProject() {
           <Group justify="center" mt="md">            
             <Button
               onClick={() =>
-                form.insertListItem('consumerUnit', { 
+                form.insertListItem('inverters', { 
                   key: randomId(),
-                  consumer_unit_code: undefined , 
-                  name: '', 
-                  description: '',         
-                  percentage: 0,
-                  is_plant: false
+                  model: undefined,
+                  manufacturer: undefined,
+                  power: undefined,
+                  quantity: 1,
+                  total_power : undefined,
                 })
               }
             >
-              Adicionar unidade consumidora
+              Adicionar inversor
+            </Button>
+          </Group>
+
+          <Table.ScrollContainer minWidth={900} type="native">
+            <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+              <Table.Th>
+                <Grid ml="md" mr="md" >          
+                  <Grid.Col span={4}>  
+                    Modelo
+                  </Grid.Col>
+                  <Grid.Col span={4}>  
+                    Fabricante
+                  </Grid.Col>
+                  <Grid.Col span={2}>
+                    Potência
+                  </Grid.Col> 
+                  <Grid.Col span={1}>
+                    Quantidade
+                  </Grid.Col> 
+                  <Grid.Col span={1}>
+                    Total
+                  </Grid.Col>                           
+                </Grid>
+              </Table.Th >
+              <Table.Tbody>{modulesDataRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>         
+
+          <Group justify="center" mt="md">            
+            <Button
+              onClick={() =>
+                form.insertListItem('modules', { 
+                  key: randomId(),
+                  model: undefined,
+                  manufacturer: undefined,
+                  power: undefined,
+                  quantity: 1,
+                  total_power : undefined,
+                })
+              }
+            >
+              Adicionar módulo fotovoltaico
             </Button>
           </Group>
         </Stepper.Step>

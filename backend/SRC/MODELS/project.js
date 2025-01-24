@@ -48,17 +48,19 @@ const consumerUnitSchema = new mongoose.Schema({
 
 const inverterSchema = new mongoose.Schema({       
   model: {type : String , require : true}, // Modelo do inversor
-  brand: {type : String , require : true}, // Marca do inversor
+  manufacturer: {type : String , require : true}, // Marca do inversor
   power : {type : Number , require : true}, // Potência do inversor em kW
   quantity: {type : Number , require : true}, // Quantidade de inversores
+  total_power : {type : Number , require : true},
   description: {type : String ,default: ""}, // Descrição do inversor (opcional)
 });
   
 const moduleSchema = new mongoose.Schema({       
   model: {type : String , require : true}, // Modelo do módulo fotovoltaico
-  brand: {type : String , require : true}, // Marca do módulo fotovoltaico
+  manufacturer: {type : String , require : true}, // Marca do módulo fotovoltaico
   power : {type : Number , require : true}, // Potência do módulo em kW
   quantity: {type : Number , default: 2.23, require : true}, // Quantidade de módulos
+  total_power : {type : Number , require : true},
   width : {type : Number , default: 1.15, require : true}, // Largura do módulo em metros
   height : {type : Number , require : true}, // Altura do módulo em metros
   description: {type : String ,default: "", require : false}, // Descrição do módulo (opcional)

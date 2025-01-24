@@ -10,10 +10,10 @@ const theme = createTheme({
 export function Logo() {
     return (
         <Group gap="sm">
-        <Image src="./logo.png" alt="Logo" width={40} height={40} />
+        {/* <Image src="./logo.png" alt="Logo" width={40} height={40} />
         <Text fw={700} size="xl" variant="gradient" gradient={{ from: 'blue', to: 'cyan', deg: 90 }} style={{fontSize: rem(28)}}>            
             PR Solar Projetos
-        </Text>
+        </Text> */}
         </Group>
     );
 }
