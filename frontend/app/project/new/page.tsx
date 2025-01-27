@@ -211,9 +211,14 @@ export default function  NewProject() {
   // form.watch('client.address.zip', ({ previousValue, value, touched, dirty }) => {
   //   alert(JSON.stringify({ previousValue, value, touched, dirty }));
   // });
-  form.watch(`modules.${FORM_INDEX}.width`, ({ previousValue, value, touched, dirty }) => {
-    alert(JSON.stringify({ previousValue, value, touched, dirty }));
-  });
+
+  const handleFieldChange = (index:number, value:number) => {    
+
+    // Recalcula total_area após a alteração
+    const height = form.values.modules[index].height;
+    const total_area = value * height;
+    form.setFieldValue(`modules.${index}.total_area`, total_area);
+  };
 
   
 
@@ -401,10 +406,11 @@ export default function  NewProject() {
               min={0}
               key={form.key(`modules.${index}.width`)}
               {...form.getInputProps(`modules.${index}.width`)}
-              // onBlur={(e)=>{
-              //   //alert(e.target.value)
-              //   alert(form.values.modules[index].height)
-              // }}
+              onChange={(e)=>{ 
+                // Atualiza o campo modificado no estado do form
+                form.setFieldValue(`modules.${index}.width`, Number(e));
+                handleFieldChange(index, Number(e))
+              }}
               required
             />
           </Grid.Col>
@@ -414,6 +420,11 @@ export default function  NewProject() {
               min={0}
               key={form.key(`modules.${index}.height`)}
               {...form.getInputProps(`modules.${index}.height`)}
+              onChange={(e)=>{ 
+                // Atualiza o campo modificado no estado do form
+                form.setFieldValue(`modules.${index}.height`, Number(e)); 
+                handleFieldChange(index, Number(e))
+              }}
               required
             />
           </Grid.Col>

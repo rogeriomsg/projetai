@@ -16,7 +16,7 @@ import { MantineLogo } from '@mantinex/mantine-logo';
 import classes from './NavbarSimpleColored.module.css';
 
 const data = [
-  { link: '', label: 'Notifications', icon: IconBellRinging },
+  { link: '/project/new', label: 'Notifications', icon: IconBellRinging },
   { link: '', label: 'Billing', icon: IconReceipt2 },
   { link: '', label: 'Security', icon: IconFingerprint },
   { link: '', label: 'SSH Keys', icon: IconKey },
@@ -35,7 +35,7 @@ export function NavbarSimpleColored() {
       href={item.link}
       key={item.label}
       onClick={(event) => {
-        event.preventDefault();
+        //event.preventDefault();
         setActive(item.label);
       }}
     >
