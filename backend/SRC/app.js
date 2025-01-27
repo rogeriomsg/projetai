@@ -3,12 +3,20 @@ const app = express();
 const router = require("./ROUTERS")
 const { errors } = require('celebrate');
 const { ValidationErrorMessage } = require('./MIDDLEWARES/message');
+var bodyParser = require('body-parser')
 
-app.use(express.json())
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }))
+
+// parse application/json
+app.use(bodyParser.json())
+
+//app.use(express.json())
 app.use("/user",router.User)
 app.use("/api",router.WebhookToMQTT)
 app.use("/project",router.Project)
 app.use("/client",router.Client)
+
 
 // Middleware para tratar erros de validação
 app.use(errors());

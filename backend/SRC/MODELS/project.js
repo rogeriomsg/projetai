@@ -1,5 +1,15 @@
 const mongoose = require("mongoose");
 
+const addressSchema = new mongoose.Schema({
+  street: {type : String , require : true}, // Logradouro
+  number: {type: Number, require : false}, // Número da residência (opcional)
+  district: {type : String , require : false}, // Bairro 
+  city: {type : String , require : true}, // Cidade
+  state: {type : String , require : true}, // Estado
+  zip : {type : Number , require : true}, // CEP
+
+});
+
 const clientSchema = new mongoose.Schema({   
   client_code : { type : Number , require : true  }, // Código único do cliente
   name: {type : String , require : true}, // Nome do cliente
@@ -8,13 +18,7 @@ const clientSchema = new mongoose.Schema({
   identity_issuer : {type : String , require : false}, //Emissor do documento de identidade
   email: {type : String , require : false}, // E-mail do cliente (opcional)
   phone : {type : String , require : false}, // Telefone do cliente (opcional)
-  address:{ // Endereço do cliente
-    street: {type : String , require : true}, // Logradouro do cliente
-    number: {type: Number, require : false}, // Número da residência (opcional)
-    city: {type : String , require : true}, // Cidade
-    state: {type : String , require : true}, // Estado
-    zip : {type : Number , require : true}, // CEP
-  }, 
+  address:{type: addressSchema, require:true}, // Endereço do cliente
 });
 
 const plantSchema = new mongoose.Schema({  
@@ -25,13 +29,7 @@ const plantSchema = new mongoose.Schema({
   installed_load : { type : Number ,  require : true }, //Carga instalada - refere-se a carga instalada na residência 
   installed_power : { type : Number ,  require : true }, // Potência instalada da usina em kW - geralmente é a potência total máxima dos módulos 
   service_voltage : { type : Number ,  require : true }, // Tensão de serviço em kV
-  address:{ // Endereço da usina( é o mesmo da unidade consumidora principal e endereço do cliente )
-    street: {type : String , require : true}, // Logradouro
-    number: {type: Number, require : false}, // Número da residência (opcional)
-    city: {type : String , require : true}, // Cidade
-    state: {type : String , require : true}, // Estado
-    zip : {type : Number , require : true}, // CEP
-  },
+  address:{type: addressSchema, require:true}, // Endereço da usina( é o mesmo da unidade consumidora principal e endereço do cliente ) 
   geolocation:  { // Geolocalização da usina
     lat: { type : Number , default : 0.0  }, // Latitude
     lng: { type : Number , default : 0.0  }, // Longitude
@@ -58,16 +56,26 @@ const inverterSchema = new mongoose.Schema({
 const moduleSchema = new mongoose.Schema({       
   model: {type : String , require : true}, // Modelo do módulo fotovoltaico
   manufacturer: {type : String , require : true}, // Marca do módulo fotovoltaico
+  description: {type : String ,default: "", require : false}, // Descrição do módulo (opcional)
+  width : {type : Number , default: 1.15, require : true}, // Largura do módulo em metros
+  height : {type : Number , require : true}, // Altura do módulo em metros
+  total_area: {type : Number , require : true}, // Área total do módulo em metros
   power : {type : Number , require : true}, // Potência do módulo em kW
   quantity: {type : Number , default: 2.23, require : true}, // Quantidade de módulos
   total_power : {type : Number , require : true},
-  width : {type : Number , default: 1.15, require : true}, // Largura do módulo em metros
-  height : {type : Number , require : true}, // Altura do módulo em metros
-  description: {type : String ,default: "", require : false}, // Descrição do módulo (opcional)
 });
     
 const projectSchema = new mongoose.Schema(
-  {   
+  {  
+    project_type : { // Status do projeto
+      type: String , 
+      enum :[
+        'Até 10kWp', 
+        'Maior que 10kWp', 
+        'Maior que 75kWp',
+      ], 
+      default : 'Até 10kWp' // Status padrão: "Até 10kWp"
+    },
     is_active: { type: Boolean , default: true}, // Indica se o projeto está ativo
     name: {type : String , require : false}, // Nome do projeto (opcional)
     description: {type : String ,default: ""}, // Descrição do projeto (opcional)
