@@ -25,6 +25,24 @@ const plantSchema = new mongoose.Schema({
   consumer_unit_code :  { type : Number , default: 0 , require : true  }, // Código único da unidade consumidora que será instalada a usina
   name: {type : String , require : false}, // Nome da usina (opcional)
   description: {type : String ,default: ""} , // Descrição da usina (opcional)
+  class:{ // classe da usina
+    type: String ,default : 'Residencial'
+  },
+  connection_type:{ type:String ,enum:[
+    "Trifásico",
+    "Bifásico",
+    "Monofásico"
+  ] ,default: "Monofásico"},
+  generation_type:{ type:String ,enum:[
+    "Solar",
+    "Eólica",
+  ] ,default: "Solar"},
+  type_branch:{ type:String ,enum:[
+    "Aérea",
+    "Subterrânea",
+  ] ,default: "Aérea"},
+  branch_section: { type : Number ,  require : true },
+  subgroup: { type : Number ,  default : "B1" },
   circuit_breaker : { type : Number ,  require : true }, // Valor do disjuntor em amperes do padrão de entrada da unidade consumidora 
   installed_load : { type : Number ,  require : true }, //Carga instalada - refere-se a carga instalada na residência 
   installed_power : { type : Number ,  require : true }, // Potência instalada da usina em kW - geralmente é a potência total máxima dos módulos 
