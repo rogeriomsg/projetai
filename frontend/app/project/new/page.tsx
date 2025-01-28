@@ -17,21 +17,26 @@ import {
 } from '@tabler/icons-react';
 import axios from "axios";
 
-
-
 export default function  NewProject() {
   const [activeStep, setActiveStep] = useState(0);  
-  const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [visible, setVisible] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [colorSlider, setcolorSlider] = useState("red");
-  const [porcentagem, setPorcentagem] = useState("");
+  const [colorSlider, setcolorSlider] = useState("green");
+  const [porcentagem, setPorcentagem] = useState(false);
+  const [states, setStates] = useState<any[]>([]); // Lista de estados
+  const [municipalities, setMunicipalities] = useState<any[]>([]); // Lista de municípios
+  const [selectedState, setSelectedState] = useState(''); // Estado selecionado
+  const [selectedMunicipality, setSelectedMunicipality] = useState<string | null>(null); // Município selecionado
+  const [loadingStates, setLoadingStates] = useState<boolean>(false); // Carregamento de estados
+  const [loadingMunicipalities, setLoadingMunicipalities] = useState<boolean>(false); // Carregamento de municípios
 
   const form = useForm({
     mode: 'uncontrolled',
+
     validateInputOnBlur:true,
+
     initialValues: { 
       status : 'Em cadastro',
       project_type : 'Até 10kWp',
@@ -119,8 +124,9 @@ export default function  NewProject() {
       }],
             
     },
+
     validate: (values) => {
-      const errors: Record<string, any> = {};
+      const errors: Record<string, any> = {};      
       switch (activeStep) {
         case 0: //informações do projeto
           // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
@@ -160,23 +166,9 @@ export default function  NewProject() {
           values.consumerUnit.map((item,index)=>(
             errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
           )) 
-          var porcentagem = 0
-          form.getValues().consumerUnit.map((item,_index)=>{      
-            porcentagem += item.percentage
-          })
-          if(porcentagem !== 100){
-            setcolorSlider("red")
-            form.getValues().consumerUnit.map((item,_index)=>{   
-              errors[`consumerUnit.${_index}.percentage`] = "Somatória geral não resulta 100%"
-            })      
-          }
-          else
-          {
-            setcolorSlider("green")
-            form.getValues().consumerUnit.map((item,_index)=>{   
-              errors[`consumerUnit.${_index}.percentage`] = null
-            }) 
-          }   
+          form.values.consumerUnit.forEach((_, index) => {
+            errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
+          });
           break; 
         case 4: //Equipamentos      
           values.inverters.map((itemInv,index)=>(
@@ -249,6 +241,47 @@ export default function  NewProject() {
     }),
   });
 
+ // Buscar estados
+ useEffect(() => {
+  const fetchStates = async () => {
+    setLoadingStates(true);
+    try {
+      const response = await axios.get("http://servicodados.ibge.gov.br/api/v1/localidades/estados");
+      setStates(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar estados", error);
+    } finally {
+      setLoadingStates(false);
+    }
+  };
+
+  fetchStates();
+}, []);
+const handleChange = (e:string) =>{
+  alert(e)
+}
+
+// Buscar municípios quando o estado é selecionado
+useEffect(() => {
+  if (!selectedState) return;
+
+  const fetchMunicipalities = async () => {
+    setLoadingMunicipalities(true);
+    try {
+      const response = await axios.get(
+        `http://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios`
+      );
+      setMunicipalities(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar municípios", error);
+    } finally {
+      setLoadingMunicipalities(false);
+    }
+  };
+
+  fetchMunicipalities();
+}, [selectedState]); // Reexecuta quando o estado selecionado mudar
+
   // form.watch('client.address.zip', ({ previousValue, value, touched, dirty }) => {
   //   alert(JSON.stringify({ previousValue, value, touched, dirty }));
   // });
@@ -295,27 +328,14 @@ export default function  NewProject() {
     // const installed_power = Number(form.getValues().plant.service_voltage) * Number(form.getValues().plant.circuit_breaker) *   
     // form.setFieldValue(`plant.`, installed_power);
   }
-  const percentgem = (field:string,index:number,value:number)=>{
-    var porcentagem = 0
 
-    form.validate();
-    //form.setFieldValue(`consumerUnit.${index}.percentage`,value)  
+  const CheckPorcentagem = ()=>{
+    var _porcentagem = 0
     form.getValues().consumerUnit.map((item,_index)=>{      
-      porcentagem += item.percentage
-    })
-    if(porcentagem !== 100){
-      setcolorSlider("red")
-      // form.getValues().consumerUnit.map((item,_index)=>{      
-      //   form.setFieldError(`consumerUnit.${_index}.percentage`,"Somatória geral não resulta 100%")
-      // })      
-    }
-    else
-    {
-      setcolorSlider("green")
-      // form.getValues().consumerUnit.map((item,_index)=>{      
-      //   form.clearFieldError(`consumerUnit.${_index}.percentage`)
-      // })       
-    }   
+      _porcentagem += item.percentage
+    })    
+    setcolorSlider(_porcentagem!==100?"red":"green")
+    setPorcentagem(_porcentagem!==100?false:true)
   }
 
   const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
@@ -369,25 +389,13 @@ export default function  NewProject() {
               max={100}
               key={form.key(`consumerUnit.${index}.percentage`)}
               {...form.getInputProps(`consumerUnit.${index}.percentage`)} 
-              onChange={(e)=>{
-                percentgem(`consumerUnit.${index}.percentage`,index,Number(e))
+              onBlur={(e)=>{
+                //alert("teste")
+                form.values.consumerUnit[index].percentage = Number(e.target.value) ;
+                CheckPorcentagem()
               }}             
               required
             />
-            {/* <Slider                
-              color={colorSlider}
-              defaultValue={0}                
-              labelAlwaysOn={true}
-              key={form.key(randomId())}
-              {...form.getInputProps(`consumerUnit.${index}.percentage`)} 
-              onChange={(e)=>{
-                
-                //form.setFieldValue(`consumerUnit.${index}.percentage`,Number(e))
-                percentgem(`consumerUnit.${index}.percentage`,index,e)
-              }}
-            /> */}
-                  
-            
           </Grid.Col> 
           <Grid.Col span={8} >
             <TextInput
@@ -399,25 +407,15 @@ export default function  NewProject() {
         </Grid>
       </Table.Td>
       <Table.Td>
-        <Group gap={0} justify="flex-end"> 
-          {
-            index===0 &&(
-              <>
-              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('consumerUnit', index)} disabled >
-                <IconTrash size={28} stroke={1.8}/>
-              </ActionIcon>
-              </>
-            ) 
-          }
-          {
-            index!==0 &&(
-              <>
-              <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('consumerUnit', index)}>
-                <IconTrash size={28} stroke={1.8}/>
-              </ActionIcon>
-              </>
-            ) 
-          } 
+        <Group gap={0} justify="flex-end">           
+          <ActionIcon color="red" variant="subtle" onClick={() => {
+            form.removeListItem('consumerUnit', index)
+            CheckPorcentagem()
+            }} 
+            disabled={index!==0?false:true} 
+          >
+            <IconTrash size={28} stroke={1.8}/>
+          </ActionIcon>             
         </Group>
       </Table.Td>
     </Table.Tr>
@@ -638,7 +636,7 @@ export default function  NewProject() {
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}  >
-      <LoadingOverlay visible={loading} />
+      
       <Stepper 
         active={activeStep} 
         onStepClick={setActiveStep} 
@@ -803,8 +801,11 @@ export default function  NewProject() {
             <Grid.Col span={2}>
               <Autocomplete
                 label="Estado"
+                //onChange={handleChange}
+                onBlur={(e)=>setSelectedState(e.target.value)}
                 placeholder="Digite o estado"
-                data={['Distrito Federal', 'Goiás', 'São Paulo', 'Rio Grande do Sul']}
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.nome)}
+                value={selectedState}
                 key={form.key(`client.address.state`)}
                 {...form.getInputProps(`client.address.state`)} 
                 required
@@ -814,7 +815,9 @@ export default function  NewProject() {
               <Autocomplete
                 label="Município"
                 placeholder="Digite o município"
-                data={['Brasília','Uruguaiana','Taubaté','Porto Alegre']}
+                value={selectedMunicipality}
+                //onChange={setSelectedMunicipality}
+                disabled={!selectedState} // Desabilita o autocomplete de município até o estado ser selecionado
                 key={form.key(`client.address.city`)}
                 {...form.getInputProps(`client.address.city`)} 
                 required
@@ -1020,7 +1023,10 @@ export default function  NewProject() {
               <Autocomplete
                 label="Estado"
                 placeholder="Digite o estado"
-                data={['Distrito Federal', 'Goiás', 'São Paulo', 'Rio Grande do Sul']}
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.nome)}
+                value={selectedState}
+                //onChange={setSelectedState}
+                //onBlur={(e)=>setSelectedState(e.target.value)}
                 key={form.key(`plant.address.state`)}
                 {...form.getInputProps(`plant.address.state`)} 
                 required
@@ -1090,9 +1096,9 @@ export default function  NewProject() {
             </Table>
           </Table.ScrollContainer>         
 
-          <Group justify="center" mt="md">            
+          <Group justify="center" mt="md">                    
             <Button
-              onClick={() =>
+              onClick={() =>{
                 form.insertListItem('consumerUnit', { 
                   key: randomId(),
                   consumer_unit_code: 0 , 
@@ -1101,10 +1107,12 @@ export default function  NewProject() {
                   percentage: 50,
                   is_plant: false
                 })
-              }
+                CheckPorcentagem()
+
+              }}
             >
               Adicionar unidade consumidora
-            </Button>
+            </Button>            
           </Group>
         </Stepper.Step>
         <Stepper.Step 
