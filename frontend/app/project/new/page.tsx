@@ -27,10 +27,19 @@ export default function  NewProject() {
   const [porcentagem, setPorcentagem] = useState(false);
   const [states, setStates] = useState<any[]>([]); // Lista de estados
   const [municipalities, setMunicipalities] = useState<any[]>([]); // Lista de municípios
-  const [selectedState, setSelectedState] = useState(''); // Estado selecionado
-  const [selectedMunicipality, setSelectedMunicipality] = useState<string | null>(null); // Município selecionado
+  const [selectedState, setSelectedState] = useState<string | null>(null); // Estado selecionado  
   const [loadingStates, setLoadingStates] = useState<boolean>(false); // Carregamento de estados
   const [loadingMunicipalities, setLoadingMunicipalities] = useState<boolean>(false); // Carregamento de municípios
+  const [zipCodes, setZipCodes] = useState({
+    logradouro: '',
+    complemento: '',
+    bairro: '',
+    localidade: '',
+    uf: '',
+  });
+
+  const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
+  const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
 
   const form = useForm({
     mode: 'uncontrolled',
@@ -62,9 +71,9 @@ export default function  NewProject() {
           street: "",
           number: 0,
           district:"",
-          city: "",
           state: "",
-          zip: 0,
+          city: "",
+          zip: "",
         },
       },
       plant: { 
@@ -72,6 +81,7 @@ export default function  NewProject() {
         name: '', 
         description: '',
         class:"",
+        subgroup:"",
         connection_type:"",
         generation_type:"",
         type_branch:"",
@@ -79,13 +89,13 @@ export default function  NewProject() {
         circuit_breaker: 0,
         installed_load: 0,
 			  installed_power: 0,
-			  service_voltage: 0.22,        
+			  service_voltage: 0,        
         address: { 
-          street: '',
+          street: "",
           number: 0,
-          district:'',
-          city: '',
-          state: '',
+          district:"",
+          state: "",
+          city: "",
           zip: 0
         },
         geolocation: {
@@ -129,44 +139,43 @@ export default function  NewProject() {
       const errors: Record<string, any> = {};      
       switch (activeStep) {
         case 0: //informações do projeto
-          // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
-          // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
-          // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
+          errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
+          errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
+          errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
+          errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
-        // class:"",
-        // connection_type:"",
-        // generation_type:"",
-        // type_branch:"",
-        // branch_section: 0, 
-          // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
+          errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
           errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
+          errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
           errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
           errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
           errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
           errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
-          // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
-          // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
-          // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
-          // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
-          // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) < 1?"A latitude é obrigatória":null
-          // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) < 1?"A longitude é obrigatória":null          
+          errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
+          errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
+          errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
+          errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
+          errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
+          errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
+          errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) < 1?"A latitude é obrigatória":null
+          errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) < 1?"A longitude é obrigatória":null          
           break;
         case 3: //Unidades consumidoras 
           values.consumerUnit.map((item,index)=>(
             errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
           )) 
-          form.values.consumerUnit.forEach((_, index) => {
+          values.consumerUnit.forEach((_, index) => {
             errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
           });
           break; 
@@ -239,38 +248,37 @@ export default function  NewProject() {
       path_procuration: values.path_procuration, // Caminho para o arquivo de procuração (opcional)
       status : 'Em Cadastro', 
     }),
+
+    onValuesChange: (values) => {
+      //alert(JSON.stringify(values))
+      CheckPorcentagemConsumerUnit()
+    },   
+
   });
 
- // Buscar estados
- useEffect(() => {
-  const fetchStates = async () => {
-    setLoadingStates(true);
-    try {
-      const response = await axios.get("http://servicodados.ibge.gov.br/api/v1/localidades/estados");
-      setStates(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar estados", error);
-    } finally {
-      setLoadingStates(false);
-    }
-  };
+  // Buscar estados
+  useEffect(() => {
+    const fetchStates = async () => {
+      setLoadingStates(true);
+      try {
+        const response = await axios.get("http://servicodados.ibge.gov.br/api/v1/localidades/estados");
+        setStates(response.data);
+      } catch (error) {
+        console.error("Erro ao buscar estados", error);
+      } finally {
+        setLoadingStates(false);
+      }
+    };
 
-  fetchStates();
-}, []);
-const handleChange = (e:string) =>{
-  alert(e)
-}
+    fetchStates();
+  }, []);
 
-// Buscar municípios quando o estado é selecionado
-useEffect(() => {
-  if (!selectedState) return;
-
-  const fetchMunicipalities = async () => {
-    setLoadingMunicipalities(true);
+  const fetchMunicipalities = async (selectedState:string) => {
+    setLoadingMunicipalities(true);       
     try {
       const response = await axios.get(
         `http://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios`
-      );
+      );      
       setMunicipalities(response.data);
     } catch (error) {
       console.error("Erro ao buscar municípios", error);
@@ -279,28 +287,81 @@ useEffect(() => {
     }
   };
 
-  fetchMunicipalities();
-}, [selectedState]); // Reexecuta quando o estado selecionado mudar
+  const fetchZipCode = async (zipcode:string) => {
+    if(zipcode.length < 8) return
+    alert(zipcode)
+    try {
+      const response = await axios.get(
+        `https://viacep.com.br/ws/${zipcode}/json/`
+      );  
+      const data = response.data;
+      // if (data.erro) {
+      //   alert('CEP não encontrado.');
+      //   return;
+      // }
 
-  // form.watch('client.address.zip', ({ previousValue, value, touched, dirty }) => {
-  //   alert(JSON.stringify({ previousValue, value, touched, dirty }));
-  // });
+      // Atualiza a variável de estado com os dados retornados pela API
+      setZipCodes({
+        logradouro: data.logradouro || '',
+        complemento: data.complemento || '',
+        bairro: data.bairro || '',
+        localidade: data.localidade || '',
+        uf: data.uf || '',
+      });
+      
+    } catch (error) {
+      console.error('Erro ao buscar o CEP:', error);
+        //alert('Não foi possível buscar o CEP. Tente novamente.');
+    } finally {
+      
+    }
+  };
+  
+  // Buscar municípios do  cliente quando o estado é selecionado
+  form.watch('client.address.state', ({ previousValue, value, touched, dirty }) => {
+    setSelectedState(value)
+    form.setFieldValue(`client.address.city`, "");   
+    fetchMunicipalities(value);    
+  });
+
+  // Buscar municípios do usina quando o estado é selecionado
+  form.watch('plant.address.state', ({ previousValue, value, touched, dirty }) => {
+    setSelectedState(value)
+    form.setFieldValue(`plant.address.city`, "");    
+    fetchMunicipalities(value);    
+  });
+
+  // Buscar municípios do  cliente quando o estado é selecionado
+  form.watch('client.address.zip', ({ previousValue, value, touched, dirty }) => {       
+    fetchZipCode(value.toString());     
+    SetFieldsAddresFromZip();
+  });
+
+  const SetFieldsAddresFromZip = ()=>{
+    form.setFieldValue('client.address.street', zipCodes.logradouro || '');
+    form.setFieldValue('client.address.district', zipCodes.bairro || '');
+    form.setFieldValue('client.address.state', zipCodes.uf || '');   
+    form.setFieldValue('client.address.city', zipCodes.localidade || '');
+  }
 
   const calculateArea = (index:number) => {
     // Recalcula total_area após a alteração
     const total_area = Number(form.getValues().modules[index].height) * Number(form.getValues().modules[index].width) ;
     form.setFieldValue(`modules.${index}.total_area`, total_area);
   };
+
   const calculatesTotalPowerModules = (index:number) => {
     // Recalcula a potência total após a alteração
     const total_power = form.getValues().modules[index].power * form.getValues().modules[index].quantity ;
     form.setFieldValue(`modules.${index}.total_power`, total_power);
   };
+
   const calculatesTotalPowerInverters = (index:number) => {
     // Recalcula a potência total após a alteração
     const total_power = Number(form.getValues().inverters[index].power) * Number(form.getValues().inverters[index].quantity) ;
     form.setFieldValue(`inverters.${index}.total_power`, total_power);
   };
+
   const CopyAddressFromClientToPlant = (_checked:boolean) => {
     if(_checked){
       form.setFieldValue(`plant.address.street`, form.getValues().client.address.street);
@@ -308,6 +369,7 @@ useEffect(() => {
       form.setFieldValue(`plant.address.district`, form.getValues().client.address.district);
       form.setFieldValue(`plant.address.state`, form.getValues().client.address.state);
       form.setFieldValue(`plant.address.city`, form.getValues().client.address.city);
+      form.setFieldValue(`plant.address.zip`, Number(form.getValues().client.address.zip));
     }
     else{
       form.setFieldValue(`plant.address.street`, "");
@@ -329,7 +391,7 @@ useEffect(() => {
     // form.setFieldValue(`plant.`, installed_power);
   }
 
-  const CheckPorcentagem = ()=>{
+  const CheckPorcentagemConsumerUnit = ()=>{
     var _porcentagem = 0
     form.getValues().consumerUnit.map((item,_index)=>{      
       _porcentagem += item.percentage
@@ -337,10 +399,7 @@ useEffect(() => {
     setcolorSlider(_porcentagem!==100?"red":"green")
     setPorcentagem(_porcentagem!==100?false:true)
   }
-
-  const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
-  const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
-
+  
   const handleSubmit = async (_values: typeof form.values ) => {   
     
     if (!form.validate().hasErrors) {
@@ -377,7 +436,8 @@ useEffect(() => {
               hideControls={true}
               min={1}
               key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
-              {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)}              
+              {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)}   
+              readOnly={index===0?true:false}           
               required
             />
           </Grid.Col>
@@ -388,12 +448,7 @@ useEffect(() => {
               min={0}
               max={100}
               key={form.key(`consumerUnit.${index}.percentage`)}
-              {...form.getInputProps(`consumerUnit.${index}.percentage`)} 
-              onBlur={(e)=>{
-                //alert("teste")
-                form.values.consumerUnit[index].percentage = Number(e.target.value) ;
-                CheckPorcentagem()
-              }}             
+              {...form.getInputProps(`consumerUnit.${index}.percentage`)}
               required
             />
           </Grid.Col> 
@@ -410,7 +465,6 @@ useEffect(() => {
         <Group gap={0} justify="flex-end">           
           <ActionIcon color="red" variant="subtle" onClick={() => {
             form.removeListItem('consumerUnit', index)
-            CheckPorcentagem()
             }} 
             disabled={index!==0?false:true} 
           >
@@ -641,6 +695,7 @@ useEffect(() => {
         active={activeStep} 
         onStepClick={setActiveStep} 
         completedIcon={<IconCircleCheck size={20} />}
+        allowNextStepsSelect={false}
         mx="auto" mt="xl" ml="xl" mr="xl"      
       >
         <Stepper.Step 
@@ -663,7 +718,8 @@ useEffect(() => {
                 label="Nome do projeto"
                 placeholder="Digite um nome para o projeto"
                 key={form.key("name")}
-                {...form.getInputProps("name")}  
+                {...form.getInputProps("name")} 
+                required 
               /> 
             </Grid.Col>
             <Grid.Col span={3}>
@@ -679,19 +735,31 @@ useEffect(() => {
             <Grid.Col span={12}>
               <Textarea
                 label="Descrição"
-                placeholder="Digite uma descrição para o projeto"
+                placeholder="Digite uma descrição para o projeto (Opcional)"
                 key={form.key("description")}
                 {...form.getInputProps("description")}  
               /> 
             </Grid.Col>            
-          </Grid>          
+          </Grid> 
+          <Group justify="center" mt="xl">   
+            <ActionIcon 
+              color="green" 
+              variant="subtle" 
+              size="xl" 
+              onClick={() => {
+                form.validate()
+              }} 
+            >
+              <IconCheck  size={28} stroke={1.5} />
+            </ActionIcon> 
+          </Group>         
         </Stepper.Step>
         <Stepper.Step 
           label="Passo 1" 
           description="Informações do cliente"
           icon={<IconUserCheck size={18} />}
         >  
-          <Grid mt="sm">
+          <Grid mt="xl">
             <Grid.Col span={2}>              
                 <NumberInput
                   label="Código do cliente"
@@ -762,11 +830,12 @@ useEffect(() => {
               />              
             </Grid.Col>
             <Grid.Col span={2}> 
-              <InputBase
+              <NumberInput
                 label="Código postal"
-                component={IMaskInput}
-                placeholder='Digite o CEP'              
-                mask="00.000-000"
+                allowDecimal={false}
+                hideControls={true}
+                maxLength={8}
+                placeholder='Digite o CEP' 
                 key={form.key(`client.address.zip`)}
                 {...form.getInputProps(`client.address.zip`)}
                 required
@@ -801,37 +870,45 @@ useEffect(() => {
             <Grid.Col span={2}>
               <Autocomplete
                 label="Estado"
-                //onChange={handleChange}
-                onBlur={(e)=>setSelectedState(e.target.value)}
-                placeholder="Digite o estado"
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.nome)}
-                value={selectedState}
+                placeholder={loadingStates ?"Carregando...":"Digite o estado"}  
                 key={form.key(`client.address.state`)}
                 {...form.getInputProps(`client.address.state`)} 
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
                 required
               />
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={2}>
               <Autocomplete
                 label="Município"
-                placeholder="Digite o município"
-                value={selectedMunicipality}
-                //onChange={setSelectedMunicipality}
-                disabled={!selectedState} // Desabilita o autocomplete de município até o estado ser selecionado
+                placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                 key={form.key(`client.address.city`)}
                 {...form.getInputProps(`client.address.city`)} 
+                data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
+                disabled={!selectedState} // Desabilita o autocomplete de município até o estado ser selecionado
                 required
               />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
-          </Grid>             
+          </Grid> 
+          <Group justify="center" mt="xl">   
+            <ActionIcon 
+              color="green" 
+              variant="subtle" 
+              size="xl" 
+              onClick={() => {
+                form.validate()
+              }} 
+            >
+              <IconCheck  size={28} stroke={1.5} />
+            </ActionIcon>
+          </Group>            
         </Stepper.Step>
         <Stepper.Step 
           label="Passo 2" 
           description="Informações da usina"
           icon={<IconHomeBolt size={18} />}
         >                 
-          <Grid mt="sm" ml="md" mr="md">                
+          <Grid mt="xl" ml="md" mr="md">                
             <Grid.Col span={2}>  
               <TextInput
                 label="Código da UC"
@@ -839,6 +916,9 @@ useEffect(() => {
                 min={1}
                 key={form.key(`plant.consumer_unit_code`)}
                 {...form.getInputProps(`plant.consumer_unit_code`)}
+                onBlur={(e)=>{
+                  form.setFieldValue("consumerUnit.0.consumer_unit_code",e.target.value)
+                }}
                 required
               />
             </Grid.Col>                
@@ -975,19 +1055,13 @@ useEffect(() => {
                 }
               />
             </Grid.Col>  
-            <Grid.Col span={2}>             
-              {/* <TextInput
-                label="CEP"
-                placeholder='Digite o CEP'
-                key={form.key(`plant.address.zip`)}
-                {...form.getInputProps(`plant.address.zip`)}
-              />    */}
-
-              <InputBase
+            <Grid.Col span={2}>  
+              <NumberInput
                 label="Código postal"
-                component={IMaskInput}
-                placeholder='Digite o CEP'              
-                mask="00000000"
+                allowDecimal={false}
+                hideControls={true}
+                maxLength={8} // Limita o número de caracteres no CEP
+                placeholder='Digite o CEP' 
                 key={form.key(`plant.address.zip`)}
                 {...form.getInputProps(`plant.address.zip`)}
                 required
@@ -1022,23 +1096,21 @@ useEffect(() => {
             <Grid.Col span={2}>
               <Autocomplete
                 label="Estado"
-                placeholder="Digite o estado"
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.nome)}
-                value={selectedState}
-                //onChange={setSelectedState}
-                //onBlur={(e)=>setSelectedState(e.target.value)}
+                placeholder="Digite o estado" 
                 key={form.key(`plant.address.state`)}
                 {...form.getInputProps(`plant.address.state`)} 
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
                 required
               />
             </Grid.Col>
             <Grid.Col span={3}>
               <Autocomplete
                 label="Município"
-                placeholder="Digite o município"
-                data={['Brasília','Uruguaiana','Taubaté','Porto Alegre']}
+                placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
+                data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
                 key={form.key(`plant.address.city`)}
                 {...form.getInputProps(`plant.address.city`)} 
+                disabled={!selectedState} // Desabilita o autocomplete de município até o estado ser selecionado                
                 required
               />
             </Grid.Col>
@@ -1067,38 +1139,62 @@ useEffect(() => {
                 {...form.getInputProps(`plant.geolocation.lng`)} 
                 required           
               />
-            </Grid.Col> 
-             
-               
+            </Grid.Col>
           </Grid> 
+          <Group justify="center" mt="xl">   
+            <ActionIcon 
+              color="green" 
+              variant="subtle" 
+              size="xl" 
+              onClick={() => {
+                form.validate()
+              }} 
+            >
+              <IconCheck  size={28} stroke={1.5} />
+            </ActionIcon> 
+          </Group>  
         </Stepper.Step>
         <Stepper.Step 
           label="Passo 3" 
           description="Unidades consumidoras"
           icon={<IconExposure size={18} />}
         >          
-          <Table.ScrollContainer minWidth={900} type="native">
+          <Table.ScrollContainer minWidth={900} type="native" mt="xl">
             <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-              <Table.Th>
+              <Table.Tr>
                 <Grid ml="md" mr="md" >          
                   <Grid.Col span={2}>  
-                  <Text fw={500}> Código da UC </Text>
+                    <Text fw={500}> Código da UC </Text>
                   </Grid.Col>
                   <Grid.Col span={3}>  
                     <Text fw={500} color={colorSlider}> Porcentagem {porcentagem} </Text>
                   </Grid.Col>
                   <Grid.Col span={7}>
-                  <Text fw={500}> Nome da Unidade consumidora</Text>
+                    <Text fw={500}> Nome da Unidade consumidora</Text>
                   </Grid.Col>                                          
                 </Grid>
-              </Table.Th >
+              </Table.Tr >
               <Table.Tbody>{consumerUnits}</Table.Tbody>
             </Table>
           </Table.ScrollContainer>         
 
-          <Group justify="center" mt="md">                    
-            <Button
-              onClick={() =>{
+          <Group justify="center" mt="md"> 
+            <ActionIcon 
+              color="green" 
+              variant="subtle" 
+              size="xl" 
+              onClick={() => {
+                form.validate()
+              }} 
+            >
+              <IconCheck  size={28} stroke={1.5} />
+            </ActionIcon>
+
+            <ActionIcon 
+              color="green" 
+              variant="subtle" 
+              size="xl" 
+              onClick={() => {
                 form.insertListItem('consumerUnit', { 
                   key: randomId(),
                   consumer_unit_code: 0 , 
@@ -1106,13 +1202,11 @@ useEffect(() => {
                   description: '',         
                   percentage: 50,
                   is_plant: false
-                })
-                CheckPorcentagem()
-
-              }}
+                })              
+              }} 
             >
-              Adicionar unidade consumidora
-            </Button>            
+              <IconPlus  size={28} stroke={1.5} />
+            </ActionIcon>
           </Group>
         </Stepper.Step>
         <Stepper.Step 
@@ -1120,10 +1214,10 @@ useEffect(() => {
           description="Equipamentos"
           icon={<IconFileUpload size={18} />}
         >
-          <Tabs color="orange" variant="pills" defaultValue="inverters">
+          <Tabs color="orange" variant="pills" defaultValue="inverters" mt="xl">
             <Tabs.List grow>
-              <Tabs.Tab value="inverters" icon={<IconHomeBolt size={20} />}>Inversor(es)</Tabs.Tab>
-              <Tabs.Tab value="modules" icon={<IconUserCheck size={20} />}>Módulo(s)</Tabs.Tab>              
+              <Tabs.Tab value="inverters" icon={<IconHomeBolt size={20} />}><Text fw={500}> Inversor(es) </Text></Tabs.Tab>
+              <Tabs.Tab value="modules" icon={<IconUserCheck size={20} />}><Text fw={500}> Módulo(s) </Text></Tabs.Tab>              
             </Tabs.List>
 
             <Tabs.Panel value="inverters" pt="xl">
@@ -1133,19 +1227,19 @@ useEffect(() => {
                   <Table.Tr>
                     <Grid ml="sm" mr="md" >          
                       <Grid.Col span={4}>  
-                        Modelo
+                        <Text fw={500}> Modelo </Text>
                       </Grid.Col>
                       <Grid.Col span={4}>  
-                        Fabricante
+                        <Text fw={500}> Fabricante </Text>
                       </Grid.Col>
                       <Grid.Col span={2}>
-                        Potência (kW)
+                        <Text fw={500}> Potência (kW) </Text>
                       </Grid.Col> 
                       <Grid.Col span={1}>
-                        Quantidade
+                        <Text fw={500}> Quantidade </Text>
                       </Grid.Col> 
                       <Grid.Col span={1}>
-                        Total (kW)
+                        <Text fw={500}> Total (kW) </Text>
                       </Grid.Col>                           
                     </Grid>
                   </Table.Tr >
@@ -1153,9 +1247,23 @@ useEffect(() => {
                 </Table>
               </Table.ScrollContainer>         
 
-              <Group justify="center" mt="md" mb="xl">          
-                <Button
-                  onClick={() =>
+              <Group justify="center" mt="md" mb="xl">
+                <ActionIcon 
+                  color="green" 
+                  variant="subtle" 
+                  size="xl" 
+                  onClick={() => {
+                    form.validate()
+                  }} 
+                >
+                  <IconCheck  size={28} stroke={1.5} />
+                </ActionIcon>
+
+                <ActionIcon 
+                  color="green" 
+                  variant="subtle" 
+                  size="xl" 
+                  onClick={() => {
                     form.insertListItem('inverters', { 
                       key: randomId(),
                       model: "",
@@ -1163,11 +1271,11 @@ useEffect(() => {
                       power: 0,
                       quantity: 1,
                       total_power : 0,
-                    })
-                  }
+                    })              
+                  }} 
                 >
-                  Adicionar inversor
-                </Button>
+                  <IconPlus  size={28} stroke={1.5} />
+                </ActionIcon>
               </Group>
             </Tabs.Panel>
 
@@ -1178,28 +1286,28 @@ useEffect(() => {
                   <Table.Tr>
                     <Grid ml="sm" mr="md" >          
                       <Grid.Col span={3}>  
-                        Modelo
+                      <Text fw={500}> Modelo </Text>
                       </Grid.Col>
                       <Grid.Col span={3}>  
-                        Fabricante
+                      <Text fw={500}> Fabricante </Text>
                       </Grid.Col>
                       <Grid.Col span={1}>  
-                        Largura (m)
+                      <Text fw={500}> Largura (m) </Text>
                       </Grid.Col>
                       <Grid.Col span={1}>  
-                        Altura (m)
+                      <Text fw={500}> Altura (m) </Text>
                       </Grid.Col>
                       <Grid.Col span={1}>  
-                        Área total (m)
+                      <Text fw={500}> Área total (m) </Text>
                       </Grid.Col>
                       <Grid.Col span={1}>
-                        Potência (kW)
+                      <Text fw={500}> Potência (kW) </Text>
                       </Grid.Col> 
                       <Grid.Col span={1}>
-                        Quantidade
+                      <Text fw={500}> Quantidade </Text>
                       </Grid.Col> 
                       <Grid.Col span={1}>
-                        Total (kW)
+                      <Text fw={500}> Total (kW) </Text>
                       </Grid.Col>                           
                     </Grid>
                   </Table.Tr >
@@ -1208,7 +1316,7 @@ useEffect(() => {
               </Table.ScrollContainer>         
 
               <Group justify="center" mt="md">            
-                <Button
+                {/* <Button
                   onClick={() =>
                     form.insertListItem('modules', { 
                       key: randomId(),
@@ -1225,7 +1333,39 @@ useEffect(() => {
                   }
                 >
                   Adicionar módulo fotovoltaico
-                </Button>
+                </Button> */}
+                <ActionIcon 
+                  color="green" 
+                  variant="subtle" 
+                  size="xl" 
+                  onClick={() => {
+                    form.validate()
+                  }} 
+                >
+                  <IconCheck  size={28} stroke={1.5} />
+                </ActionIcon>
+
+                <ActionIcon 
+                  color="green" 
+                  variant="subtle" 
+                  size="xl" 
+                  onClick={() => {
+                    form.insertListItem('modules', { 
+                      key: randomId(),
+                      model: "",
+                      manufacturer: "",
+                      description: "",
+                      width: 0,
+                      height: 0,
+                      total_area:0,
+                      power: 0,
+                      quantity: 0,
+                      total_power : 0,
+                    })             
+                  }} 
+                >
+                  <IconPlus  size={28} stroke={1.5} />
+                </ActionIcon>                
               </Group>
             </Tabs.Panel>
 
@@ -1258,7 +1398,7 @@ useEffect(() => {
           </>          
         )}        
         {activeStep < 6 && (
-          <Button onClick={nextStep} >
+          <Button onClick={nextStep} color='green' >
             {activeStep === 5 ? "Conferir tudo" : "Próximo passo"}
           </Button>
         )} 
