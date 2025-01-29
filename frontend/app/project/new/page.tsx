@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
+import { Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -17,6 +17,14 @@ import {
 } from '@tabler/icons-react';
 import axios from "axios";
 
+interface IZipCode {
+    logradouro: '',
+    complemento: '',
+    bairro: '',
+    localidade: '',
+    uf: '',
+  }
+
 export default function  NewProject() {
   const [activeStep, setActiveStep] = useState(0);  
   const [apiResponse, setApiResponse] = useState<string | null>(null);
@@ -30,13 +38,16 @@ export default function  NewProject() {
   const [selectedState, setSelectedState] = useState<string | null>(null); // Estado selecionado  
   const [loadingStates, setLoadingStates] = useState<boolean>(false); // Carregamento de estados
   const [loadingMunicipalities, setLoadingMunicipalities] = useState<boolean>(false); // Carregamento de municípios
-  const [zipCodes, setZipCodes] = useState({
-    logradouro: '',
-    complemento: '',
-    bairro: '',
-    localidade: '',
-    uf: '',
-  });
+  const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
+  
+  const [street, setStreet] = useState<string | null>(null);
+  const [complement, setComplement] = useState<string | null>(null);
+  const [district, setDistrict] = useState<string | null>(null);
+  const [state, setState] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+
+
+  const [teste, setTeste] = useState(""); 
 
   const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
   const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
@@ -139,60 +150,60 @@ export default function  NewProject() {
       const errors: Record<string, any> = {};      
       switch (activeStep) {
         case 0: //informações do projeto
-          errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
-          errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
-          errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
-          errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
+          // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
+          // errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
+          // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
+          // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+          // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
-          errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
-          errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
-          errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
-          errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
-          errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
-          errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
-          errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
-          errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
-          errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
-          errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
-          errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
-          errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
-          errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) < 1?"A latitude é obrigatória":null
-          errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) < 1?"A longitude é obrigatória":null          
+          // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
+          // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
+          // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
+          // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
+          // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
+          // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
+          // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
+          // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
+          // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
+          // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
+          // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
+          // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
+          // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) < 1?"A latitude é obrigatória":null
+          // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) < 1?"A longitude é obrigatória":null          
           break;
         case 3: //Unidades consumidoras 
-          values.consumerUnit.map((item,index)=>(
-            errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
-          )) 
-          values.consumerUnit.forEach((_, index) => {
-            errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
-          });
+          // values.consumerUnit.map((item,index)=>(
+          //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
+          // )) 
+          // values.consumerUnit.forEach((_, index) => {
+          //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
+          // });
           break; 
         case 4: //Equipamentos      
-          values.inverters.map((itemInv,index)=>(
-            errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
-            errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
-            errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
-          ));
+          // values.inverters.map((itemInv,index)=>(
+          //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
+          //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
+          //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
+          // ));
           
-          values.modules.map((item,index)=>(  
-            errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
-            errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
-            errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
-            errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
-            errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
-          ));
+          // values.modules.map((item,index)=>(  
+          //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
+          //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
+          //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
+          //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
+          //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
+          // ));
         break;
       }
       //alert(JSON.stringify(errors) ) 
@@ -274,6 +285,7 @@ export default function  NewProject() {
   }, []);
 
   const fetchMunicipalities = async (selectedState:string) => {
+    alert("fetchMunicipalities : "+selectedState)
     setLoadingMunicipalities(true);       
     try {
       const response = await axios.get(
@@ -288,39 +300,36 @@ export default function  NewProject() {
   };
 
   const fetchZipCode = async (zipcode:string) => {
-    if(zipcode.length < 8) return
-    alert(zipcode)
+
+    if(!(zipcode.length === 8)) return false;    
+    setLoadingZipCode(true)
     try {
       const response = await axios.get(
         `https://viacep.com.br/ws/${zipcode}/json/`
       );  
-      const data = response.data;
-      // if (data.erro) {
-      //   alert('CEP não encontrado.');
-      //   return;
-      // }
-
-      // Atualiza a variável de estado com os dados retornados pela API
-      setZipCodes({
-        logradouro: data.logradouro || '',
-        complemento: data.complemento || '',
-        bairro: data.bairro || '',
-        localidade: data.localidade || '',
-        uf: data.uf || '',
-      });
-      
+      const data = response.data;  
+      setStreet(data.logradouro || '')
+      setComplement(data.complemento|| '')
+      setDistrict(data.bairro|| '')
+      setState(data.uf|| '')
+      setCity(data.localidade|| '')      
+      return true
     } catch (error) {
       console.error('Erro ao buscar o CEP:', error);
         //alert('Não foi possível buscar o CEP. Tente novamente.');
-    } finally {
+        //setLoadingZipCode(true)
+        return false;
+    } finally {   
+         
       
     }
   };
   
   // Buscar municípios do  cliente quando o estado é selecionado
   form.watch('client.address.state', ({ previousValue, value, touched, dirty }) => {
-    setSelectedState(value)
-    form.setFieldValue(`client.address.city`, "");   
+    //alert("watch('client.address.state') : "+value)
+    setState(value)
+    setCity("") 
     fetchMunicipalities(value);    
   });
 
@@ -332,16 +341,21 @@ export default function  NewProject() {
   });
 
   // Buscar municípios do  cliente quando o estado é selecionado
-  form.watch('client.address.zip', ({ previousValue, value, touched, dirty }) => {       
-    fetchZipCode(value.toString());     
-    SetFieldsAddresFromZip();
+  form.watch('client.address.zip', async ({ previousValue, value, touched, dirty }) => {    
+
+    const ret = await fetchZipCode(value.toString())  ; 
+    if(ret===true)
+      SetFieldsAddresFromZip();
+    //setTeste("RR")
   });
 
   const SetFieldsAddresFromZip = ()=>{
-    form.setFieldValue('client.address.street', zipCodes.logradouro || '');
-    form.setFieldValue('client.address.district', zipCodes.bairro || '');
-    form.setFieldValue('client.address.state', zipCodes.uf || '');   
-    form.setFieldValue('client.address.city', zipCodes.localidade || '');
+    //alert(selectedState)
+    // form.setFieldValue('client.address.street', zipCodes.logradouro || '');
+    // form.setFieldValue('client.address.district', zipCodes.bairro || '');
+    // form.setFieldValue(`client.address.state`, zipCodes.uf ||'' )  ;
+    // form.values.client.address.state = zipCodes.uf ||'' ;
+    // form.setFieldValue('client.address.city', zipCodes.localidade || '');   
   }
 
   const calculateArea = (index:number) => {
@@ -830,12 +844,12 @@ export default function  NewProject() {
               />              
             </Grid.Col>
             <Grid.Col span={2}> 
-              <NumberInput
+              <NumberInput               
                 label="Código postal"
+                placeholder='Digite o CEP' 
                 allowDecimal={false}
                 hideControls={true}
                 maxLength={8}
-                placeholder='Digite o CEP' 
                 key={form.key(`client.address.zip`)}
                 {...form.getInputProps(`client.address.zip`)}
                 required
@@ -844,8 +858,14 @@ export default function  NewProject() {
             <Grid.Col span={8}>             
               <TextInput
                 label="Logradouro"
+                value={street}
                 key={form.key(`client.address.street`)}
                 {...form.getInputProps(`client.address.street`)}
+                onChange={(e)=>{
+                  //alert("mudo logra")
+                  form.setFieldValue(`client.address.street`,e.target.value)
+                  setStreet(e.target.value)
+                }}
                 required
               />    
             </Grid.Col>
@@ -863,28 +883,54 @@ export default function  NewProject() {
               <TextInput
                 label="Bairro"
                 placeholder="Digite o bairro"
+                value={district}
                 key={form.key(`client.address.district`)}
                 {...form.getInputProps(`client.address.district`)} 
+                onChange={(e)=>{
+                  //form.setFieldValue(`client.address.street`,e.target.value)
+                  setDistrict(e.target.value)
+                }}
               />
             </Grid.Col>
             <Grid.Col span={2}>
-              <Autocomplete
+              <Select
                 label="Estado"
                 placeholder={loadingStates ?"Carregando...":"Digite o estado"}  
+                searchable
+                value={state}
                 key={form.key(`client.address.state`)}
                 {...form.getInputProps(`client.address.state`)} 
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
-                required
+                onChange={(e)=>{                  
+                  form.setFieldValue(`client.address.state`, e||'' )
+                  setState(e)
+                }}
+                data={loadingStates ? ["Carregando..."] : states.map((state) => ({value:state.sigla , label:`${state.sigla} - ${state.nome}`}))} 
               />
+              {/* <Autocomplete
+                label="Estado"
+                placeholder={loadingStates ?"Carregando...":"Digite o estado"}  
+                value={zipCodes.uf}
+                //key={form.key(`client.address.state`)}
+                {...form.getInputProps(`client.address.state`)} 
+                onChange={(e)=>form.values.client.address.state = e}             
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}  
+                //data={['Estado A','Estado B','Estado C']}   
+                required
+              /> */}
             </Grid.Col>
             <Grid.Col span={2}>
               <Autocomplete
                 label="Município"
+                value={city}
                 placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                 key={form.key(`client.address.city`)}
                 {...form.getInputProps(`client.address.city`)} 
                 data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
-                disabled={!selectedState} // Desabilita o autocomplete de município até o estado ser selecionado
+                disabled={!state} // Desabilita o autocomplete de município até o estado ser selecionado
+                onChange={(e)=>{                  
+                  form.setFieldValue(`client.address.city`, e||'' )
+                  setCity(e)
+                }}
                 required
               />
             </Grid.Col>
@@ -1315,25 +1361,7 @@ export default function  NewProject() {
                 </Table>
               </Table.ScrollContainer>         
 
-              <Group justify="center" mt="md">            
-                {/* <Button
-                  onClick={() =>
-                    form.insertListItem('modules', { 
-                      key: randomId(),
-                      model: "",
-                      manufacturer: "",
-                      description: "",
-                      width: 0,
-                      height: 0,
-                      total_area:0,
-                      power: 0,
-                      quantity: 0,
-                      total_power : 0,
-                    })
-                  }
-                >
-                  Adicionar módulo fotovoltaico
-                </Button> */}
+              <Group justify="center" mt="md"> 
                 <ActionIcon 
                   color="green" 
                   variant="subtle" 
@@ -1344,7 +1372,6 @@ export default function  NewProject() {
                 >
                   <IconCheck  size={28} stroke={1.5} />
                 </ActionIcon>
-
                 <ActionIcon 
                   color="green" 
                   variant="subtle" 
@@ -1368,9 +1395,7 @@ export default function  NewProject() {
                 </ActionIcon>                
               </Group>
             </Tabs.Panel>
-
           </Tabs>
-
         </Stepper.Step>
         <Stepper.Step 
           label="Passo 5" 
