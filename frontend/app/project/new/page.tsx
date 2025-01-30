@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
+import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -26,28 +26,17 @@ interface IZipCode {
   }
 
 export default function  NewProject() {
-  const [activeStep, setActiveStep] = useState(0);  
-  const [apiResponse, setApiResponse] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(0); 
   const [checked, setChecked] = useState(false);
   const [colorSlider, setcolorSlider] = useState("green");
   const [porcentagem, setPorcentagem] = useState(false);
   const [states, setStates] = useState<any[]>([]); // Lista de estados
-  const [municipalities, setMunicipalities] = useState<any[]>([]); // Lista de municípios
-  const [selectedState, setSelectedState] = useState<string | null>(null); // Estado selecionado  
+  const [municipalities, setMunicipalities] = useState<any[]>([]); // Lista de municípios   
   const [loadingStates, setLoadingStates] = useState<boolean>(false); // Carregamento de estados
   const [loadingMunicipalities, setLoadingMunicipalities] = useState<boolean>(false); // Carregamento de municípios
   const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
-  
-  const [street, setStreet] = useState<string | null>(null);
-  const [complement, setComplement] = useState<string | null>(null);
-  const [district, setDistrict] = useState<string | null>(null);
-  const [state, setState] = useState<string | null>(null);
-  const [city, setCity] = useState<string | null>(null);
-
-
-  const [teste, setTeste] = useState(""); 
+  const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
+  const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
 
   const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
   const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
@@ -68,8 +57,7 @@ export default function  NewProject() {
       path_meter: "", // Caminho para a foto do medidor (opcional)
       path_bill: "", // Caminho para a fatura de energia (opcional)
       path_identity:"", // Caminho para a identidade do cliente (opcional)
-      path_procuration:"", // Caminho para o arquivo de procuração (opcional)
-      
+      path_procuration:"", // Caminho para o arquivo de procuração (opcional)      
       client: {
         client_code: 0,
         name: "",
@@ -80,6 +68,8 @@ export default function  NewProject() {
         phone: "",
         address: {
           street: "",
+          complement:"",
+          no_number: false,
           number: 0,
           district:"",
           state: "",
@@ -103,6 +93,8 @@ export default function  NewProject() {
 			  service_voltage: 0,        
         address: { 
           street: "",
+          complement:"",
+          no_number: false,
           number: 0,
           district:"",
           state: "",
@@ -156,14 +148,15 @@ export default function  NewProject() {
           // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
           // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
@@ -261,10 +254,24 @@ export default function  NewProject() {
     }),
 
     onValuesChange: (values) => {
-      //alert(JSON.stringify(values))
       CheckPorcentagemConsumerUnit()
-    },   
-
+      if(values.client.address.no_number){ 
+        form.clearFieldError('client.address.number')
+        form.setFieldValue('client.address.number',0)
+        setNoNumberClient(true)
+      }
+      else{        
+        setNoNumberClient(false)
+      }
+      if(values.plant.address.no_number){ 
+        form.clearFieldError('plant.address.number')
+        form.setFieldValue('plant.address.number',0)
+        setNoNumberPlant(true)
+      }
+      else{        
+        setNoNumberPlant(false)
+      }
+    },
   });
 
   // Buscar estados
@@ -284,8 +291,7 @@ export default function  NewProject() {
     fetchStates();
   }, []);
 
-  const fetchMunicipalities = async (selectedState:string) => {
-    alert("fetchMunicipalities : "+selectedState)
+  const fetchMunicipalities = async (selectedState:string) => {    
     setLoadingMunicipalities(true);       
     try {
       const response = await axios.get(
@@ -299,64 +305,46 @@ export default function  NewProject() {
     }
   };
 
-  const fetchZipCode = async (zipcode:string) => {
-
-    if(!(zipcode.length === 8)) return false;    
+  const fetchZipCode = async (zipcode:string) => {     
     setLoadingZipCode(true)
     try {
       const response = await axios.get(
         `https://viacep.com.br/ws/${zipcode}/json/`
       );  
-      const data = response.data;  
-      setStreet(data.logradouro || '')
-      setComplement(data.complemento|| '')
-      setDistrict(data.bairro|| '')
-      setState(data.uf|| '')
-      setCity(data.localidade|| '')      
-      return true
+      const data = response.data;
+      return data;
     } catch (error) {
       console.error('Erro ao buscar o CEP:', error);
-        //alert('Não foi possível buscar o CEP. Tente novamente.');
-        //setLoadingZipCode(true)
-        return false;
+      return {};
     } finally {   
-         
-      
+      setLoadingZipCode(true)     
     }
   };
   
   // Buscar municípios do  cliente quando o estado é selecionado
-  form.watch('client.address.state', ({ previousValue, value, touched, dirty }) => {
-    //alert("watch('client.address.state') : "+value)
-    setState(value)
-    setCity("") 
+  form.watch('client.address.state', ({value}) => {    
+    form.setFieldValue('client.address.city', "") 
     fetchMunicipalities(value);    
   });
 
   // Buscar municípios do usina quando o estado é selecionado
-  form.watch('plant.address.state', ({ previousValue, value, touched, dirty }) => {
-    setSelectedState(value)
+  form.watch('plant.address.state', ({value}) => {    
     form.setFieldValue(`plant.address.city`, "");    
     fetchMunicipalities(value);    
   });
 
   // Buscar municípios do  cliente quando o estado é selecionado
-  form.watch('client.address.zip', async ({ previousValue, value, touched, dirty }) => {    
-
-    const ret = await fetchZipCode(value.toString())  ; 
-    if(ret===true)
-      SetFieldsAddresFromZip();
-    //setTeste("RR")
+  form.watch('client.address.zip', async ({ previousValue, value, touched, dirty }) => 
+  {   
+    if(!(value.toString().trim().length === 8)) 
+      return false; 
+    const zipCodeData = await fetchZipCode(value.toString())
+    form.setFieldValue('client.address.street', zipCodeData.logradouro||'')
+    form.setFieldValue('client.address.district', zipCodeData.bairro||'')
+    form.setFieldValue(`client.address.state`, zipCodeData.uf||'' ) 
+    form.setFieldValue('client.address.city', zipCodeData.localidade||'')
+    form.setFieldValue('client.address.complement', zipCodeData.complemento||'')
   });
-
-  const SetFieldsAddresFromZip = ()=>{
-    //alert(selectedState)
-    // form.setFieldValue('client.address.street', zipCodes.logradouro || '');
-    // form.setFieldValue('client.address.district', zipCodes.bairro || '');
-    // form.setFieldValue(`client.address.state`, zipCodes.uf ||'' )  ;
-    // form.values.client.address.state = zipCodes.uf ||'' ;
-    // form.setFieldValue('client.address.city', zipCodes.localidade || '');   
-  }
 
   const calculateArea = (index:number) => {
     // Recalcula total_area após a alteração
@@ -377,22 +365,14 @@ export default function  NewProject() {
   };
 
   const CopyAddressFromClientToPlant = (_checked:boolean) => {
-    if(_checked){
-      form.setFieldValue(`plant.address.street`, form.getValues().client.address.street);
-      form.setFieldValue(`plant.address.number`, Number(form.getValues().client.address.number) );
-      form.setFieldValue(`plant.address.district`, form.getValues().client.address.district);
-      form.setFieldValue(`plant.address.state`, form.getValues().client.address.state);
-      form.setFieldValue(`plant.address.city`, form.getValues().client.address.city);
-      form.setFieldValue(`plant.address.zip`, Number(form.getValues().client.address.zip));
-    }
-    else{
-      form.setFieldValue(`plant.address.street`, "");
-      form.setFieldValue(`plant.address.number`, 0);
-      form.setFieldValue(`plant.address.district`, "");
-      form.setFieldValue(`plant.address.state`, "");
-      form.setFieldValue(`plant.address.city`, "");
-      form.setFieldValue(`plant.address.zip`, 0);
-    }    
+    form.setFieldValue(`plant.address.street`,_checked?form.getValues().client.address.street:"");
+    form.setFieldValue(`plant.address.number`, _checked?Number(form.getValues().client.address.number):0 );
+    form.setFieldValue(`plant.address.district`, _checked?form.getValues().client.address.district:"");
+    form.setFieldValue(`plant.address.state`, _checked?form.getValues().client.address.state:"");
+    form.setFieldValue(`plant.address.city`, _checked?form.getValues().client.address.city:"");
+    form.setFieldValue(`plant.address.zip`, _checked?Number(form.getValues().client.address.zip):0);
+    form.setFieldValue(`plant.address.complement`, _checked?form.getValues().client.address.complement:"0");
+    form.setFieldValue(`plant.address.no_number`, _checked?form.getValues().client.address.no_number:false);      
   };
  
   const CalculatesLoadAvailable = () => {
@@ -701,7 +681,6 @@ export default function  NewProject() {
     </Table.Tr>
   ));
 
-
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}  >
       
@@ -855,82 +834,67 @@ export default function  NewProject() {
                 required
               /> 
             </Grid.Col>               
-            <Grid.Col span={8}>             
+            <Grid.Col span={7}>             
               <TextInput
                 label="Logradouro"
-                value={street}
                 key={form.key(`client.address.street`)}
                 {...form.getInputProps(`client.address.street`)}
-                onChange={(e)=>{
-                  //alert("mudo logra")
-                  form.setFieldValue(`client.address.street`,e.target.value)
-                  setStreet(e.target.value)
-                }}
                 required
               />    
             </Grid.Col>
+            <Grid.Col span={1}>             
+              <Checkbox
+                mt="xl"
+                label="Sem número"
+                key={form.key(`client.address.no_number`)}
+                {...form.getInputProps(`client.address.no_number`,{ type: "checkbox" })}                
+              />    
+            </Grid.Col>            
             <Grid.Col span={2}>
               <NumberInput
                 label="Número"
                 allowDecimal={false}
                 allowLeadingZeros={false}
+                hideControls={true}
+                disabled={noNumberClient}
                 min={1}
                 key={form.key(`client.address.number`)}
                 {...form.getInputProps(`client.address.number`)} 
+              />
+            </Grid.Col>
+            <Grid.Col span={5}>
+              <TextInput
+                label="Complemento"
+                placeholder=""
+                key={form.key(`client.address.complement`)}
+                {...form.getInputProps(`client.address.complement`)} 
               />
             </Grid.Col>
             <Grid.Col span={3}>
               <TextInput
                 label="Bairro"
                 placeholder="Digite o bairro"
-                value={district}
                 key={form.key(`client.address.district`)}
                 {...form.getInputProps(`client.address.district`)} 
-                onChange={(e)=>{
-                  //form.setFieldValue(`client.address.street`,e.target.value)
-                  setDistrict(e.target.value)
-                }}
               />
             </Grid.Col>
-            <Grid.Col span={2}>
-              <Select
+            <Grid.Col span={2}>              
+              <Autocomplete
                 label="Estado"
-                placeholder={loadingStates ?"Carregando...":"Digite o estado"}  
-                searchable
-                value={state}
+                placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
                 key={form.key(`client.address.state`)}
-                {...form.getInputProps(`client.address.state`)} 
-                onChange={(e)=>{                  
-                  form.setFieldValue(`client.address.state`, e||'' )
-                  setState(e)
-                }}
-                data={loadingStates ? ["Carregando..."] : states.map((state) => ({value:state.sigla , label:`${state.sigla} - ${state.nome}`}))} 
-              />
-              {/* <Autocomplete
-                label="Estado"
-                placeholder={loadingStates ?"Carregando...":"Digite o estado"}  
-                value={zipCodes.uf}
-                //key={form.key(`client.address.state`)}
-                {...form.getInputProps(`client.address.state`)} 
-                onChange={(e)=>form.values.client.address.state = e}             
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}  
-                //data={['Estado A','Estado B','Estado C']}   
+                {...form.getInputProps(`client.address.state`)}                             
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}
                 required
-              /> */}
+              />
             </Grid.Col>
             <Grid.Col span={2}>
               <Autocomplete
                 label="Município"
-                value={city}
                 placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                 key={form.key(`client.address.city`)}
                 {...form.getInputProps(`client.address.city`)} 
-                data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
-                disabled={!state} // Desabilita o autocomplete de município até o estado ser selecionado
-                onChange={(e)=>{                  
-                  form.setFieldValue(`client.address.city`, e||'' )
-                  setCity(e)
-                }}
+                data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}               
                 required
               />
             </Grid.Col>
@@ -954,7 +918,7 @@ export default function  NewProject() {
           description="Informações da usina"
           icon={<IconHomeBolt size={18} />}
         >                 
-          <Grid mt="xl" ml="md" mr="md">                
+          <Grid mt="xl">                
             <Grid.Col span={2}>  
               <TextInput
                 label="Código da UC"
@@ -1011,7 +975,7 @@ export default function  NewProject() {
             </Grid.Col> 
             <Grid.Col span={3}>
               <Autocomplete
-                label="SubGrupo UC geradora"
+                label="Subgrupo UC geradora"
                 placeholder="Selecione"
                 data={['B1', 'B2']}
                 key={form.key(`plant.subgroup`)}
@@ -1113,7 +1077,7 @@ export default function  NewProject() {
                 required
               />  
             </Grid.Col>               
-            <Grid.Col span={8}>             
+            <Grid.Col span={7}>             
               <TextInput
                 label="Logradouro"
                 key={form.key(`plant.address.street`)}
@@ -1121,14 +1085,32 @@ export default function  NewProject() {
                 required
               />    
             </Grid.Col>
+            <Grid.Col span={1}>             
+              <Checkbox
+                mt="xl"
+                label="Sem número"
+                key={form.key(`plant.address.no_number`)}
+                {...form.getInputProps(`plant.address.no_number`,{ type: "checkbox" })}
+              />    
+            </Grid.Col>
             <Grid.Col span={2}>
               <NumberInput
                 label="Número"
                 allowDecimal={false}
                 allowLeadingZeros={false}
+                hideControls={true}
+                disabled={noNumberPlant}
                 min={1}
                 key={form.key(`plant.address.number`)}
                 {...form.getInputProps(`plant.address.number`)} 
+              />
+            </Grid.Col>
+            <Grid.Col span={4}>
+              <TextInput
+                label="Complemento"
+                placeholder=""
+                key={form.key(`plant.address.complement`)}
+                {...form.getInputProps(`plant.address.complement`)} 
               />
             </Grid.Col>
             <Grid.Col span={3}>
@@ -1155,8 +1137,7 @@ export default function  NewProject() {
                 placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                 data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
                 key={form.key(`plant.address.city`)}
-                {...form.getInputProps(`plant.address.city`)} 
-                disabled={!selectedState} // Desabilita o autocomplete de município até o estado ser selecionado                
+                {...form.getInputProps(`plant.address.city`)}                
                 required
               />
             </Grid.Col>
@@ -1165,7 +1146,7 @@ export default function  NewProject() {
                 label="Latitude"
                 placeholder=""
                 min={1}
-                decimalScale={5}
+                decimalScale={6}
                 allowedDecimalSeparators={['.',',']}
                 hideControls={true}
                 key={form.key(`plant.geolocation.lat`)}
@@ -1178,7 +1159,7 @@ export default function  NewProject() {
                 label="Longitude"
                 placeholder=""
                 min={1}
-                decimalScale={5}
+                decimalScale={6}
                 allowedDecimalSeparators={['.',',']}
                 hideControls={true}
                 key={form.key(`plant.geolocation.lng`)}
@@ -1332,10 +1313,10 @@ export default function  NewProject() {
                   <Table.Tr>
                     <Grid ml="sm" mr="md" >          
                       <Grid.Col span={3}>  
-                      <Text fw={500}> Modelo </Text>
+                      <Text ml="lg" fw={500}> Modelo </Text>
                       </Grid.Col>
                       <Grid.Col span={3}>  
-                      <Text fw={500}> Fabricante </Text>
+                      <Text ml="sm"   fw={500}> Fabricante </Text>
                       </Grid.Col>
                       <Grid.Col span={1}>  
                       <Text fw={500}> Largura (m) </Text>

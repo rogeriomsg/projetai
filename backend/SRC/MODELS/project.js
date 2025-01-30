@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 
 const addressSchema = new mongoose.Schema({
   street: {type : String , require : true}, // Logradouro
+  complement:{type:String,require:false},
+  no_number:{type:Boolean,default:false},
   number: {type: Number, require : false}, // Número da residência (opcional)
   district: {type : String , require : false}, // Bairro 
   city: {type : String , require : true}, // Cidade
