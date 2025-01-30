@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
+import { Loader,Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -74,11 +74,11 @@ export default function  NewProject() {
           district:"",
           state: "",
           city: "",
-          zip: "",
+          zip: 0,
         },
       },
       plant: { 
-        consumer_unit_code: 0 , 
+        consumer_unit_code: "" , 
         name: '', 
         description: '',
         class:"",
@@ -103,7 +103,8 @@ export default function  NewProject() {
         },
         geolocation: {
           lat: 0,
-          lng: 0
+          lng: 0,
+          link_point:""
         }, 
       },
       consumerUnit: [{ 
@@ -148,15 +149,17 @@ export default function  NewProject() {
           // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
-          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          // errors["client.client_code"] = values.client.client_code < 1?"Verifique o código do cliente":null; 
+          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+           
+          // //errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          // errors["client.phone"] = /^(\([0-9]{2}\) |[0-9]{5}-)[0-9]{5}-[0-9]{4}/.test(values.client.phone)?null:"O telefone esta inválido"
+          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
           // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
@@ -314,10 +317,10 @@ export default function  NewProject() {
       const data = response.data;
       return data;
     } catch (error) {
-      console.error('Erro ao buscar o CEP:', error);
+      //console.error('Erro ao buscar o CEP:', error);
       return {};
     } finally {   
-      setLoadingZipCode(true)     
+      setLoadingZipCode(false)     
     }
   };
   
@@ -334,7 +337,7 @@ export default function  NewProject() {
   });
 
   // Buscar municípios do  cliente quando o estado é selecionado
-  form.watch('client.address.zip', async ({ previousValue, value, touched, dirty }) => 
+  form.watch('client.address.zip', async ({value}) => 
   {   
     if(!(value.toString().trim().length === 8)) 
       return false; 
@@ -345,6 +348,19 @@ export default function  NewProject() {
     form.setFieldValue('client.address.city', zipCodeData.localidade||'')
     form.setFieldValue('client.address.complement', zipCodeData.complemento||'')
   });
+
+  // Buscar municípios do  cliente quando o estado é selecionado
+  form.watch('plant.address.zip', async ({value}) => 
+    {   
+      if(!(value.toString().trim().length === 8)) 
+        return false; 
+      const zipCodeData = await fetchZipCode(value.toString())
+      form.setFieldValue('plant.address.street', zipCodeData.logradouro||'')
+      form.setFieldValue('plant.address.district', zipCodeData.bairro||'')
+      form.setFieldValue(`plant.address.state`, zipCodeData.uf||'' ) 
+      form.setFieldValue('plant.address.city', zipCodeData.localidade||'')
+      form.setFieldValue('plant.address.complement', zipCodeData.complemento||'')
+    });
 
   const calculateArea = (index:number) => {
     // Recalcula total_area após a alteração
@@ -815,7 +831,7 @@ export default function  NewProject() {
               <InputBase
                 label="Telefone"
                 component={IMaskInput}
-                placeholder='Celular com DDD'
+                placeholder='(XX)99999-0000'
                 mask="(00) 00000-0000"
                 key={form.key("client.phone")}
                 {...form.getInputProps("client.phone")}
@@ -829,6 +845,8 @@ export default function  NewProject() {
                 allowDecimal={false}
                 hideControls={true}
                 maxLength={8}
+                allowLeadingZeros={false}
+                rightSection={ loadingZipCode && <Loader color="blue" size="xs" mr="sm"/>}
                 key={form.key(`client.address.zip`)}
                 {...form.getInputProps(`client.address.zip`)}
                 required
@@ -862,7 +880,7 @@ export default function  NewProject() {
                 {...form.getInputProps(`client.address.number`)} 
               />
             </Grid.Col>
-            <Grid.Col span={5}>
+            <Grid.Col span={6}>
               <TextInput
                 label="Complemento"
                 placeholder=""
@@ -878,13 +896,14 @@ export default function  NewProject() {
                 {...form.getInputProps(`client.address.district`)} 
               />
             </Grid.Col>
-            <Grid.Col span={2}>              
+            <Grid.Col span={1}>              
               <Autocomplete
                 label="Estado"
-                placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
+                placeholder={loadingStates ?"Carregando...":"Sigla"}                  
                 key={form.key(`client.address.state`)}
                 {...form.getInputProps(`client.address.state`)}                             
                 data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}
+                comboboxProps={{ transitionProps: { transition: 'pop', duration: 200 } }}
                 required
               />
             </Grid.Col>
@@ -894,7 +913,8 @@ export default function  NewProject() {
                 placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                 key={form.key(`client.address.city`)}
                 {...form.getInputProps(`client.address.city`)} 
-                data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}               
+                data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}  
+                comboboxProps={{ transitionProps: { transition: 'pop', duration: 200 } }}             
                 required
               />
             </Grid.Col>
@@ -920,10 +940,12 @@ export default function  NewProject() {
         >                 
           <Grid mt="xl">                
             <Grid.Col span={2}>  
-              <TextInput
+              <NumberInput
                 label="Código da UC"
                 placeholder="Código da UC"
                 min={1}
+                allowLeadingZeros={false}
+                hideControls={true}
                 key={form.key(`plant.consumer_unit_code`)}
                 {...form.getInputProps(`plant.consumer_unit_code`)}
                 onBlur={(e)=>{
@@ -1071,7 +1093,9 @@ export default function  NewProject() {
                 allowDecimal={false}
                 hideControls={true}
                 maxLength={8} // Limita o número de caracteres no CEP
+                allowLeadingZeros={false}
                 placeholder='Digite o CEP' 
+                rightSection={ loadingZipCode && <Loader color="red" size="xs" mr="sm"/>}
                 key={form.key(`plant.address.zip`)}
                 {...form.getInputProps(`plant.address.zip`)}
                 required
@@ -1089,6 +1113,7 @@ export default function  NewProject() {
               <Checkbox
                 mt="xl"
                 label="Sem número"
+                
                 key={form.key(`plant.address.no_number`)}
                 {...form.getInputProps(`plant.address.no_number`,{ type: "checkbox" })}
               />    
@@ -1105,7 +1130,7 @@ export default function  NewProject() {
                 {...form.getInputProps(`plant.address.number`)} 
               />
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={6}>
               <TextInput
                 label="Complemento"
                 placeholder=""
@@ -1121,23 +1146,25 @@ export default function  NewProject() {
                 {...form.getInputProps(`plant.address.district`)} 
               />
             </Grid.Col>
-            <Grid.Col span={2}>
+            <Grid.Col span={1}>
               <Autocomplete
                 label="Estado"
                 placeholder="Digite o estado" 
                 key={form.key(`plant.address.state`)}
                 {...form.getInputProps(`plant.address.state`)} 
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
+                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}         
+                comboboxProps={{ transitionProps: { transition: 'pop', duration: 200 } }}       
                 required
               />
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={2}>
               <Autocomplete
                 label="Município"
                 placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                 data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
                 key={form.key(`plant.address.city`)}
-                {...form.getInputProps(`plant.address.city`)}                
+                {...form.getInputProps(`plant.address.city`)}          
+                comboboxProps={{ transitionProps: { transition: 'pop', duration: 200 } }}      
                 required
               />
             </Grid.Col>
@@ -1165,6 +1192,15 @@ export default function  NewProject() {
                 key={form.key(`plant.geolocation.lng`)}
                 {...form.getInputProps(`plant.geolocation.lng`)} 
                 required           
+              />
+            </Grid.Col>
+            <Grid.Col span={5}>
+              <TextInput
+                label="Link point"
+                placeholder="Cole aqui o link do google maps com o ponto da residencia do cliente "
+                key={form.key(`plant.address.link_point`)}
+                {...form.getInputProps(`plant.address.link_point`)} 
+                onFocus={()=>alert("teste")}
               />
             </Grid.Col>
           </Grid> 
