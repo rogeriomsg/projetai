@@ -21,7 +21,7 @@ import { usePathname } from 'next/navigation';
 const data = [
   { link: '/', label: 'Início', icon: IconBellRinging },
   { link: '/project/new', label: 'Projetos', icon: IconReceipt2 },
-  // { link: '', label: 'Segurança', icon: IconFingerprint },
+  { link: '/map', label: 'Mapa', icon: IconFingerprint },
   // { link: '', label: 'Chaves', icon: IconKey },
   // { link: '', label: 'Databases', icon: IconDatabaseImport },
   // { link: '', label: 'Authentication', icon: Icon2fa },
@@ -36,12 +36,11 @@ export function NavbarSimple() {
 
   // Atualizar o estado "active" com base na URL atual
   useEffect(() => {
-    const currentPath = location.pathname;
-    const activeItem = data.find((item) => item.link === currentPath);
+    const activeItem = data.find((item) => item.link === pathname);
     if (activeItem) {
       setActive(activeItem.label);
     }
-  }, [location.pathname]); // Atualizar sempre que a URL mudar
+  }, [pathname]); // Atualizar sempre que a URL mudar
 
   const links = data.map((item) => (
     <a
