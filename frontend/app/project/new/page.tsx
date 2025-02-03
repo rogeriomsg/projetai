@@ -16,19 +16,7 @@ import {
   IconX,
   IconMap2,
 } from '@tabler/icons-react';
-import {
-  setKey,
-  setDefaults,
-  setLanguage,
-  setRegion,
-  fromAddress,
-  fromLatLng,
-  fromPlaceId,
-  setLocationType,
-  geocode,
-  RequestType,
-  OutputFormat,
-} from "react-geocode";
+
 import axios from "axios";
 import MapModal from '@/components/MapModal/MapModalGetSinglePoint';
 import MapModalGetMultiple from '@/components/MapModal/MapModalGetMultiple';
