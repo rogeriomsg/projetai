@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
+import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -14,16 +14,24 @@ import {
   IconPlus,
   IconCheck,
   IconX,
+  IconMap2,
 } from '@tabler/icons-react';
+import {
+  setKey,
+  setDefaults,
+  setLanguage,
+  setRegion,
+  fromAddress,
+  fromLatLng,
+  fromPlaceId,
+  setLocationType,
+  geocode,
+  RequestType,
+  OutputFormat,
+} from "react-geocode";
 import axios from "axios";
-
-interface IZipCode {
-    logradouro: '',
-    complemento: '',
-    bairro: '',
-    localidade: '',
-    uf: '',
-  }
+import MapModal from '@/components/MapModal/MapModalGetSinglePoint';
+import MapModalGetMultiple from '@/components/MapModal/MapModalGetMultiple';
 
 export default function  NewProject() {
   const [activeStep, setActiveStep] = useState(0); 
@@ -37,6 +45,10 @@ export default function  NewProject() {
   const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
   const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
   const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number }>({lat: -15.783579727102195, lng: -47.93393761657747});
+
 
   const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
   const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
@@ -99,7 +111,7 @@ export default function  NewProject() {
           district:"",
           state: "",
           city: "",
-          zip: 0
+          zip: ""
         },
         geolocation: {
           lat: 0,
@@ -148,15 +160,15 @@ export default function  NewProject() {
           // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
-          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+          // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
           // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
@@ -317,7 +329,7 @@ export default function  NewProject() {
       console.error('Erro ao buscar o CEP:', error);
       return {};
     } finally {   
-      setLoadingZipCode(true)     
+      setLoadingZipCode(false)     
     }
   };
   
@@ -345,6 +357,19 @@ export default function  NewProject() {
     form.setFieldValue('client.address.city', zipCodeData.localidade||'')
     form.setFieldValue('client.address.complement', zipCodeData.complemento||'')
   });
+
+  // Buscar municípios do  cliente quando o estado é selecionado
+  form.watch('plant.address.zip', async ({value}) => 
+    {   
+      if(!(value.toString().trim().length === 8)) 
+        return false; 
+      const zipCodeData = await fetchZipCode(value.toString())
+      form.setFieldValue('plant.address.street', zipCodeData.logradouro||'')
+      form.setFieldValue('plant.address.district', zipCodeData.bairro||'')
+      form.setFieldValue(`plant.address.state`, zipCodeData.uf||'' ) 
+      form.setFieldValue('plant.address.city', zipCodeData.localidade||'')
+      form.setFieldValue('plant.address.complement', zipCodeData.complemento||'')
+    });
 
   const calculateArea = (index:number) => {
     // Recalcula total_area após a alteração
@@ -681,740 +706,792 @@ export default function  NewProject() {
     </Table.Tr>
   ));
 
+  const handleSaveCoordinates = () => {
+    if (coordinates) {
+      form.setFieldValue("plant.geolocation.lat", coordinates.lat);
+      form.setFieldValue("plant.geolocation.lng", coordinates.lng);
+    }
+    setModalOpen(false);
+  };
+
   return (
-    <form onSubmit={form.onSubmit(handleSubmit)}  >
-      
-      <Stepper 
-        active={activeStep} 
-        onStepClick={setActiveStep} 
-        completedIcon={<IconCircleCheck size={20} />}
-        allowNextStepsSelect={false}
-        mx="auto" mt="xl" ml="xl" mr="xl"      
-      >
-        <Stepper.Step 
-          label="Passo 5" 
-          description="Informções do projeto"
-          icon={<IconFileUpload size={18} />}
+    <>
+    
+    
+      <form onSubmit={form.onSubmit(handleSubmit)}  >
+        
+        <Stepper 
+          active={activeStep} 
+          onStepClick={setActiveStep} 
+          completedIcon={<IconCircleCheck size={20} />}
+          allowNextStepsSelect={false}
+          mx="auto" mt="xl" ml="xl" mr="xl"      
         >
-          <Grid mt="sm">
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Tipo de projeto"
-                data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
-                key={form.key("project_type")}
-                {...form.getInputProps("project_type")} 
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Nome do projeto"
-                placeholder="Digite um nome para o projeto"
-                key={form.key("name")}
-                {...form.getInputProps("name")} 
-                required 
-              /> 
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Distribuidora"
-                placeholder="Selecione o nome da distribuidora"
-                data={['Neoenergia Brasília', 'Goiás', ]}
-                key={form.key("dealership")}
-                {...form.getInputProps("dealership")} 
-                required
-              />
-            </Grid.Col>            
-            <Grid.Col span={12}>
-              <Textarea
-                label="Descrição"
-                placeholder="Digite uma descrição para o projeto (Opcional)"
-                key={form.key("description")}
-                {...form.getInputProps("description")}  
-              /> 
-            </Grid.Col>            
-          </Grid> 
-          <Group justify="center" mt="xl">   
-            <ActionIcon 
-              color="green" 
-              variant="subtle" 
-              size="xl" 
-              onClick={() => {
-                form.validate()
-              }} 
-            >
-              <IconCheck  size={28} stroke={1.5} />
-            </ActionIcon> 
-          </Group>         
-        </Stepper.Step>
-        <Stepper.Step 
-          label="Passo 1" 
-          description="Informações do cliente"
-          icon={<IconUserCheck size={18} />}
-        >  
-          <Grid mt="xl">
-            <Grid.Col span={2}>              
+          <Stepper.Step 
+            label="Passo 5" 
+            description="Informções do projeto"
+            icon={<IconFileUpload size={18} />}
+          >
+            <Grid mt="sm">
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Tipo de projeto"
+                  data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
+                  key={form.key("project_type")}
+                  {...form.getInputProps("project_type")} 
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={6}>
+                <TextInput
+                  label="Nome do projeto"
+                  placeholder="Digite um nome para o projeto"
+                  key={form.key("name")}
+                  {...form.getInputProps("name")} 
+                  required 
+                /> 
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Distribuidora"
+                  placeholder="Selecione o nome da distribuidora"
+                  data={['Neoenergia Brasília', 'Goiás', ]}
+                  key={form.key("dealership")}
+                  {...form.getInputProps("dealership")} 
+                  required
+                />
+              </Grid.Col>            
+              <Grid.Col span={12}>
+                <Textarea
+                  label="Descrição"
+                  placeholder="Digite uma descrição para o projeto (Opcional)"
+                  key={form.key("description")}
+                  {...form.getInputProps("description")}  
+                /> 
+              </Grid.Col>            
+            </Grid> 
+            <Group justify="center" mt="xl">   
+              <ActionIcon 
+                color="green" 
+                variant="subtle" 
+                size="xl" 
+                onClick={() => {
+                  form.validate()
+                }} 
+              >
+                <IconCheck  size={28} stroke={1.5} />
+              </ActionIcon> 
+            </Group>         
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 1" 
+            description="Informações do cliente"
+            icon={<IconUserCheck size={18} />}
+          >  
+            <Grid mt="xl">
+              <Grid.Col span={2}>              
+                  <NumberInput
+                    label="Código do cliente"
+                    placeholder="Código do cliente"
+                    allowDecimal={false}
+                    allowLeadingZeros={false}
+                    hideControls={true}
+                    min={1}
+                    key={form.key("client.client_code")}
+                    {...form.getInputProps("client.client_code")} 
+                    required           
+                  />
+              </Grid.Col>
+              <Grid.Col span={10}>
+                <Tooltip label="Nome do cliente da conta onde será instalada a usina" position="top-start" offset={24}>
+                  <TextInput
+                    label="Nome completo do cliente titular UC"
+                    placeholder="Nome"
+                    key={form.key("client.name")}
+                    {...form.getInputProps("client.name")}
+                    required
+                  />
+                </Tooltip>
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <InputBase
+                  label="CPF"
+                  component={IMaskInput}
+                  mask="000.000.000-00"
+                  key={form.key("client.cpf")}
+                  {...form.getInputProps("client.cpf")}
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <TextInput
+                  label="RG"
+                  placeholder="Numero da indentidade"
+                  key={form.key("client.identity")}
+                  {...form.getInputProps("client.identity")}  
+                /> 
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <TextInput
+                  label="Orgão expedidor"
+                  placeholder='Emissor da identidade'
+                  key={form.key("client.identity_issuer")}
+                  {...form.getInputProps("client.identity_issuer")}  
+                /> 
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <TextInput
+                  label="E-mail"
+                  key={form.key("client.email")}
+                  {...form.getInputProps("client.email")}
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <InputBase
+                  label="Telefone"
+                  component={IMaskInput}
+                  placeholder='Celular com DDD'
+                  mask="(00) 00000-0000"
+                  key={form.key("client.phone")}
+                  {...form.getInputProps("client.phone")}
+                  required
+                />              
+              </Grid.Col>
+              <Grid.Col span={2}> 
+                <NumberInput               
+                  label="Código postal"
+                  placeholder='Digite o CEP' 
+                  allowDecimal={false}
+                  hideControls={true}
+                  allowLeadingZeros={false}
+                  maxLength={8}
+                  rightSection={loadingZipCode && <Loader mr="sm" size={22} />} 
+                  key={form.key(`client.address.zip`)}
+                  {...form.getInputProps(`client.address.zip`)}
+                  required
+                /> 
+              </Grid.Col>               
+              <Grid.Col span={7}>             
+                <TextInput
+                  label="Logradouro"
+                  key={form.key(`client.address.street`)}
+                  {...form.getInputProps(`client.address.street`)}
+                  required
+                />    
+              </Grid.Col>
+              <Grid.Col span={1}>             
+                <Checkbox
+                  mt="xl"
+                  label="Sem número"
+                  key={form.key(`client.address.no_number`)}
+                  {...form.getInputProps(`client.address.no_number`,{ type: "checkbox" })}                
+                />    
+              </Grid.Col>            
+              <Grid.Col span={2}>
                 <NumberInput
-                  label="Código do cliente"
-                  placeholder="Código do cliente"
+                  label="Número"
                   allowDecimal={false}
                   allowLeadingZeros={false}
                   hideControls={true}
+                  disabled={noNumberClient}
                   min={1}
-                  key={form.key("client.client_code")}
-                  {...form.getInputProps("client.client_code")} 
-                  required           
+                  key={form.key(`client.address.number`)}
+                  {...form.getInputProps(`client.address.number`)} 
                 />
-            </Grid.Col>
-            <Grid.Col span={10}>
-              <Tooltip label="Nome do cliente da conta onde será instalada a usina" position="top-start" offset={24}>
+              </Grid.Col>
+              <Grid.Col span={5}>
                 <TextInput
-                  label="Nome completo do cliente titular UC"
-                  placeholder="Nome"
-                  key={form.key("client.name")}
-                  {...form.getInputProps("client.name")}
+                  label="Complemento"
+                  placeholder=""
+                  key={form.key(`client.address.complement`)}
+                  {...form.getInputProps(`client.address.complement`)} 
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <TextInput
+                  label="Bairro"
+                  placeholder="Digite o bairro"
+                  key={form.key(`client.address.district`)}
+                  {...form.getInputProps(`client.address.district`)} 
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>              
+                <Autocomplete
+                  label="Estado"
+                  placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
+                  key={form.key(`client.address.state`)}
+                  {...form.getInputProps(`client.address.state`)}                             
+                  data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}
                   required
                 />
-              </Tooltip>
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <InputBase
-                label="CPF"
-                component={IMaskInput}
-                mask="000.000.000-00"
-                key={form.key("client.cpf")}
-                {...form.getInputProps("client.cpf")}
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <TextInput
-                label="RG"
-                placeholder="Numero da indentidade"
-                key={form.key("client.identity")}
-                {...form.getInputProps("client.identity")}  
-              /> 
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <TextInput
-                label="Orgão expedidor"
-                placeholder='Emissor da identidade'
-                key={form.key("client.identity_issuer")}
-                {...form.getInputProps("client.identity_issuer")}  
-              /> 
-            </Grid.Col>
-            <Grid.Col span={4}>
-              <TextInput
-                label="E-mail"
-                key={form.key("client.email")}
-                {...form.getInputProps("client.email")}
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <InputBase
-                label="Telefone"
-                component={IMaskInput}
-                placeholder='Celular com DDD'
-                mask="(00) 00000-0000"
-                key={form.key("client.phone")}
-                {...form.getInputProps("client.phone")}
-                required
-              />              
-            </Grid.Col>
-            <Grid.Col span={2}> 
-              <NumberInput               
-                label="Código postal"
-                placeholder='Digite o CEP' 
-                allowDecimal={false}
-                hideControls={true}
-                maxLength={8}
-                key={form.key(`client.address.zip`)}
-                {...form.getInputProps(`client.address.zip`)}
-                required
-              /> 
-            </Grid.Col>               
-            <Grid.Col span={7}>             
-              <TextInput
-                label="Logradouro"
-                key={form.key(`client.address.street`)}
-                {...form.getInputProps(`client.address.street`)}
-                required
-              />    
-            </Grid.Col>
-            <Grid.Col span={1}>             
-              <Checkbox
-                mt="xl"
-                label="Sem número"
-                key={form.key(`client.address.no_number`)}
-                {...form.getInputProps(`client.address.no_number`,{ type: "checkbox" })}                
-              />    
-            </Grid.Col>            
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Número"
-                allowDecimal={false}
-                allowLeadingZeros={false}
-                hideControls={true}
-                disabled={noNumberClient}
-                min={1}
-                key={form.key(`client.address.number`)}
-                {...form.getInputProps(`client.address.number`)} 
-              />
-            </Grid.Col>
-            <Grid.Col span={5}>
-              <TextInput
-                label="Complemento"
-                placeholder=""
-                key={form.key(`client.address.complement`)}
-                {...form.getInputProps(`client.address.complement`)} 
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <TextInput
-                label="Bairro"
-                placeholder="Digite o bairro"
-                key={form.key(`client.address.district`)}
-                {...form.getInputProps(`client.address.district`)} 
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>              
-              <Autocomplete
-                label="Estado"
-                placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
-                key={form.key(`client.address.state`)}
-                {...form.getInputProps(`client.address.state`)}                             
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <Autocomplete
-                label="Município"
-                placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
-                key={form.key(`client.address.city`)}
-                {...form.getInputProps(`client.address.city`)} 
-                data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}               
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={2}></Grid.Col>
-          </Grid> 
-          <Group justify="center" mt="xl">   
-            <ActionIcon 
-              color="green" 
-              variant="subtle" 
-              size="xl" 
-              onClick={() => {
-                form.validate()
-              }} 
-            >
-              <IconCheck  size={28} stroke={1.5} />
-            </ActionIcon>
-          </Group>            
-        </Stepper.Step>
-        <Stepper.Step 
-          label="Passo 2" 
-          description="Informações da usina"
-          icon={<IconHomeBolt size={18} />}
-        >                 
-          <Grid mt="xl">                
-            <Grid.Col span={2}>  
-              <TextInput
-                label="Código da UC"
-                placeholder="Código da UC"
-                min={1}
-                key={form.key(`plant.consumer_unit_code`)}
-                {...form.getInputProps(`plant.consumer_unit_code`)}
-                onBlur={(e)=>{
-                  form.setFieldValue("consumerUnit.0.consumer_unit_code",e.target.value)
-                }}
-                required
-              />
-            </Grid.Col>                
-            <Grid.Col span={8} >
-              <TextInput
-                placeholder="Digite um nome para usina (opcional)"
-                label="Nome da usina"
-                key={form.key(`plant.name`)}
-                {...form.getInputProps(`plant.name`)}
-              />
-            </Grid.Col> 
-            <Grid.Col span={2} >
-              <NumberInput
-                label="Potência instalada da usina(kWp)"
-                placeholder="Digite"
-                decimalScale={3}
-                allowedDecimalSeparators={['.',',']}
-                hideControls={true}
-                min={0}
-                key={form.key(`plant.installed_power`)}
-                {...form.getInputProps(`plant.installed_power`)} 
-                //readOnly          
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Tipo de geração"
-                placeholder="Selecione"
-                data={['Solar', 'Eólica']}
-                key={form.key(`plant.generation_type`)}
-                {...form.getInputProps(`plant.generation_type`)} 
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Classe da UC geradora"
-                placeholder="Selecione"
-                data={['Residencial', 'Condominio']}
-                key={form.key(`plant.class`)}
-                {...form.getInputProps(`plant.class`)} 
-                required
-              />
-            </Grid.Col> 
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Subgrupo UC geradora"
-                placeholder="Selecione"
-                data={['B1', 'B2']}
-                key={form.key(`plant.subgroup`)}
-                {...form.getInputProps(`plant.subgroup`)} 
-                required
-              />
-            </Grid.Col> 
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Tensão Fase neutro (kV)"
-                placeholder="Selecione"
-                data={['0.22', '0.38', '1', '6.9','13.8']}
-                key={form.key(`plant.service_voltage`)}
-                {...form.getInputProps(`plant.service_voltage`)} 
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Tipo de conexão"
-                placeholder="Selecione"
-                data={['Monofásico', 'Bifásico', 'Trifásico']}
-                key={form.key(`plant.connection_type`)}
-                {...form.getInputProps(`plant.connection_type`)} 
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Tipo de ramal"
-                placeholder="Selecione"
-                data={['Aéreo', 'Subterrâneo']}
-                key={form.key(`plant.type_branch`)}
-                {...form.getInputProps(`plant.type_branch`)} 
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <Autocomplete
-                label="Seção do ramal de entrada(mm²)"
-                placeholder="Selecione"
-                data={['10','16','25']}
-                key={form.key(`plant.branch_section`)}
-                {...form.getInputProps(`plant.branch_section`)} 
-                required
-              />
-            </Grid.Col>                                                       
-            <Grid.Col span={2}>
-              <Autocomplete
-                label="Disjuntor padrão de entrada(A)"
-                placeholder="Digite"
-                data={['20', '30', '50', '63','80','100','120']}
-                key={form.key(`plant.circuit_breaker`)}
-                {...form.getInputProps(`plant.circuit_breaker`)} 
-                required
-              />              
-            </Grid.Col> 
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Carga disponibilizada"
-                placeholder="Em (kW)"
-                min={0}
-                decimalScale={3}
-                hideControls={true}
-                allowedDecimalSeparators={['.',',']}
-                key={form.key(`plant.installed_load`)}
-                {...form.getInputProps(`plant.installed_load`)} 
-                //readOnly         
-              />
-            </Grid.Col> 
-            <Grid.Col span={12}>
-              <Switch
-                onChange={(e) =>{ 
-                  setChecked(e.currentTarget.checked)
-                  CopyAddressFromClientToPlant(e.currentTarget.checked);
-                }}
-                checked={checked}
-                color="teal"
-                size="md"
-                label="Copiar o endereço do cliente titular"
-                thumbIcon={
-                  checked ? (
-                    <IconCheck size={12} color="var(--mantine-color-teal-6)" stroke={3} />
-                  ) : (
-                    <IconX size={12} color="var(--mantine-color-red-6)" stroke={3} />
-                  )
-                }
-              />
-            </Grid.Col>  
-            <Grid.Col span={2}>  
-              <NumberInput
-                label="Código postal"
-                allowDecimal={false}
-                hideControls={true}
-                maxLength={8} // Limita o número de caracteres no CEP
-                placeholder='Digite o CEP' 
-                key={form.key(`plant.address.zip`)}
-                {...form.getInputProps(`plant.address.zip`)}
-                required
-              />  
-            </Grid.Col>               
-            <Grid.Col span={7}>             
-              <TextInput
-                label="Logradouro"
-                key={form.key(`plant.address.street`)}
-                {...form.getInputProps(`plant.address.street`)}
-                required
-              />    
-            </Grid.Col>
-            <Grid.Col span={1}>             
-              <Checkbox
-                mt="xl"
-                label="Sem número"
-                key={form.key(`plant.address.no_number`)}
-                {...form.getInputProps(`plant.address.no_number`,{ type: "checkbox" })}
-              />    
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Número"
-                allowDecimal={false}
-                allowLeadingZeros={false}
-                hideControls={true}
-                disabled={noNumberPlant}
-                min={1}
-                key={form.key(`plant.address.number`)}
-                {...form.getInputProps(`plant.address.number`)} 
-              />
-            </Grid.Col>
-            <Grid.Col span={4}>
-              <TextInput
-                label="Complemento"
-                placeholder=""
-                key={form.key(`plant.address.complement`)}
-                {...form.getInputProps(`plant.address.complement`)} 
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <TextInput
-                label="Bairro"
-                placeholder="Digite o bairro"
-                key={form.key(`plant.address.district`)}
-                {...form.getInputProps(`plant.address.district`)} 
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <Autocomplete
-                label="Estado"
-                placeholder="Digite o estado" 
-                key={form.key(`plant.address.state`)}
-                {...form.getInputProps(`plant.address.state`)} 
-                data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <Autocomplete
-                label="Município"
-                placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
-                data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
-                key={form.key(`plant.address.city`)}
-                {...form.getInputProps(`plant.address.city`)}                
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Latitude"
-                placeholder=""
-                min={1}
-                decimalScale={6}
-                allowedDecimalSeparators={['.',',']}
-                hideControls={true}
-                key={form.key(`plant.geolocation.lat`)}
-                {...form.getInputProps(`plant.geolocation.lat`)} 
-                required           
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <NumberInput
-                label="Longitude"
-                placeholder=""
-                min={1}
-                decimalScale={6}
-                allowedDecimalSeparators={['.',',']}
-                hideControls={true}
-                key={form.key(`plant.geolocation.lng`)}
-                {...form.getInputProps(`plant.geolocation.lng`)} 
-                required           
-              />
-            </Grid.Col>
-          </Grid> 
-          <Group justify="center" mt="xl">   
-            <ActionIcon 
-              color="green" 
-              variant="subtle" 
-              size="xl" 
-              onClick={() => {
-                form.validate()
-              }} 
-            >
-              <IconCheck  size={28} stroke={1.5} />
-            </ActionIcon> 
-          </Group>  
-        </Stepper.Step>
-        <Stepper.Step 
-          label="Passo 3" 
-          description="Unidades consumidoras"
-          icon={<IconExposure size={18} />}
-        >          
-          <Table.ScrollContainer minWidth={900} type="native" mt="xl">
-            <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-              <Table.Tr>
-                <Grid ml="md" mr="md" >          
-                  <Grid.Col span={2}>  
-                    <Text fw={500}> Código da UC </Text>
-                  </Grid.Col>
-                  <Grid.Col span={3}>  
-                    <Text fw={500} color={colorSlider}> Porcentagem {porcentagem} </Text>
-                  </Grid.Col>
-                  <Grid.Col span={7}>
-                    <Text fw={500}> Nome da Unidade consumidora</Text>
-                  </Grid.Col>                                          
-                </Grid>
-              </Table.Tr >
-              <Table.Tbody>{consumerUnits}</Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>         
-
-          <Group justify="center" mt="md"> 
-            <ActionIcon 
-              color="green" 
-              variant="subtle" 
-              size="xl" 
-              onClick={() => {
-                form.validate()
-              }} 
-            >
-              <IconCheck  size={28} stroke={1.5} />
-            </ActionIcon>
-
-            <ActionIcon 
-              color="green" 
-              variant="subtle" 
-              size="xl" 
-              onClick={() => {
-                form.insertListItem('consumerUnit', { 
-                  key: randomId(),
-                  consumer_unit_code: 0 , 
-                  name: '', 
-                  description: '',         
-                  percentage: 50,
-                  is_plant: false
-                })              
-              }} 
-            >
-              <IconPlus  size={28} stroke={1.5} />
-            </ActionIcon>
-          </Group>
-        </Stepper.Step>
-        <Stepper.Step 
-          label="Passo 4" 
-          description="Equipamentos"
-          icon={<IconFileUpload size={18} />}
-        >
-          <Tabs color="orange" variant="pills" defaultValue="inverters" mt="xl">
-            <Tabs.List grow>
-              <Tabs.Tab value="inverters" icon={<IconHomeBolt size={20} />}><Text fw={500}> Inversor(es) </Text></Tabs.Tab>
-              <Tabs.Tab value="modules" icon={<IconUserCheck size={20} />}><Text fw={500}> Módulo(s) </Text></Tabs.Tab>              
-            </Tabs.List>
-
-            <Tabs.Panel value="inverters" pt="xl">
-
-              <Table.ScrollContainer minWidth={900} type="native">
-                <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                  <Table.Tr>
-                    <Grid ml="sm" mr="md" >          
-                      <Grid.Col span={4}>  
-                        <Text fw={500}> Modelo </Text>
-                      </Grid.Col>
-                      <Grid.Col span={4}>  
-                        <Text fw={500}> Fabricante </Text>
-                      </Grid.Col>
-                      <Grid.Col span={2}>
-                        <Text fw={500}> Potência (kW) </Text>
-                      </Grid.Col> 
-                      <Grid.Col span={1}>
-                        <Text fw={500}> Quantidade </Text>
-                      </Grid.Col> 
-                      <Grid.Col span={1}>
-                        <Text fw={500}> Total (kW) </Text>
-                      </Grid.Col>                           
-                    </Grid>
-                  </Table.Tr >
-                  <Table.Tbody>{invertersDataRows}</Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>         
-
-              <Group justify="center" mt="md" mb="xl">
-                <ActionIcon 
-                  color="green" 
-                  variant="subtle" 
-                  size="xl" 
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <Autocomplete
+                  label="Município"
+                  placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
+                  key={form.key(`client.address.city`)}
+                  {...form.getInputProps(`client.address.city`)} 
+                  data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}               
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={2}></Grid.Col>
+            </Grid> 
+            <Group justify="center" mt="xl">   
+              <ActionIcon 
+                color="green" 
+                variant="subtle" 
+                size="xl" 
+                onClick={() => {
+                  form.validate()
+                }} 
+              >
+                <IconCheck  size={28} stroke={1.5} />
+              </ActionIcon>
+            </Group>            
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 2" 
+            description="Informações da usina"
+            icon={<IconHomeBolt size={18} />}
+          >                 
+            <Grid mt="xl" align="center">                
+              <Grid.Col span={2}>  
+                <TextInput
+                  label="Código da UC"
+                  placeholder="Código da UC"
+                  min={1}
+                  key={form.key(`plant.consumer_unit_code`)}
+                  {...form.getInputProps(`plant.consumer_unit_code`)}
+                  onBlur={(e)=>{
+                    form.setFieldValue("consumerUnit.0.consumer_unit_code",e.target.value)
+                  }}
+                  required
+                />
+              </Grid.Col>                
+              <Grid.Col span={8} >
+                <TextInput
+                  placeholder="Digite um nome para usina (opcional)"
+                  label="Nome da usina"
+                  key={form.key(`plant.name`)}
+                  {...form.getInputProps(`plant.name`)}
+                />
+              </Grid.Col> 
+              <Grid.Col span={2} >
+                <NumberInput
+                  label="Potência instalada da usina(kWp)"
+                  placeholder="Digite"
+                  decimalScale={3}
+                  allowedDecimalSeparators={['.',',']}
+                  hideControls={true}
+                  min={0}
+                  key={form.key(`plant.installed_power`)}
+                  {...form.getInputProps(`plant.installed_power`)} 
+                  //readOnly          
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Tipo de geração"
+                  placeholder="Selecione"
+                  data={['Solar', 'Eólica']}
+                  key={form.key(`plant.generation_type`)}
+                  {...form.getInputProps(`plant.generation_type`)} 
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Classe da UC geradora"
+                  placeholder="Selecione"
+                  data={['Residencial', 'Condominio']}
+                  key={form.key(`plant.class`)}
+                  {...form.getInputProps(`plant.class`)} 
+                  required
+                />
+              </Grid.Col> 
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Subgrupo UC geradora"
+                  placeholder="Selecione"
+                  data={['B1', 'B2']}
+                  key={form.key(`plant.subgroup`)}
+                  {...form.getInputProps(`plant.subgroup`)} 
+                  required
+                />
+              </Grid.Col> 
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Tensão Fase neutro (kV)"
+                  placeholder="Selecione"
+                  data={['0.22', '0.38', '1', '6.9','13.8']}
+                  key={form.key(`plant.service_voltage`)}
+                  {...form.getInputProps(`plant.service_voltage`)} 
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Tipo de conexão"
+                  placeholder="Selecione"
+                  data={['Monofásico', 'Bifásico', 'Trifásico']}
+                  key={form.key(`plant.connection_type`)}
+                  {...form.getInputProps(`plant.connection_type`)} 
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Tipo de ramal"
+                  placeholder="Selecione"
+                  data={['Aéreo', 'Subterrâneo']}
+                  key={form.key(`plant.type_branch`)}
+                  {...form.getInputProps(`plant.type_branch`)} 
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <Autocomplete
+                  label="Seção do ramal de entrada(mm²)"
+                  placeholder="Selecione"
+                  data={['10','16','25']}
+                  key={form.key(`plant.branch_section`)}
+                  {...form.getInputProps(`plant.branch_section`)} 
+                  required
+                />
+              </Grid.Col>                                                       
+              <Grid.Col span={2}>
+                <Autocomplete
+                  label="Disjuntor padrão de entrada(A)"
+                  placeholder="Digite"
+                  data={['20', '30', '50', '63','80','100','120']}
+                  key={form.key(`plant.circuit_breaker`)}
+                  {...form.getInputProps(`plant.circuit_breaker`)} 
+                  required
+                />              
+              </Grid.Col> 
+              <Grid.Col span={2}>
+                <NumberInput
+                  label="Carga disponibilizada"
+                  placeholder="Em (kW)"
+                  min={0}
+                  decimalScale={3}
+                  hideControls={true}
+                  allowedDecimalSeparators={['.',',']}
+                  key={form.key(`plant.installed_load`)}
+                  {...form.getInputProps(`plant.installed_load`)} 
+                  //readOnly         
+                />
+              </Grid.Col> 
+              <Grid.Col span={12}>
+                <Switch
+                  onChange={(e) =>{ 
+                    setChecked(e.currentTarget.checked)
+                    CopyAddressFromClientToPlant(e.currentTarget.checked);
+                  }}
+                  checked={checked}
+                  color="teal"
+                  size="md"
+                  label="Copiar o endereço do cliente titular"
+                  thumbIcon={
+                    checked ? (
+                      <IconCheck size={12} color="var(--mantine-color-teal-6)" stroke={3} />
+                    ) : (
+                      <IconX size={12} color="var(--mantine-color-red-6)" stroke={3} />
+                    )
+                  }
+                />
+              </Grid.Col>  
+              <Grid.Col span={2}>  
+                <NumberInput
+                  label="Código postal"
+                  placeholder='Digite o CEP' 
+                  allowDecimal={false}
+                  hideControls={true}
+                  maxLength={8} // Limita o número de caracteres no CEP
+                  allowLeadingZeros={false}
+                  rightSection={loadingZipCode && <Loader mr="sm" size={22} />}        
+                  key={form.key(`plant.address.zip`)}
+                  {...form.getInputProps(`plant.address.zip`)}
+                  required
+                />  
+              </Grid.Col>               
+              <Grid.Col span={7}>             
+                <TextInput
+                  label="Logradouro"
+                  key={form.key(`plant.address.street`)}
+                  {...form.getInputProps(`plant.address.street`)}
+                  required
+                />    
+              </Grid.Col>
+              <Grid.Col span={1}>             
+                <Checkbox
+                  mt="xl"
+                  label="Sem número"
+                  key={form.key(`plant.address.no_number`)}
+                  {...form.getInputProps(`plant.address.no_number`,{ type: "checkbox" })}
+                />    
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <NumberInput
+                  label="Número"
+                  allowDecimal={false}
+                  allowLeadingZeros={false}
+                  hideControls={true}
+                  disabled={noNumberPlant}
+                  min={1}
+                  key={form.key(`plant.address.number`)}
+                  {...form.getInputProps(`plant.address.number`)} 
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <TextInput
+                  label="Complemento"
+                  placeholder=""
+                  key={form.key(`plant.address.complement`)}
+                  {...form.getInputProps(`plant.address.complement`)} 
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <TextInput
+                  label="Bairro"
+                  placeholder="Digite o bairro"
+                  key={form.key(`plant.address.district`)}
+                  {...form.getInputProps(`plant.address.district`)} 
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <Autocomplete
+                  label="Estado"
+                  placeholder="Digite o estado" 
+                  key={form.key(`plant.address.state`)}
+                  {...form.getInputProps(`plant.address.state`)} 
+                  data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Município"
+                  placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
+                  data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
+                  key={form.key(`plant.address.city`)}
+                  {...form.getInputProps(`plant.address.city`)}                
+                  required
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <NumberInput
+                  label="Latitude"
+                  placeholder=""
+                  min={1}
+                  //decimalScale={6}
+                  allowedDecimalSeparators={['.',',']}
+                  hideControls={true}
+                  key={form.key(`plant.geolocation.lat`)}
+                  {...form.getInputProps(`plant.geolocation.lat`)} 
+                  required           
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <NumberInput
+                  label="Longitude"
+                  placeholder=""
+                  min={1}
+                  //decimalScale={6}
+                  allowedDecimalSeparators={['.',',']}
+                  hideControls={true}
+                  key={form.key(`plant.geolocation.lng`)}
+                  {...form.getInputProps(`plant.geolocation.lng`)} 
+                  required           
+                />
+              </Grid.Col>
+              <Grid.Col span={1}>
+                <ActionIcon
+                  size="lg" 
+                  mt="xl"
                   onClick={() => {
-                    form.validate()
+                    setModalOpen(true)
                   }} 
                 >
-                  <IconCheck  size={28} stroke={1.5} />
-                </ActionIcon>
-
-                <ActionIcon 
-                  color="green" 
-                  variant="subtle" 
-                  size="xl" 
-                  onClick={() => {
-                    form.insertListItem('inverters', { 
-                      key: randomId(),
-                      model: "",
-                      manufacturer: "",
-                      power: 0,
-                      quantity: 1,
-                      total_power : 0,
-                    })              
-                  }} 
-                >
-                  <IconPlus  size={28} stroke={1.5} />
-                </ActionIcon>
-              </Group>
-            </Tabs.Panel>
-
-            <Tabs.Panel value="modules" pt="xl">
-
-              <Table.ScrollContainer minWidth={900} type="native">
-                <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                  <Table.Tr>
-                    <Grid ml="sm" mr="md" >          
-                      <Grid.Col span={3}>  
-                      <Text ml="lg" fw={500}> Modelo </Text>
-                      </Grid.Col>
-                      <Grid.Col span={3}>  
-                      <Text ml="sm"   fw={500}> Fabricante </Text>
-                      </Grid.Col>
-                      <Grid.Col span={1}>  
-                      <Text fw={500}> Largura (m) </Text>
-                      </Grid.Col>
-                      <Grid.Col span={1}>  
-                      <Text fw={500}> Altura (m) </Text>
-                      </Grid.Col>
-                      <Grid.Col span={1}>  
-                      <Text fw={500}> Área total (m) </Text>
-                      </Grid.Col>
-                      <Grid.Col span={1}>
-                      <Text fw={500}> Potência (kW) </Text>
-                      </Grid.Col> 
-                      <Grid.Col span={1}>
-                      <Text fw={500}> Quantidade </Text>
-                      </Grid.Col> 
-                      <Grid.Col span={1}>
-                      <Text fw={500}> Total (kW) </Text>
-                      </Grid.Col>                           
-                    </Grid>
-                  </Table.Tr >
-                  <Table.Tbody>{modulesDataRows}</Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>         
-
-              <Group justify="center" mt="md"> 
-                <ActionIcon 
-                  color="green" 
-                  variant="subtle" 
-                  size="xl" 
-                  onClick={() => {
-                    form.validate()
-                  }} 
-                >
-                  <IconCheck  size={28} stroke={1.5} />
-                </ActionIcon>
-                <ActionIcon 
-                  color="green" 
-                  variant="subtle" 
-                  size="xl" 
-                  onClick={() => {
-                    form.insertListItem('modules', { 
-                      key: randomId(),
-                      model: "",
-                      manufacturer: "",
-                      description: "",
-                      width: 0,
-                      height: 0,
-                      total_area:0,
-                      power: 0,
-                      quantity: 0,
-                      total_power : 0,
-                    })             
-                  }} 
-                >
-                  <IconPlus  size={28} stroke={1.5} />
+                  <IconMap2 size={30} stroke={1.2} />
                 </ActionIcon>                
-              </Group>
-            </Tabs.Panel>
-          </Tabs>
-        </Stepper.Step>
-        <Stepper.Step 
-          label="Passo 5" 
-          description="Documentos"
-          icon={<IconFileUpload size={18} />}
-        >
-          Step 4 content: teste
-        </Stepper.Step>
-        <Stepper.Completed>
-          <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
-          <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
-          
-        </Stepper.Completed>
-      </Stepper>
 
-      <Group justify="right" mt="xl" mr="xl">        
-        {activeStep > 0 && (
-          <>
-          <Button variant="default" onClick={prevStep}>
-            Voltar
-          </Button>
-          <Button variant="default" onClick={prevStep} disabled={false}>
-          Salvar e editar depois
-          </Button>
-          </>          
-        )}        
-        {activeStep < 6 && (
-          <Button onClick={nextStep} color='green' >
-            {activeStep === 5 ? "Conferir tudo" : "Próximo passo"}
-          </Button>
-        )} 
-        {activeStep === 6 && (
-          <Button type='submit'>Enviar para análise</Button>
-        )}
-      </Group>
-      
-      
-    </form>
+              </Grid.Col>
+            </Grid> 
+            <Group justify="center" mt="xl">   
+              <ActionIcon 
+                color="green" 
+                variant="subtle" 
+                size="xl" 
+                onClick={() => {
+                  form.validate()
+                }} 
+              >
+                <IconCheck  size={28} stroke={1.5} />
+              </ActionIcon> 
+            </Group>  
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 3" 
+            description="Unidades consumidoras"
+            icon={<IconExposure size={18} />}
+          >          
+            <Table.ScrollContainer minWidth={900} type="native" mt="xl">
+              <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+                <Table.Tr>
+                  <Grid ml="md" mr="md" >          
+                    <Grid.Col span={2}>  
+                      <Text fw={500}> Código da UC </Text>
+                    </Grid.Col>
+                    <Grid.Col span={3}>  
+                      <Text fw={500} color={colorSlider}> Porcentagem {porcentagem} </Text>
+                    </Grid.Col>
+                    <Grid.Col span={7}>
+                      <Text fw={500}> Nome da Unidade consumidora</Text>
+                    </Grid.Col>                                          
+                  </Grid>
+                </Table.Tr >
+                <Table.Tbody>{consumerUnits}</Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>         
+
+            <Group justify="center" mt="md"> 
+              <ActionIcon 
+                color="green" 
+                variant="subtle" 
+                size="xl" 
+                onClick={() => {
+                  form.validate()
+                }} 
+              >
+                <IconCheck  size={28} stroke={1.5} />
+              </ActionIcon>
+
+              <ActionIcon 
+                color="green" 
+                variant="subtle" 
+                size="xl" 
+                onClick={() => {
+                  form.insertListItem('consumerUnit', { 
+                    key: randomId(),
+                    consumer_unit_code: 0 , 
+                    name: '', 
+                    description: '',         
+                    percentage: 50,
+                    is_plant: false
+                  })              
+                }} 
+              >
+                <IconPlus  size={28} stroke={1.5} />
+              </ActionIcon>
+            </Group>
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 4" 
+            description="Equipamentos"
+            icon={<IconFileUpload size={18} />}
+          >
+            <Tabs color="orange" variant="pills" defaultValue="inverters" mt="xl">
+              <Tabs.List grow>
+                <Tabs.Tab value="inverters" icon={<IconHomeBolt size={20} />}><Text fw={500}> Inversor(es) </Text></Tabs.Tab>
+                <Tabs.Tab value="modules" icon={<IconUserCheck size={20} />}><Text fw={500}> Módulo(s) </Text></Tabs.Tab>              
+              </Tabs.List>
+
+              <Tabs.Panel value="inverters" pt="xl">
+
+                <Table.ScrollContainer minWidth={900} type="native">
+                  <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+                    <Table.Tr>
+                      <Grid ml="sm" mr="md" >          
+                        <Grid.Col span={4}>  
+                          <Text fw={500}> Modelo </Text>
+                        </Grid.Col>
+                        <Grid.Col span={4}>  
+                          <Text fw={500}> Fabricante </Text>
+                        </Grid.Col>
+                        <Grid.Col span={2}>
+                          <Text fw={500}> Potência (kW) </Text>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
+                          <Text fw={500}> Quantidade </Text>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
+                          <Text fw={500}> Total (kW) </Text>
+                        </Grid.Col>                           
+                      </Grid>
+                    </Table.Tr >
+                    <Table.Tbody>{invertersDataRows}</Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>         
+
+                <Group justify="center" mt="md" mb="xl">
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.validate()
+                    }} 
+                  >
+                    <IconCheck  size={28} stroke={1.5} />
+                  </ActionIcon>
+
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.insertListItem('inverters', { 
+                        key: randomId(),
+                        model: "",
+                        manufacturer: "",
+                        power: 0,
+                        quantity: 1,
+                        total_power : 0,
+                      })              
+                    }} 
+                  >
+                    <IconPlus  size={28} stroke={1.5} />
+                  </ActionIcon>
+                </Group>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="modules" pt="xl">
+
+                <Table.ScrollContainer minWidth={900} type="native">
+                  <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+                    <Table.Tr>
+                      <Grid ml="sm" mr="md" >          
+                        <Grid.Col span={3}>  
+                        <Text ml="lg" fw={500}> Modelo </Text>
+                        </Grid.Col>
+                        <Grid.Col span={3}>  
+                        <Text ml="sm"   fw={500}> Fabricante </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>  
+                        <Text fw={500}> Largura (m) </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>  
+                        <Text fw={500}> Altura (m) </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>  
+                        <Text fw={500}> Área total (m) </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>
+                        <Text fw={500}> Potência (kW) </Text>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
+                        <Text fw={500}> Quantidade </Text>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
+                        <Text fw={500}> Total (kW) </Text>
+                        </Grid.Col>                           
+                      </Grid>
+                    </Table.Tr >
+                    <Table.Tbody>{modulesDataRows}</Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>         
+
+                <Group justify="center" mt="md"> 
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.validate()
+                    }} 
+                  >
+                    <IconCheck  size={28} stroke={1.5} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.insertListItem('modules', { 
+                        key: randomId(),
+                        model: "",
+                        manufacturer: "",
+                        description: "",
+                        width: 0,
+                        height: 0,
+                        total_area:0,
+                        power: 0,
+                        quantity: 0,
+                        total_power : 0,
+                      })             
+                    }} 
+                  >
+                    <IconPlus  size={28} stroke={1.5} />
+                  </ActionIcon>                
+                </Group>
+              </Tabs.Panel>
+            </Tabs>
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 5" 
+            description="Documentos"
+            icon={<IconFileUpload size={18} />}
+          >
+            Step 4 content: teste
+          </Stepper.Step>
+          <Stepper.Completed>
+            <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
+            <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
+            
+          </Stepper.Completed>
+        </Stepper>
+
+        <Group justify="right" mt="xl" mr="xl">        
+          {activeStep > 0 && (
+            <>
+            <Button variant="default" onClick={prevStep}>
+              Voltar
+            </Button>
+            <Button variant="default" onClick={prevStep} disabled={false}>
+            Salvar e editar depois
+            </Button>
+            </>          
+          )}        
+          {activeStep < 6 && (
+            <Button onClick={nextStep} color='green' >
+              {activeStep === 5 ? "Conferir tudo" : "Próximo passo"}
+            </Button>
+          )} 
+          {activeStep === 6 && (
+            <Button type='submit'>Enviar para análise</Button>
+          )}
+        </Group>
+        
+        
+      </form>
+      <MapModal
+        isOpen={isModalOpen}
+        onClose={handleSaveCoordinates}
+        setCoordinates={setCoordinates}
+        centerMap={coordinates}
+      />
+
+      <MapModalGetMultiple 
+        title={"Selecione os dispositivos"} 
+        labelButton={"Selecionar no mapa"}     
+        data={[
+          {id:'1',name:"device1",available:true,lat:-15.783409087327046,lng:-47.93393934544606},
+          {id:'2',name:"device2",available:true,lat:-15.783722169965136,lng:-47.93397602701885},
+          {id:'3',name:"device3",available:false,lat:-15.783789697529565,lng:-47.93371447145638},
+          {id:'4',name:"device4",available:false,lat:-15.783605531391776,lng:-47.933644298012794},
+          {id:'5',name:"device5",available:true,lat:-15.783277101364115,lng:-47.933535848145425},
+        ]} 
+        onSelectionChange={(devs)=>{
+          alert(JSON.stringify(devs))
+        }}
+        
+      />
+
+    </>
+
     
   );
 }
