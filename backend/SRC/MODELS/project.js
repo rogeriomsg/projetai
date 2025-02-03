@@ -53,6 +53,7 @@ const plantSchema = new mongoose.Schema({
   geolocation:  { // Geolocalização da usina
     lat: { type : Number , default : 0.0  }, // Latitude
     lng: { type : Number , default : 0.0  }, // Longitude
+    link_point:{type:String,require:false}
   },
 });
 
