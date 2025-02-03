@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box,} from '@mantine/core';
+import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -15,10 +15,11 @@ import {
   IconCheck,
   IconX,
   IconMap2,
+  IconHome,
 } from '@tabler/icons-react';
 
 import axios from "axios";
-import MapModal from '@/components/MapModal/MapModalGetSinglePoint';
+import MapModalGetSinglePoint from '@/components/MapModal/MapModalGetSinglePoint';
 import MapModalGetMultiple from '@/components/MapModal/MapModalGetMultiple';
 
 export default function  NewProject() {
@@ -33,9 +34,7 @@ export default function  NewProject() {
   const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
   const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
   const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
-  const [isModalOpen, setModalOpen] = useState(false);
-
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number }>({lat: -15.783579727102195, lng: -47.93393761657747});
+  const [activeTab, setActiveTab] = useState<string>('inverters');
 
 
   const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
@@ -107,6 +106,7 @@ export default function  NewProject() {
           link_point:""
         }, 
       },
+      compensation_system: "",
       consumerUnit: [{ 
         key: randomId(),
         consumer_unit_code: 0 , 
@@ -143,10 +143,10 @@ export default function  NewProject() {
       const errors: Record<string, any> = {};      
       switch (activeStep) {
         case 0: //informações do projeto
-          // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
-          // errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
-          // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
-          // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
+          errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
+          errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
+          errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
+          errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
           errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
@@ -160,44 +160,54 @@ export default function  NewProject() {
           errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
-          // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
-          // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
-          // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
-          // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
-          // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
-          // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
-          // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
-          // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
-          // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
-          // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
-          // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
-          // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
-          // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
-          // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) < 1?"A latitude é obrigatória":null
-          // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) < 1?"A longitude é obrigatória":null          
+          errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
+          errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
+          errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
+          
+          errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
+          errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
+          errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
+          errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
+          errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
+          errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
+          errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
+          errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
+          errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
+          errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
+          errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
+          errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
           break;
-        case 3: //Unidades consumidoras 
-          // values.consumerUnit.map((item,index)=>(
-          //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
-          // )) 
-          // values.consumerUnit.forEach((_, index) => {
-          //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
-          // });
+        case 3: //Sistema de compensação
+          errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
+          values.consumerUnit.map((item,index)=>(
+            errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
+          )) 
+          values.consumerUnit.forEach((_, index) => {
+            errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
+          });
           break; 
         case 4: //Equipamentos      
-          // values.inverters.map((itemInv,index)=>(
-          //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
-          //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
-          //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
-          // ));
+          values.inverters.map((itemInv,index)=>(
+            errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
+            errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
+            errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
+          ));
           
-          // values.modules.map((item,index)=>(  
-          //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
-          //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
-          //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
-          //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
-          //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
-          // ));
+          values.modules.map((item,index)=>(  
+            errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
+            errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
+            errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
+            errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
+            errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
+          ));
+          const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
+            return Object.keys(obj).some((key) => key.startsWith(prefix));
+          };
+          if(hasKeyStartingWith(errors, 'inverters.'))
+            changeTab("inverters")
+          else if(hasKeyStartingWith(errors, 'modules.'))
+            changeTab("modules")
+
         break;
       }
       //alert(JSON.stringify(errors) ) 
@@ -362,7 +372,7 @@ export default function  NewProject() {
 
   const calculateArea = (index:number) => {
     // Recalcula total_area após a alteração
-    const total_area = Number(form.getValues().modules[index].height) * Number(form.getValues().modules[index].width) ;
+    const total_area = Number(form.getValues().modules[index].height) * Number(form.getValues().modules[index].width) * Number(form.getValues().modules[index].quantity);
     form.setFieldValue(`modules.${index}.total_area`, total_area);
   };
 
@@ -389,14 +399,18 @@ export default function  NewProject() {
     form.setFieldValue(`plant.address.no_number`, _checked?form.getValues().client.address.no_number:false);      
   };
  
-  const CalculatesLoadAvailable = () => {
-    // Recalcula a potência total após a alteração
-    // circuit_breaker: undefined,
-    //     installed_load: undefined,
-		// 	  installed_power: undefined,
-		// 	  service_voltage: undefined,
-    // const installed_power = Number(form.getValues().plant.service_voltage) * Number(form.getValues().plant.circuit_breaker) *   
-    // form.setFieldValue(`plant.`, installed_power);
+  const calculatesLoadAvailable = () => {
+    alert("calculatesLoadAvailable ")
+    // Mapeamento do tipo de conexão para o número correspondente
+    const connectionTypeMultiplier: Record<string, number> = {
+      Trifásico: 3,
+      Bifásico: 2,
+      Monofásico: 1,
+    };
+    // Obtém o multiplicador do tipo de conexão
+    const connectionTypeValue = connectionTypeMultiplier[form.getValues().plant.connection_type] || 1;
+    const installed_power = Number(form.getValues().plant.service_voltage) * Number(form.getValues().plant.circuit_breaker) * connectionTypeValue  
+    form.setFieldValue(`plant.installed_load`, installed_power);
   }
 
   const CheckPorcentagemConsumerUnit = ()=>{
@@ -407,11 +421,23 @@ export default function  NewProject() {
     setcolorSlider(_porcentagem!==100?"red":"green")
     setPorcentagem(_porcentagem!==100?false:true)
   }
+
+  // Função para mudar a aba programaticamente
+  const changeTab = (tabValue: string) => {
+    setActiveTab(tabValue);
+  };
+
+  const handleSalvepointPlant = (point:{lat:number;lng:number}) => {
+    if (point) {
+      form.setFieldValue("plant.geolocation.lat", point.lat);
+      form.setFieldValue("plant.geolocation.lng", point.lng);
+    }
+  };
   
   const handleSubmit = async (_values: typeof form.values ) => {   
     
     if (!form.validate().hasErrors) {
-      alert(JSON.stringify(_values))
+      //alert(JSON.stringify(_values))
       
       //setLoading(true);
     //   setIsSubmitting(true);
@@ -436,12 +462,13 @@ export default function  NewProject() {
   const consumerUnits = form.getValues().consumerUnit.map((item, index) => (
     <Table.Tr key={item.key} >
       <Table.Td >           
-        <Grid ml="md" mr="md" mb="sm">          
+        <Grid ml="md" mr="md">          
           <Grid.Col span={2}>  
             <NumberInput
               placeholder="Código da UC"
               allowDecimal={false}
               hideControls={true}
+              allowLeadingZeros={false}
               min={1}
               key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
               {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)}   
@@ -454,7 +481,7 @@ export default function  NewProject() {
               placeholder="Código da UC"
               allowDecimal={false}
               min={0}
-              max={100}
+              max={100}              
               key={form.key(`consumerUnit.${index}.percentage`)}
               {...form.getInputProps(`consumerUnit.${index}.percentage`)}
               required
@@ -470,13 +497,13 @@ export default function  NewProject() {
         </Grid>
       </Table.Td>
       <Table.Td>
-        <Group gap={0} justify="flex-end">           
+        <Group justify="flex-end">           
           <ActionIcon color="red" variant="subtle" onClick={() => {
             form.removeListItem('consumerUnit', index)
             }} 
             disabled={index!==0?false:true} 
           >
-            <IconTrash size={28} stroke={1.8}/>
+            <IconTrash size={27} stroke={1.6}/>
           </ActionIcon>             
         </Group>
       </Table.Td>
@@ -486,7 +513,7 @@ export default function  NewProject() {
   const invertersDataRows = form.getValues().inverters.map((item, index) => (
     <Table.Tr key={item.key} >
       <Table.Td >           
-        <Grid ml="sm" mr="md" >          
+        <Grid ml="md" mr="md" >          
           <Grid.Col span={4}>  
             <TextInput
               placeholder="Modelo do inversor"
@@ -543,12 +570,12 @@ export default function  NewProject() {
         </Grid>
       </Table.Td>
       <Table.Td>
-        <Group gap={0} justify="flex-end"> 
+        <Group justify="flex-end"> 
           {
             index===0 &&(
               <>
               <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)} disabled >
-                <IconTrash size={28} stroke={1.8}/>
+                <IconTrash size={27} stroke={1.6}/>
               </ActionIcon>
               </>
             ) 
@@ -557,7 +584,7 @@ export default function  NewProject() {
             index!==0 &&(
               <>
               <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)}>
-                <IconTrash size={28} stroke={1.8}/>
+                <IconTrash size={27} stroke={1.6}/>
               </ActionIcon>
               </>
             ) 
@@ -667,16 +694,15 @@ export default function  NewProject() {
               readOnly  
             />
           </Grid.Col>                           
-        </Grid>
-        
+        </Grid>        
       </Table.Td>
       <Table.Td>
-        <Group gap={0} justify="flex-end"> 
+        <Group justify="flex-end"> 
           {
             index===0 &&(
               <>
               <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('modules', index)} disabled >
-                <IconTrash size={28} stroke={1.8}/>
+                <IconTrash size={27} stroke={1.6}/>
               </ActionIcon>
               </>
             ) 
@@ -685,7 +711,7 @@ export default function  NewProject() {
             index!==0 &&(
               <>
               <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('modules', index)}>
-                <IconTrash size={28} stroke={1.8}/>
+                <IconTrash size={27} stroke={1.6}/>
               </ActionIcon>
               </>
             ) 
@@ -694,14 +720,6 @@ export default function  NewProject() {
       </Table.Td>
     </Table.Tr>
   ));
-
-  const handleSaveCoordinates = () => {
-    if (coordinates) {
-      form.setFieldValue("plant.geolocation.lat", coordinates.lat);
-      form.setFieldValue("plant.geolocation.lng", coordinates.lng);
-    }
-    setModalOpen(false);
-  };
 
   return (
     <>
@@ -845,13 +863,26 @@ export default function  NewProject() {
                   required
                 />              
               </Grid.Col>
+              <GridCol span={12}>
+              <Divider my="sm" 
+                label={
+                  <>
+                    <IconHome size={20} />
+                    <Box ml={5}>Endereço da fatura do cliente</Box>
+                  </>
+                } 
+                labelPosition="center" 
+              />
+              </GridCol>
               <Grid.Col span={2}> 
                 <NumberInput               
                   label="Código postal"
                   placeholder='Digite o CEP' 
+                  allowLeadingZeros={false}
                   allowDecimal={false}
                   hideControls={true}
                   maxLength={8}
+                  rightSection={loadingZipCode && <Loader size={20} mr="sm"/>}   
                   key={form.key(`client.address.zip`)}
                   {...form.getInputProps(`client.address.zip`)}
                   required
@@ -1015,17 +1046,7 @@ export default function  NewProject() {
                   {...form.getInputProps(`plant.service_voltage`)} 
                   required
                 />
-              </Grid.Col>
-              <Grid.Col span={3}>
-                <Autocomplete
-                  label="Tipo de conexão"
-                  placeholder="Selecione"
-                  data={['Monofásico', 'Bifásico', 'Trifásico']}
-                  key={form.key(`plant.connection_type`)}
-                  {...form.getInputProps(`plant.connection_type`)} 
-                  required
-                />
-              </Grid.Col>
+              </Grid.Col>              
               <Grid.Col span={3}>
                 <Autocomplete
                   label="Tipo de ramal"
@@ -1045,7 +1066,17 @@ export default function  NewProject() {
                   {...form.getInputProps(`plant.branch_section`)} 
                   required
                 />
-              </Grid.Col>                                                       
+              </Grid.Col> 
+              <Grid.Col span={3}>
+                <Autocomplete
+                  label="Tipo de conexão"
+                  placeholder="Selecione"
+                  data={['Monofásico', 'Bifásico', 'Trifásico']}
+                  key={form.key(`plant.connection_type`)}
+                  {...form.getInputProps(`plant.connection_type`)} 
+                  required
+                />
+              </Grid.Col>                                                      
               <Grid.Col span={2}>
                 <Autocomplete
                   label="Disjuntor padrão de entrada(A)"
@@ -1056,7 +1087,7 @@ export default function  NewProject() {
                   required
                 />              
               </Grid.Col> 
-              <Grid.Col span={2}>
+              {/* <Grid.Col span={2}>
                 <NumberInput
                   label="Carga disponibilizada"
                   placeholder="Em (kW)"
@@ -1066,9 +1097,9 @@ export default function  NewProject() {
                   allowedDecimalSeparators={['.',',']}
                   key={form.key(`plant.installed_load`)}
                   {...form.getInputProps(`plant.installed_load`)} 
-                  //readOnly         
+                  readOnly         
                 />
-              </Grid.Col> 
+              </Grid.Col>  */}
               <Grid.Col span={12}>
                 <Switch
                   onChange={(e) =>{ 
@@ -1091,10 +1122,12 @@ export default function  NewProject() {
               <Grid.Col span={2}>  
                 <NumberInput
                   label="Código postal"
-                  allowDecimal={false}
-                  hideControls={true}
-                  maxLength={8} // Limita o número de caracteres no CEP
                   placeholder='Digite o CEP' 
+                  allowDecimal={false}
+                  allowLeadingZeros={false}
+                  hideControls={true} 
+                  rightSection={loadingZipCode && <Loader size={20} mr="sm"/>}                 
+                  maxLength={8} // Limita o número de caracteres no CEP
                   key={form.key(`plant.address.zip`)}
                   {...form.getInputProps(`plant.address.zip`)}
                   required
@@ -1169,7 +1202,7 @@ export default function  NewProject() {
                   label="Latitude"
                   placeholder=""
                   min={1}
-                  decimalScale={6}
+                  decimalScale={8}
                   allowedDecimalSeparators={['.',',']}
                   hideControls={true}
                   key={form.key(`plant.geolocation.lat`)}
@@ -1182,7 +1215,7 @@ export default function  NewProject() {
                   label="Longitude"
                   placeholder=""
                   min={1}
-                  decimalScale={6}
+                  decimalScale={8}
                   allowedDecimalSeparators={['.',',']}
                   hideControls={true}
                   key={form.key(`plant.geolocation.lng`)}
@@ -1190,6 +1223,12 @@ export default function  NewProject() {
                   required           
                 />
               </Grid.Col>
+              <GridCol span={3} mt="lg">
+                <MapModalGetSinglePoint
+                  onSetPoint={handleSalvepointPlant}
+                  centerMap={{lat:-15.783608157298113,lng:-47.933789069620715}}
+                />
+              </GridCol>
             </Grid> 
             <Group justify="center" mt="xl">   
               <ActionIcon 
@@ -1206,9 +1245,19 @@ export default function  NewProject() {
           </Stepper.Step>
           <Stepper.Step 
             label="Passo 3" 
-            description="Unidades consumidoras"
+            description="Sistema de compensação"
             icon={<IconExposure size={18} />}
-          >          
+          > 
+            <SimpleGrid cols={3}>
+              <Autocomplete
+                label="Tipo de sistema de compensação"
+                data={['AutoConsumo remoto','AutoConsumo local','Condominio','Associação',"Cooperativa",'Consórcio']}
+                key={form.key(`compensation_system`)}
+                {...form.getInputProps(`compensation_system`)}                
+                required
+                ml="lg"
+              /> 
+            </SimpleGrid>
             <Table.ScrollContainer minWidth={900} type="native" mt="xl">
               <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                 <Table.Tr>
@@ -1258,163 +1307,160 @@ export default function  NewProject() {
                   <IconPlus  size={28} stroke={1.5} />
                 </ActionIcon>
               </Group>
-            </Stepper.Step>
-            <Stepper.Step 
-              label="Passo 4" 
-              description="Equipamentos"
-              icon={<IconFileUpload size={18} />}
-            >
-              <Tabs color="orange" variant="pills" defaultValue="inverters" mt="xl">
-                <Tabs.List grow>
-                  <Tabs.Tab value="inverters" icon={<IconHomeBolt size={20} />}><Text fw={500}> Inversor(es) </Text></Tabs.Tab>
-                  <Tabs.Tab value="modules" icon={<IconUserCheck size={20} />}><Text fw={500}> Módulo(s) </Text></Tabs.Tab>              
-                </Tabs.List>
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 4" 
+            description="Equipamentos"
+            icon={<IconFileUpload size={18} />}
+          >
+            <Tabs color="orange" variant="pills" defaultValue="inverters" mt="xl">
+              <Tabs.List grow>
+                <Tabs.Tab value="inverters" ><Text fw={500}> Inversor(es) </Text></Tabs.Tab>
+                <Tabs.Tab value="modules" ><Text fw={500}> Módulo(s) </Text></Tabs.Tab>              
+              </Tabs.List>
 
-                <Tabs.Panel value="inverters" pt="xl">
-
-                  <Table.ScrollContainer minWidth={900} type="native">
-                    <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                      <Table.Tr>
-                        <Grid ml="sm" mr="md" >          
-                          <Grid.Col span={4}>  
-                            <Text fw={500}> Modelo </Text>
-                          </Grid.Col>
-                          <Grid.Col span={4}>  
-                            <Text fw={500}> Fabricante </Text>
-                          </Grid.Col>
-                          <Grid.Col span={2}>
-                            <Text fw={500}> Potência (kW) </Text>
-                          </Grid.Col> 
-                          <Grid.Col span={1}>
-                            <Text fw={500}> Quantidade </Text>
-                          </Grid.Col> 
-                          <Grid.Col span={1}>
-                            <Text fw={500}> Total (kW) </Text>
-                          </Grid.Col>                           
-                        </Grid>
-                      </Table.Tr >
-                      <Table.Tbody>{invertersDataRows}</Table.Tbody>
-                    </Table>
-                  </Table.ScrollContainer>         
-
-                  <Group justify="center" mt="md" mb="xl">
-                    <ActionIcon 
-                      color="green" 
-                      variant="subtle" 
-                      size="xl" 
-                      onClick={() => {
-                        form.validate()
-                      }} 
-                    >
-                      <IconCheck  size={28} stroke={1.5} />
-                    </ActionIcon>
-
-                    <ActionIcon 
-                      color="green" 
-                      variant="subtle" 
-                      size="xl" 
-                      onClick={() => {
-                        form.insertListItem('inverters', { 
-                          key: randomId(),
-                          model: "",
-                          manufacturer: "",
-                          power: 0,
-                          quantity: 1,
-                          total_power : 0,
-                        })              
-                      }} 
-                    >
-                      <IconPlus  size={28} stroke={1.5} />
-                    </ActionIcon>
-                  </Group>
-                </Tabs.Panel>
-
-                <Tabs.Panel value="modules" pt="xl">
-
-                  <Table.ScrollContainer minWidth={900} type="native">
-                    <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                      <Table.Tr>
-                        <Grid ml="sm" mr="md" >          
-                          <Grid.Col span={3}>  
-                          <Text ml="lg" fw={500}> Modelo </Text>
-                          </Grid.Col>
-                          <Grid.Col span={3}>  
-                          <Text ml="sm"   fw={500}> Fabricante </Text>
-                          </Grid.Col>
-                          <Grid.Col span={1}>  
-                          <Text fw={500}> Largura (m) </Text>
-                          </Grid.Col>
-                          <Grid.Col span={1}>  
-                          <Text fw={500}> Altura (m) </Text>
-                          </Grid.Col>
-                          <Grid.Col span={1}>  
-                          <Text fw={500}> Área total (m) </Text>
-                          </Grid.Col>
-                          <Grid.Col span={1}>
+              <Tabs.Panel value="inverters" pt="xl">
+                <Table.ScrollContainer minWidth={900} type="native">
+                  <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+                    <Table.Tr>
+                      <Grid ml="sm" mr="md" >          
+                        <Grid.Col span={4}>  
+                          <Text fw={500}> Modelo </Text>
+                        </Grid.Col>
+                        <Grid.Col span={4}>  
+                          <Text fw={500}> Fabricante </Text>
+                        </Grid.Col>
+                        <Grid.Col span={2}>
                           <Text fw={500}> Potência (kW) </Text>
-                          </Grid.Col> 
-                          <Grid.Col span={1}>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
                           <Text fw={500}> Quantidade </Text>
-                          </Grid.Col> 
-                          <Grid.Col span={1}>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
                           <Text fw={500}> Total (kW) </Text>
-                          </Grid.Col>                           
-                        </Grid>
-                      </Table.Tr >
-                      <Table.Tbody>{modulesDataRows}</Table.Tbody>
-                    </Table>
-                  </Table.ScrollContainer>         
+                        </Grid.Col>                           
+                      </Grid>
+                    </Table.Tr >
+                    <Table.Tbody>{invertersDataRows}</Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>         
 
-                  <Group justify="center" mt="md"> 
-                    <ActionIcon 
-                      color="green" 
-                      variant="subtle" 
-                      size="xl" 
-                      onClick={() => {
-                        form.validate()
-                      }} 
-                    >
-                      <IconCheck  size={28} stroke={1.5} />
-                    </ActionIcon>
-                    <ActionIcon 
-                      color="green" 
-                      variant="subtle" 
-                      size="xl" 
-                      onClick={() => {
-                        form.insertListItem('modules', { 
-                          key: randomId(),
-                          model: "",
-                          manufacturer: "",
-                          description: "",
-                          width: 0,
-                          height: 0,
-                          total_area:0,
-                          power: 0,
-                          quantity: 0,
-                          total_power : 0,
-                        })             
-                      }} 
-                    >
-                      <IconPlus  size={28} stroke={1.5} />
-                    </ActionIcon>                
-                  </Group>
-                </Tabs.Panel>
-              </Tabs>
-            </Stepper.Step>
-            <Stepper.Step 
-              label="Passo 5" 
-              description="Documentos"
-              icon={<IconFileUpload size={18} />}
-            >
-              Step 4 content: teste
-            </Stepper.Step>
-            <Stepper.Completed>
-              <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
-              <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
-              
-            </Stepper.Completed>
+                <Group justify="center" mt="md" mb="xl">
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.validate()
+                    }} 
+                  >
+                    <IconCheck  size={28} stroke={1.5} />
+                  </ActionIcon>
+
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.insertListItem('inverters', { 
+                        key: randomId(),
+                        model: "",
+                        manufacturer: "",
+                        power: 0,
+                        quantity: 1,
+                        total_power : 0,
+                      })              
+                    }} 
+                  >
+                    <IconPlus  size={28} stroke={1.5} />
+                  </ActionIcon>
+                </Group>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="modules" pt="xl">
+                <Table.ScrollContainer minWidth={900} type="native">
+                  <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
+                    <Table.Tr>
+                      <Grid ml="sm" mr="md" >          
+                        <Grid.Col span={3}>  
+                        <Text ml="lg" fw={500}> Modelo </Text>
+                        </Grid.Col>
+                        <Grid.Col span={3}>  
+                        <Text ml="sm"   fw={500}> Fabricante </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>  
+                        <Text fw={500}> Largura (m) </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>  
+                        <Text fw={500}> Altura (m) </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>  
+                        <Text fw={500}> Área total (m) </Text>
+                        </Grid.Col>
+                        <Grid.Col span={1}>
+                        <Text fw={500}> Potência (kW) </Text>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
+                        <Text fw={500}> Quantidade </Text>
+                        </Grid.Col> 
+                        <Grid.Col span={1}>
+                        <Text fw={500}> Total (kW) </Text>
+                        </Grid.Col>                           
+                      </Grid>
+                    </Table.Tr >
+                    <Table.Tbody>{modulesDataRows}</Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>         
+
+                <Group justify="center" mt="md"> 
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.validate()
+                    }} 
+                  >
+                    <IconCheck  size={28} stroke={1.5} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                      form.insertListItem('modules', { 
+                        key: randomId(),
+                        model: "",
+                        manufacturer: "",
+                        description: "",
+                        width: 0,
+                        height: 0,
+                        total_area:0,
+                        power: 0,
+                        quantity: 0,
+                        total_power : 0,
+                      })             
+                    }} 
+                  >
+                    <IconPlus  size={28} stroke={1.5} />
+                  </ActionIcon>                
+                </Group>
+              </Tabs.Panel>
+            </Tabs>
+          </Stepper.Step>
+          <Stepper.Step 
+            label="Passo 5" 
+            description="Documentos"
+            icon={<IconFileUpload size={18} />}
+          >
+            Step 4 content: teste
+          </Stepper.Step>
+          <Stepper.Completed>
+            <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
+            <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
+            
+          </Stepper.Completed>
           </Stepper>
-
           <Group justify="right" mt="xl" mr="xl">        
             {activeStep > 0 && (
               <>
@@ -1434,19 +1480,9 @@ export default function  NewProject() {
             {activeStep === 6 && (
               <Button type='submit'>Enviar para análise</Button>
             )}
-          </Group>
-          
-          
+          </Group>    
         </form>
-        
-        <MapModal
-          isOpen={isModalOpen}
-          onClose={handleSaveCoordinates}
-          setCoordinates={setCoordinates}
-          centerMap={coordinates}
-        />
-
-        <MapModalGetMultiple 
+        {/* <MapModalGetMultiple 
           title={"Selecione os dispositivos"} 
           labelButton={"Selecionar no mapa"}     
           data={[
@@ -1457,10 +1493,9 @@ export default function  NewProject() {
             {id:'5',name:"device5",available:true,lat:-15.783277101364115,lng:-47.933535848145425},
           ]} 
           onSelectionChange={(devs)=>{
-            alert(JSON.stringify(devs))
-          }}
-          
-        />    
+            //alert(JSON.stringify(devs))
+          }}          
+        />     */}
     </>
     
 

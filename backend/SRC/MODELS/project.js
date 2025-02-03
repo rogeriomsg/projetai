@@ -103,6 +103,7 @@ const projectSchema = new mongoose.Schema(
     dealership: {type : String , require : false}, // Nome da concessionária ou distribuidora (opcional)
     client: { type: clientSchema, require: true}, // Cliente associado ao projeto
     plant:{type: plantSchema,}, // Dados da sina associada ao projeto
+    compensation_system: {type:String, require: true},
     consumerUnit: {type : [consumerUnitSchema], default: []}, // Lista de unidades consumidoras participantes do sistema de 
     inverters:{type : [inverterSchema], default: []}, // Lista de inversores usados no projeto
     modules:{type : [moduleSchema], default: []}, // Lista de módulos fotovoltaicos usados no projeto
