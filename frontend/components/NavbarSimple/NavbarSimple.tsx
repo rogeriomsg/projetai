@@ -3,7 +3,7 @@ import { useState , useEffect } from 'react';
 import {
   Icon2fa,
   IconBellRinging,
-  IconDatabaseImport,
+  IconMap,
   IconFingerprint,
   IconKey,
   IconLogout,
@@ -21,8 +21,8 @@ import { usePathname } from 'next/navigation';
 const data = [
   { link: '/', label: 'Início', icon: IconBellRinging },
   { link: '/project/new', label: 'Projetos', icon: IconReceipt2 },
-  { link: '/map', label: 'Mapa', icon: IconFingerprint },
-  // { link: '', label: 'Chaves', icon: IconKey },
+  { link: '/map', label: 'Mapa', icon: IconMap },
+  { link: '/mapMulti', label: 'Mapa2', icon: IconKey },
   // { link: '', label: 'Databases', icon: IconDatabaseImport },
   // { link: '', label: 'Authentication', icon: Icon2fa },
   // { link: '', label: 'Other Settings', icon: IconSettings },

@@ -1,18 +1,33 @@
 'use client'
-import { MapComponent } from "@/components/map";
-import { MapProvider } from "@/providers/map-provider";
+import React from 'react';
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 
-export default function Map() {
-  const center = {lat:-15.78357490519806,lng:-47.93394030140764}
-  const handleMapClick = (e:google.maps.MapMouseEvent) => {
-    
-    alert( e.latLng?.toString() )
-  };
+const containerStyle = {
+  width: '100%',
+  height: '800px',
+};
 
+const center = {
+  lat: -23.55052, // Latitude de exemplo (São Paulo)
+  lng: -46.633308, // Longitude de exemplo (São Paulo)
+};
+
+const MyMap = () => {
   return (
-    <MapProvider>
-      
-        <MapComponent center={center} zoom={18} onClick={handleMapClick}/>
-    </MapProvider>
+    <LoadScript 
+        googleMapsApiKey="AIzaSyC1l1lxyBRn6Jfm7EQkoeCv7auuleXsnmM"
+        libraries={['places','marker','maps']}
+    >
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={18}
+      >
+        {/* Exemplo de marcador */}
+        <Marker position={center} />
+      </GoogleMap>
+    </LoadScript>
   );
-}
+};
+
+export default MyMap;
