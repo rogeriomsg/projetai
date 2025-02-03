@@ -44,7 +44,7 @@ const plantSchema = new mongoose.Schema({
     "Subterrânea",
   ] ,default: "Aérea"},
   branch_section: { type : Number ,  require : true },
-  subgroup: { type : Number ,  default : "B1" },
+  subgroup: { type : String ,  default : "B1" },
   circuit_breaker : { type : Number ,  require : true }, // Valor do disjuntor em amperes do padrão de entrada da unidade consumidora 
   installed_load : { type : Number ,  require : true }, //Carga instalada - refere-se a carga instalada na residência 
   installed_power : { type : Number ,  require : true }, // Potência instalada da usina em kW - geralmente é a potência total máxima dos módulos 
@@ -107,11 +107,11 @@ const projectSchema = new mongoose.Schema(
     consumerUnit: {type : [consumerUnitSchema], default: []}, // Lista de unidades consumidoras participantes do sistema de 
     inverters:{type : [inverterSchema], default: []}, // Lista de inversores usados no projeto
     modules:{type : [moduleSchema], default: []}, // Lista de módulos fotovoltaicos usados no projeto
-    path_meter_pole: { type: String, required: false }, // Caminho para a foto do poste do medidor (opcional)
-    path_meter: { type: String, required: false }, // Caminho para a foto do medidor (opcional)
-    path_bill: { type: String, required: false }, // Caminho para a fatura de energia (opcional)
-    path_identity:{ type: String, required: false }, // Caminho para a identidade do cliente (opcional)
-    path_procuration:{ type: String, required: false}, // Caminho para o arquivo de procuração (opcional)
+    path_meter_pole: { data: Buffer, contentType: String }, // Caminho para a foto do poste do medidor (opcional)
+    path_meter: { data: Buffer, contentType: String }, // Caminho para a foto do medidor (opcional)
+    path_bill: { data: Buffer, contentType: String }, // Caminho para a fatura de energia (opcional)
+    path_identity:{ data: Buffer, contentType: String }, // Caminho para a identidade do cliente (opcional)
+    path_procuration:{ data: Buffer, contentType: String }, // Caminho para o arquivo de procuração (opcional)
     status : { // Status do projeto
       type: String , 
       enum :[

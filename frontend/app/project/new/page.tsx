@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid,} from '@mantine/core';
+import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid, FileInput,} from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -52,11 +52,11 @@ export default function  NewProject() {
       name: "", // Nome do projeto (opcional)
       description: "", // Descrição do projeto (opcional)
       dealership: "", // Nome da concessionária ou distribuidora (opcional)
-      path_meter_pole: "", // Caminho para a foto do poste do medidor (opcional)
-      path_meter: "", // Caminho para a foto do medidor (opcional)
-      path_bill: "", // Caminho para a fatura de energia (opcional)
-      path_identity:"", // Caminho para a identidade do cliente (opcional)
-      path_procuration:"", // Caminho para o arquivo de procuração (opcional)      
+      path_meter_pole: null as Buffer | null, // Caminho para a foto do poste do medidor (opcional)
+      path_meter: null as Buffer | null, // Caminho para a foto do medidor (opcional)
+      path_bill: null as Buffer | null, // Caminho para a fatura de energia (opcional)
+      path_identity:null as Buffer | null, // Caminho para a identidade do cliente (opcional)
+      path_procuration:null as Buffer | null, // Caminho para o arquivo de procuração (opcional)      
       client: {
         client_code: 0,
         name: "",
@@ -143,71 +143,70 @@ export default function  NewProject() {
       const errors: Record<string, any> = {};      
       switch (activeStep) {
         case 0: //informações do projeto
-          errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
-          errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
-          errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
-          errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
+          // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
+          // errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
+          // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
+          // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
-          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+          // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
-          errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
-          errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
-          errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
+          // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
+          // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
+          // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
           
-          errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
-          errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
-          errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
-          errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
-          errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
-          errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
-          errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
-          errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
-          errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
-          errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
-          errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
+          // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
+          // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
+          // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
+          // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
+          // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
+          // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
+          // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
+          // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
+          // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
+          // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
+          // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
           break;
         case 3: //Sistema de compensação
-          errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
-          values.consumerUnit.map((item,index)=>(
-            errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
-          )) 
-          values.consumerUnit.forEach((_, index) => {
-            errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
-          });
+          // errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
+          // values.consumerUnit.map((item,index)=>(
+          //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
+          // )) 
+          // values.consumerUnit.forEach((_, index) => {
+          //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
+          // });
           break; 
         case 4: //Equipamentos      
-          values.inverters.map((itemInv,index)=>(
-            errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
-            errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
-            errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
-          ));
+          // values.inverters.map((itemInv,index)=>(
+          //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
+          //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
+          //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
+          // ));
           
-          values.modules.map((item,index)=>(  
-            errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
-            errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
-            errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
-            errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
-            errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
-          ));
-          const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
-            return Object.keys(obj).some((key) => key.startsWith(prefix));
-          };
-          if(hasKeyStartingWith(errors, 'inverters.'))
-            changeTab("inverters")
-          else if(hasKeyStartingWith(errors, 'modules.'))
-            changeTab("modules")
-
+          // values.modules.map((item,index)=>(  
+          //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
+          //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
+          //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
+          //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
+          //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
+          // ));
+          // const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
+          //   return Object.keys(obj).some((key) => key.startsWith(prefix));
+          // };
+          // if(hasKeyStartingWith(errors, 'inverters.'))
+          //   changeTab("inverters")
+          // else if(hasKeyStartingWith(errors, 'modules.'))
+          //   changeTab("modules")
         break;
       }
       //alert(JSON.stringify(errors) ) 
@@ -215,16 +214,44 @@ export default function  NewProject() {
     },
 
     transformValues: (values) => ({
-      ...values,
-      name:`Projeto de ${values.client.name} - ${values.client.client_code}`, // Nome do projeto (opcional)
+      status : 'Em cadastro',
+      project_type : values.project_type,
+      is_active: true, // Indica se o projeto está ativo
+      name: values.name, // Nome do projeto (opcional)
+      description: values.description, // Descrição do projeto (opcional)
+      dealership: values.dealership, // Nome da concessionária ou distribuidora (opcional)
+      path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
+      path_meter: values.path_meter, // Caminho para a foto do medidor (opcional)
+      path_bill: values.path_bill, // Caminho para a fatura de energia (opcional)
+      path_identity:values.path_identity, // Caminho para a identidade do cliente (opcional)
+      path_procuration:values.path_procuration, // Caminho para o arquivo de procuração (opcional)        
       client: {
         client_code: Number(values.client.client_code),
-        address: {          
+        name: values.client.name,
+        cpf: values.client.cpf,
+        identity: values.client.identity,
+        identity_issuer:values.client.identity_issuer,
+        email: values.client.email,
+        phone: values.client.phone,        
+        address: {  
+          street: values.client.address.street,
+          complement:values.client.address.complement,
+          no_number: Boolean(values.client.address.no_number),          
+          district:values.client.address.district,
+          state: values.client.address.state,
+          city: values.client.address.city,                 
           number: Number(values.client.address.number),          
           zip: Number(values.client.address.zip),
         },
       },
       plant: { 
+        name: values.plant.name, 
+        description: values.plant.description,
+        class:values.plant.class,
+        subgroup:values.plant.subgroup,
+        connection_type:values.plant.connection_type,
+        generation_type:values.plant.generation_type,
+        type_branch:values.plant.type_branch,  
         consumer_unit_code: Number(values.plant.consumer_unit_code) ,
         circuit_breaker: Number(values.plant.circuit_breaker),
         installed_load: Number(values.plant.installed_load),
@@ -232,36 +259,47 @@ export default function  NewProject() {
         service_voltage: Number(values.plant.service_voltage),
         branch_section: Number(values.plant.branch_section), 
         address: { 
-          number: Number(values.plant.address.number),
-          zip:  Number(values.plant.address.zip)
+          street: values.plant.address.street,
+          complement:values.plant.address.complement,
+          no_number: Boolean(values.plant.address.no_number),          
+          district:values.plant.address.district,
+          state: values.plant.address.state,
+          city: values.plant.address.city,                 
+          number: Number(values.plant.address.number),          
+          zip: Number(values.plant.address.zip),
         },
-        geolocation: {
+        geolocation: {          
           lat: Number(values.plant.geolocation.lat),
-          lng: Number(values.plant.geolocation.lng)
+          lng: Number(values.plant.geolocation.lng),
+          link_point:values.plant.geolocation.link_point
         }, 
       },      
-      consumerUnit: values.consumerUnit.map((item)=>({
+      consumerUnit: values.consumerUnit.map((item)=>({         
         consumer_unit_code: Number(item.consumer_unit_code) ,
+        name: item.name, 
+        description: item.description, 
         percentage:  Number(item.percentage),
+        is_plant: Boolean(item.is_plant),
       })),
       inverters: values.inverters.map((item)=>({
+        model: item.model,
+        manufacturer: item.manufacturer, 
+        description: item.description,
         power: Number(item.power),
         quantity: Number(item.quantity),
         total_power : Number(item.total_power),
       })),      
       modules: values.modules.map((item)=>({
+        model: item.model,
+        manufacturer: item.manufacturer,
+        description: item.description,        
+        total_area: Number(item.total_area),
         with: Number(item.width),
         heigth : Number(item.height),
         power: Number(item.power),
         quantity: Number(item.quantity),
         total_power : Number(item.total_power),
-      })),
-      path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
-      path_meter: values.path_meter, // Caminho para a foto do medidor (opcional)
-      path_bill: values.path_bill, // Caminho para a fatura de energia (opcional)
-      path_identity: values.path_identity, // Caminho para a identidade do cliente (opcional)
-      path_procuration: values.path_procuration, // Caminho para o arquivo de procuração (opcional)
-      status : 'Em Cadastro', 
+      })),      
     }),
 
     onValuesChange: (values) => {
@@ -395,7 +433,7 @@ export default function  NewProject() {
     form.setFieldValue(`plant.address.state`, _checked?form.getValues().client.address.state:"");
     form.setFieldValue(`plant.address.city`, _checked?form.getValues().client.address.city:"");
     form.setFieldValue(`plant.address.zip`, _checked?Number(form.getValues().client.address.zip):0);
-    form.setFieldValue(`plant.address.complement`, _checked?form.getValues().client.address.complement:"0");
+    form.setFieldValue(`plant.address.complement`, _checked?form.getValues().client.address.complement:"");
     form.setFieldValue(`plant.address.no_number`, _checked?form.getValues().client.address.no_number:false);      
   };
  
@@ -438,21 +476,20 @@ export default function  NewProject() {
     
     if (!form.validate().hasErrors) {
       //alert(JSON.stringify(_values))
+      //alert(_values.path_bill?.name)
+      //return;
       
-      //setLoading(true);
-    //   setIsSubmitting(true);
-      // try {
-      //   const data = {}
-      //   const response = await axios.post("http://192.168.0.10:3333/project/create",
-      //     _values,
-      //     {headers: {'content-type': 'application/x-www-form-urlencoded'}}
-      //   );
-      //   alert("Resposta do servidor: "+ response.data)
-      // } catch (e:any) {
-      //   alert("Erro ao enviar os dados: " + e.message);
-      // } finally {
-      //   setIsSubmitting(false);
-      // }
+      try {
+        const response = await axios.post("http://10.67.120.248:3333/project/create",
+          _values,
+          {headers: {'content-type': 'application/x-www-form-urlencoded'}}
+        );
+        alert("Resposta do servidor: "+ response.data)
+      } catch (e:any) {
+        alert("Erro ao enviar os dados: " + e.message);
+      } finally {
+        //setIsSubmitting(false);
+      }
     }
     else{
       alert("O formulário contem pendências!");
@@ -1051,7 +1088,7 @@ export default function  NewProject() {
                 <Autocomplete
                   label="Tipo de ramal"
                   placeholder="Selecione"
-                  data={['Aéreo', 'Subterrâneo']}
+                  data={["Aérea","Subterrânea"]}
                   key={form.key(`plant.type_branch`)}
                   {...form.getInputProps(`plant.type_branch`)} 
                   required
@@ -1453,11 +1490,57 @@ export default function  NewProject() {
             description="Documentos"
             icon={<IconFileUpload size={18} />}
           >
-            Step 4 content: teste
+            <Grid>
+              <GridCol >
+                <FileInput 
+                  accept="image/png,image/jpeg,application/pdf" 
+                  label="Foto da conta de energia do cliente" 
+                  placeholder="Upload de arquivos" 
+                  key={form.key(`path_bill`)}
+                  {...form.getInputProps(`path_bill`)}   
+                /> 
+              </GridCol>
+              <GridCol >
+                <FileInput 
+                  accept="image/png,image/jpeg,application/pdf" 
+                  label="Cópia do documento de identidade do cliente" 
+                  placeholder="Upload de arquivos" 
+                  key={form.key(`path_identity`)}
+                  {...form.getInputProps(`path_identity`)}   
+                /> 
+              </GridCol>
+              <GridCol >
+                <FileInput 
+                  accept="image/png,image/jpeg" 
+                  label="Foto do padrão de entrada " 
+                  placeholder="Upload de arquivos" 
+                  key={form.key(`path_meter`)}
+                  {...form.getInputProps(`path_meter`)} 
+                /> 
+              </GridCol>
+              <GridCol >
+                <FileInput 
+                  accept="image/png,image/jpeg" 
+                  label="Foto do poste do padrão de entrada" 
+                  placeholder="Upload de arquivos" 
+                  key={form.key(`path_meter_pole`)}
+                  {...form.getInputProps(`path_meter_pole`)} 
+                /> 
+              </GridCol>
+              <GridCol >
+                <FileInput 
+                  accept="image/png,image/jpeg,application/pdf" 
+                  label="Foto da procuração" 
+                  placeholder="Upload de arquivos" 
+                  key={form.key(`path_procuration`)}
+                  {...form.getInputProps(`path_procuration`)}                     
+                /> 
+              </GridCol>
+            </Grid>
           </Stepper.Step>
           <Stepper.Completed>
             <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
-            <pre>{JSON.stringify(form.getValues(), null, 3)}</pre>
+            <pre>{JSON.stringify(form.getValues(), null, 4)}</pre>
             
           </Stepper.Completed>
           </Stepper>
