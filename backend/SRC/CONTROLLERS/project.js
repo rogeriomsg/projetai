@@ -2,9 +2,10 @@ const Models = require('../MODELS');
 const Services = require("../SERVICES")
 
 exports.search = async (req, res) => {
-    //console.log(req.query)
+
     const {name = '', id, client_id, dealership = '', status, service_voltage, is_active} = req.query ;
-    console.log(name, id, client_id, dealership, status, service_voltage, is_active);
+    console.log( id, name, client_id, dealership, status, service_voltage, is_active);    
+
     const filtros = {} ;
     filtros.name = { $regex: name , $options: 'i' }; // 'i' para case-insensitive = name ;
     if(id) filtros._id = id ;

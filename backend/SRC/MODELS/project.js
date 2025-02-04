@@ -10,6 +10,9 @@ const addressSchema = new mongoose.Schema({
   state: {type : String , require : true}, // Estado
   zip : {type : Number , require : true}, // CEP
 
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const clientSchema = new mongoose.Schema({   
@@ -21,6 +24,9 @@ const clientSchema = new mongoose.Schema({
   email: {type : String , require : false}, // E-mail do cliente (opcional)
   phone : {type : String , require : false}, // Telefone do cliente (opcional)
   address:{type: addressSchema, require:true}, // Endereço do cliente
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const plantSchema = new mongoose.Schema({  
@@ -55,6 +61,9 @@ const plantSchema = new mongoose.Schema({
     lng: { type : Number , default : 0.0  }, // Longitude
     link_point:{type:String,require:false}
   },
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const consumerUnitSchema = new mongoose.Schema({       
@@ -63,6 +72,9 @@ const consumerUnitSchema = new mongoose.Schema({
   description: {type : String ,default: ""} , // Descrição da unidade consumidora (opcional)
   percentage : { type : Number , default: 0 , require : false }, // Porcentagem de participação no sistema de compensação(opcional)
   is_plant: { type: Boolean , default: false}, // Indica se essa unidade consumidora será instalada a usina
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const inverterSchema = new mongoose.Schema({       
@@ -72,6 +84,9 @@ const inverterSchema = new mongoose.Schema({
   quantity: {type : Number , require : true}, // Quantidade de inversores
   total_power : {type : Number , require : true},
   description: {type : String ,default: ""}, // Descrição do inversor (opcional)
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
   
 const moduleSchema = new mongoose.Schema({       
@@ -84,6 +99,9 @@ const moduleSchema = new mongoose.Schema({
   power : {type : Number , require : true}, // Potência do módulo em kW
   quantity: {type : Number , default: 2.23, require : true}, // Quantidade de módulos
   total_power : {type : Number , require : true},
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
     
 const projectSchema = new mongoose.Schema(

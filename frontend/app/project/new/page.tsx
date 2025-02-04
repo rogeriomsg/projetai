@@ -14,13 +14,11 @@ import {
   IconPlus,
   IconCheck,
   IconX,
-  IconMap2,
   IconHome,
 } from '@tabler/icons-react';
 
 import axios from "axios";
 import MapModalGetSinglePoint from '@/components/MapModal/MapModalGetSinglePoint';
-import MapModalGetMultiple from '@/components/MapModal/MapModalGetMultiple';
 
 export default function  NewProject() {
   const [activeStep, setActiveStep] = useState(0); 
@@ -293,7 +291,7 @@ export default function  NewProject() {
         model: item.model,
         manufacturer: item.manufacturer,
         description: item.description,        
-        total_area: Number(item.total_area),
+        total_area: Number(item.total_area).toPrecision(2),
         with: Number(item.width),
         heigth : Number(item.height),
         power: Number(item.power),
@@ -460,11 +458,6 @@ export default function  NewProject() {
     setPorcentagem(_porcentagem!==100?false:true)
   }
 
-  // Função para mudar a aba programaticamente
-  const changeTab = (tabValue: string) => {
-    setActiveTab(tabValue);
-  };
-
   const handleSalvepointPlant = (point:{lat:number;lng:number}) => {
     if (point) {
       form.setFieldValue("plant.geolocation.lat", point.lat);
@@ -472,7 +465,7 @@ export default function  NewProject() {
     }
   };
   
-  const handleSubmit = async (_values: typeof form.values ) => {   
+  const handleSubmit = async (_values: any ) => {   
     
     if (!form.validate().hasErrors) {
       //alert(JSON.stringify(_values))
@@ -651,6 +644,23 @@ export default function  NewProject() {
               required
             />
           </Grid.Col>
+          <Grid.Col span={1}>
+            <NumberInput
+              placeholder="Quantidade de inversores"
+              min={1}
+              allowLeadingZeros={false}
+              allowDecimal={false}
+              key={form.key(`modules.${index}.quantity`)}
+              {...form.getInputProps(`modules.${index}.quantity`)} 
+              onBlur={(e)=>{ 
+                // Atualiza o campo modificado no estado do form
+                form.setFieldValue(`modules.${index}.quantity`, Number(e.target.value)); 
+                calculatesTotalPowerModules(index)
+                calculateArea(index)
+              }}
+              required           
+            />
+          </Grid.Col> 
           <Grid.Col span={1}>  
             <NumberInput
               placeholder="Largura"
@@ -686,7 +696,7 @@ export default function  NewProject() {
           <Grid.Col span={1}>  
             <NumberInput
               placeholder="Área"
-              decimalScale={3}
+              decimalScale={2}
               key={form.key(`modules.${index}.total_area`)}
               {...form.getInputProps(`modules.${index}.total_area`)}
               readOnly
@@ -706,23 +716,7 @@ export default function  NewProject() {
               }}
               required         
             />
-          </Grid.Col>          
-          <Grid.Col span={1}>
-            <NumberInput
-              placeholder="Quantidade de inversores"
-              min={1}
-              allowLeadingZeros={false}
-              allowDecimal={false}
-              key={form.key(`modules.${index}.quantity`)}
-              {...form.getInputProps(`modules.${index}.quantity`)} 
-              onBlur={(e)=>{ 
-                // Atualiza o campo modificado no estado do form
-                form.setFieldValue(`modules.${index}.quantity`, Number(e.target.value)); 
-                calculatesTotalPowerModules(index)
-              }}
-              required           
-            />
-          </Grid.Col> 
+          </Grid.Col>  
           <Grid.Col span={1}>
             <NumberInput
               decimalScale={3}
