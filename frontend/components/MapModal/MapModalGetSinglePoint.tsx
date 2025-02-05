@@ -7,8 +7,11 @@ import { randomId } from "@mantine/hooks";
 
 interface MapModalProps {
   title?:string
-  centerMap?: { lat : number ; lng:number} | null
-  onSetPoint: (point: { lat:number; lng: number }) => void ;
+  pointDefault?: { lat : number ; lng:number} | null
+  centerDefault?: { lat : number ; lng:number} | null
+  zoom?: number
+  onSetPoint?: (point: { lat:number; lng: number }) => void ;
+  changePoint?:boolean
 }
 
 const containerStyle = {
@@ -16,13 +19,13 @@ const containerStyle = {
     height: '500px',
   };
   
-  const defaultcenter = {
+  const center = {
     lat: -15.783579727102195, // Latitude de exemplo (São Paulo)
     lng: -47.93393761657747, // Longitude de exemplo (São Paulo)
   };
 
 
-const MapModalGetSinglePoint: React.FC<MapModalProps> = ({ title,  onSetPoint,centerMap}) => {
+const MapModalGetSinglePoint: React.FC<MapModalProps> = ({ title,  onSetPoint, centerDefault = center, pointDefault ,zoom = 16, changePoint = true}) => {
     const [marker, setMarker] = useState<{ lat: number; lng: number}[]>([]);
     const [opened, setOpened] = useState(false);
     const { isLoaded } = useJsApiLoader({
@@ -30,19 +33,24 @@ const MapModalGetSinglePoint: React.FC<MapModalProps> = ({ title,  onSetPoint,ce
     });
 
     const handleSave = () => {      
-      if(marker.length>0)
+      if(marker.length>0 && onSetPoint)
         onSetPoint(marker[0])
       setOpened(false);
     };
 
     const handleMapClick = (event: google.maps.MapMouseEvent) => {  
-              
+        if(!changePoint)  return ;     
         if (event.latLng) {            
             const marker = {lat:event.latLng?.lat(), lng: event.latLng?.lng()}            
             //criar apenas um
             setMarker( [marker] ) 
         } 
-    };    
+    };  
+    useEffect(()=>{
+      //alert(JSON.stringify(defaultPoint))
+      setMarker(pointDefault? [pointDefault] : [] )
+      changePoint = changePoint || true ;
+    },[])  
    
 
 
@@ -70,8 +78,8 @@ const MapModalGetSinglePoint: React.FC<MapModalProps> = ({ title,  onSetPoint,ce
           {isLoaded ? (
             <GoogleMap
               mapContainerStyle={containerStyle}
-              center={centerMap || defaultcenter}
-              zoom={18}
+              center={ pointDefault || centerDefault || center} 
+              zoom={ zoom}
               onClick={handleMapClick}
               options={{
                 streetViewControl: false, 

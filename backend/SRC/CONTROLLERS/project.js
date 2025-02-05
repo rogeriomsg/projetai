@@ -138,10 +138,8 @@ exports.create = async (req, res) => {
   
     try {
       // Validação básica (pode ser expandida)
-      if (!req.body.name || !req.body.client) {
-        return res
-          .status(400)
-          .json({ message: "Os campos 'name' e 'client' são obrigatórios." });
+      if (!req.body.name || !req.body.client || !req.body.plant) {
+        return res.status(400).json({ message: "Os campos 'name' e 'client' são obrigatórios." });
       }
   
       // Criar o projeto diretamente no banco

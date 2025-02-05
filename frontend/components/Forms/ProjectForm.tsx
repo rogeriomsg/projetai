@@ -19,9 +19,13 @@ import {
 
 import axios from "axios";
 import MapModalGetSinglePoint from '@/components/MapModal/MapModalGetSinglePoint';
+import Api, { Create, Update } from '@/api/project';
+import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
+import { useRouter } from 'next/navigation';
 
 
-export interface IDataValuesProject {
+export interface IProjectDataValues {
+    _id:string ,
     status : string,
     project_type : string;
     is_active: boolean; // Indica se o projeto está ativo
@@ -112,37 +116,65 @@ export interface IDataValuesProject {
         power: number;
         total_power : number;
     }[];
-  };
-
-interface FormProps {
-    initialValues?: IDataValuesProject | null; // Valores iniciais para edição
 };
 
-const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
-    
+interface IZipCodeDataValues {
+    cep: string,
+    logradouro: string,
+    complemento: string,
+    unidade: string,
+    bairro: string,
+    localidade: string,
+    uf: string,
+    estado: string,
+    regiao: string,
+    ibge: string,
+    gia: string,
+    ddd: string,
+    siafi: string,
+};
+interface IStatesDataValues {
+    id: number,
+    sigla: string,
+    nome: string,
+    regiao: {
+      id: number,
+      sigla: string,
+      nome: string
+    }
+}
 
+
+interface FormProps {
+    initialValues?: IProjectDataValues | null; // Valores iniciais para edição
+};
+
+const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{   
+    const [saving, setSaving] = useState(false); 
     const [activeStep, setActiveStep] = useState(0); 
     const [checked, setChecked] = useState(false);
     const [colorSlider, setcolorSlider] = useState("green");
     const [porcentagem, setPorcentagem] = useState(false);
-    const [states, setStates] = useState<any[]>([]); // Lista de estados
+    const [states, setStates] = useState<IStatesDataValues[] | null>(null); // Lista de estados
     const [municipalities, setMunicipalities] = useState<any[]>([]); // Lista de municípios   
     const [loadingStates, setLoadingStates] = useState<boolean>(false); // Carregamento de estados
     const [loadingMunicipalities, setLoadingMunicipalities] = useState<boolean>(false); // Carregamento de municípios
     const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
     const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
     const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
-    const [zipCodeData, setZipCodeData] = useState<{}|null>(null); // Carregamento de estados
+    const [isEditing, setIsEditing] = useState(false); //
+    const router = useRouter();
 
     const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
     const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
 
-    const form = useForm<IDataValuesProject>({
+    const form = useForm<IProjectDataValues>({
         mode: 'uncontrolled',
 
         validateInputOnBlur:true,
 
         initialValues: initialValues || { 
+            _id : "",
             status : 'Em cadastro',
             project_type : 'Até 10kWp',
             is_active: true, // Indica se o projeto está ativo
@@ -311,6 +343,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
         },
 
         transformValues: (values) => ({
+            _id: values._id,
             status : 'Em cadastro',
             project_type : values.project_type,
             is_active: true, // Indica se o projeto está ativo
@@ -403,7 +436,8 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
             })),      
         }),
 
-        onValuesChange: (values) => {
+        onValuesChange: (values,previous) => {
+            //form.setValues(values)
             CheckPorcentagemConsumerUnit()
             if(values.client.address.no_number){ 
                 form.clearFieldError('client.address.number')
@@ -420,62 +454,35 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
             }
             else{        
                 setNoNumberPlant(false)
-            }
+            } 
         },
     });
 
     // Buscar estados
     useEffect(() => {
-        const fetchStates = async () => {
-        setLoadingStates(true);
-        try {
-            const response = await axios.get("http://servicodados.ibge.gov.br/api/v1/localidades/estados");
-            setStates(response.data);
-        } catch (error) {
-            console.error("Erro ao buscar estados", error);
-        } finally {
+        const fetchStates = async () => {    
+            setLoadingStates(true);
+            const response = await FetchStates()
+            setStates(response as IStatesDataValues[])
             setLoadingStates(false);
-        }
         };
-
         fetchStates();
+
+        setIsEditing(initialValues!==undefined)
     }, []);
 
     const fetchMunicipalities = async (selectedState:string) => {    
-        setLoadingMunicipalities(true);       
-        try {
-        const response = await axios.get(
-            `http://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios`
-        );      
-        setMunicipalities(response.data as any);
-        } catch (error) {
-        console.error("Erro ao buscar municípios", error);
-        } finally {
+        if(!(selectedState.toString().trim().length === 2)) return false;         
+        setLoadingMunicipalities(true);
+        const response = await FetchMunicipalities(selectedState)
+        setMunicipalities(response as any);
         setLoadingMunicipalities(false);
-        }
-    };
-
-    const fetchZipCode = async (zipcode:string) => {     
-        setLoadingZipCode(true)
-        try {
-            const response = await axios.get(
-                `https://viacep.com.br/ws/${zipcode}/json/`
-            );  
-            // const data = response.data;
-            // return data;
-            setZipCodeData(response.data as any)
-        } catch (error) {
-            //console.error('Erro ao buscar o CEP:', error);
-            return {};
-        } finally {   
-            setLoadingZipCode(false)     
-        }
     };
     
     // Buscar municípios do  cliente quando o estado é selecionado
     form.watch('client.address.state', ({value}) => {    
         form.setFieldValue('client.address.city', "") 
-        fetchMunicipalities(value);    
+        fetchMunicipalities(value); 
     });
 
     // Buscar municípios do usina quando o estado é selecionado
@@ -487,28 +494,37 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
     // Buscar municípios do  cliente quando o estado é selecionado
     form.watch('client.address.zip', async ({value}) => 
     {   
-        if(!(value.toString().trim().length === 8)) 
-        return false; 
-        await fetchZipCode(value.toString())
-        form.setFieldValue('client.address.street', zipCodeData.logradouro||'')
-        form.setFieldValue('client.address.district', zipCodeData.bairro||'')
-        form.setFieldValue(`client.address.state`, zipCodeData.uf||'' ) 
-        form.setFieldValue('client.address.city', zipCodeData.localidade||'')
-        form.setFieldValue('client.address.complement', zipCodeData.complemento||'')
+        if(value.toString().trim().length < 8) return; 
+        const response = (await FetchZipCode(value.toString())) as IZipCodeDataValues;
+        form.setFieldValue('client.address.street', response.logradouro ||'')
+        form.setFieldValue('client.address.district', response.bairro ||'')
+        form.setFieldValue(`client.address.state`, response.uf ||'' ) 
+        form.setFieldValue('client.address.city', response.localidade ||'')
+        form.setFieldValue('client.address.complement', response.complemento ||'')
     });
 
     // Buscar municípios do  cliente quando o estado é selecionado
-    form.watch('plant.address.zip', async ({value}) => 
-        {   
-        if(!(value.toString().trim().length === 8)) 
-            return false; 
-        await fetchZipCode(value.toString())
-        form.setFieldValue('plant.address.street', zipCodeData.logradouro||'')
-        form.setFieldValue('plant.address.district', zipCodeData.bairro||'')
-        form.setFieldValue(`plant.address.state`, zipCodeData.uf||'' ) 
-        form.setFieldValue('plant.address.city', zipCodeData.localidade||'')
-        form.setFieldValue('plant.address.complement', zipCodeData.complemento||'')
-        });
+    form.watch('plant.address.zip', async ({value}) => {  
+        // if(!(value.toString().trim().length === 8)) return; 
+        // const response = (await FetchZipCode(value.toString())) as IZipCodeDataValues;
+        // form.setFieldValue('plant.address.street', response.logradouro || '')
+        // form.setFieldValue('plant.address.district', response.bairro || '')
+        // form.setFieldValue(`plant.address.state`, response.uf || '' ) 
+        // form.setFieldValue('plant.address.city', response.localidade || '')
+        // form.setFieldValue('plant.address.complement', response.complemento || '')
+    });
+    
+    const CopyAddressFromClientToPlant = (_checked:boolean) => {
+        form.setFieldValue(`plant.address.street`,_checked?form.getValues().client.address.street:"");
+        form.setFieldValue(`plant.address.complement`, _checked?form.getValues().client.address.complement:"0" );
+        form.setFieldValue(`plant.address.number`, _checked?Number(form.getValues().client.address.number):0 );
+        form.setFieldValue(`plant.address.district`, _checked?form.getValues().client.address.district:"");
+        form.setFieldValue(`plant.address.state`, _checked?form.getValues().client.address.state:"");
+        form.setFieldValue(`plant.address.city`, _checked?form.getValues().client.address.city:"");
+        form.setFieldValue(`plant.address.zip`, _checked?Number(form.getValues().client.address.zip):0);
+        form.setFieldValue(`plant.address.complement`, _checked?form.getValues().client.address.complement:"");
+        form.setFieldValue(`plant.address.no_number`, _checked?form.getValues().client.address.no_number:false);      
+    };
 
     const calculateArea = (index:number) => {
         // Recalcula total_area após a alteração
@@ -526,17 +542,6 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
         // Recalcula a potência total após a alteração
         const total_power = Number(form.getValues().inverters[index].power) * Number(form.getValues().inverters[index].quantity) ;
         form.setFieldValue(`inverters.${index}.total_power`, total_power);
-    };
-
-    const CopyAddressFromClientToPlant = (_checked:boolean) => {
-        form.setFieldValue(`plant.address.street`,_checked?form.getValues().client.address.street:"");
-        form.setFieldValue(`plant.address.number`, _checked?Number(form.getValues().client.address.number):0 );
-        form.setFieldValue(`plant.address.district`, _checked?form.getValues().client.address.district:"");
-        form.setFieldValue(`plant.address.state`, _checked?form.getValues().client.address.state:"");
-        form.setFieldValue(`plant.address.city`, _checked?form.getValues().client.address.city:"");
-        form.setFieldValue(`plant.address.zip`, _checked?Number(form.getValues().client.address.zip):0);
-        form.setFieldValue(`plant.address.complement`, _checked?form.getValues().client.address.complement:"");
-        form.setFieldValue(`plant.address.no_number`, _checked?form.getValues().client.address.no_number:false);      
     };
     
     const calculatesLoadAvailable = () => {
@@ -564,8 +569,8 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
 
     const handleSalvepointPlant = (point:{lat:number;lng:number}) => {
         if (point) {
-        form.setFieldValue("plant.geolocation.lat", point.lat);
-        form.setFieldValue("plant.geolocation.lng", point.lng);
+            form.setFieldValue("plant.geolocation.lat", point.lat);
+            form.setFieldValue("plant.geolocation.lng", point.lng);
         }
     };  
     
@@ -835,21 +840,49 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
     const handleSubmit = async (_values: any ) => {   
         
         if (!form.validate().hasErrors) {
-        //alert(JSON.stringify(_values))
-        //alert(_values.path_bill?.name)
-        //return;
-        
-            try {
-                const response = await axios.post("http://10.67.120.248:3333/project/create",
-                _values,
-                {headers: {'content-type': 'application/x-www-form-urlencoded'}}
-                );
-                alert("Resposta do servidor: "+ response.data)
-            } catch (e:any) {
-                alert("Erro ao enviar os dados: " + e.message);
-            } finally {
-                //setIsSubmitting(false);
+            if(isEditing)
+            {
+                alert("editando")
+                const updateProject = async () => {
+                    setSaving(true);
+                    const response = await Update(_values._id,_values);
+                    if(response.error === 'none')
+                    {
+                        //redirecionar sucesso  
+                        alert(`Salvou com sucesso: ${response.data}`) 
+                    }
+                    else 
+                    {
+                        //redirecionar erro
+                        alert(`Erro ao salvar: ${response.data}`) 
+                    }
+                    router.push("/project/list"); // Redireciona para a página de listagem"
+                    setSaving(false);
+                };    
+                
+                updateProject(); 
             }
+            else{
+                const createProject = async () => {
+                    setSaving(true);
+                    const response = await Create(_values);
+                    if(response.error === 'none')
+                    {
+                        //redirecionar sucesso  
+                        alert("Salvou com sucesso!")                  
+                    }
+                    else 
+                    {
+                        //redirecionar erro
+                        alert("Erro ao salvar!") 
+                    }
+                    router.push("/project/list"); // Redireciona para a página de listagem"
+                    setSaving(false);
+                };    
+                
+                createProject(); 
+            }
+                       
         }
         else{
             alert("O formulário contem pendências!");
@@ -1073,7 +1106,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                     placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
                     key={form.key(`client.address.state`)}
                     {...form.getInputProps(`client.address.state`)}                             
-                    data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}
+                    data={loadingStates ? ["Carregando..."] : states?.map((state) => state.sigla)}
                     required
                     />
                 </Grid.Col>
@@ -1083,7 +1116,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                     placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
                     key={form.key(`client.address.city`)}
                     {...form.getInputProps(`client.address.city`)} 
-                    data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}               
+                    data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}     
                     required
                     />
                 </Grid.Col>
@@ -1298,10 +1331,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                 </Grid.Col>
                 <Grid.Col span={4}>
                     <TextInput
-                    label="Complemento"
-                    placeholder=""
-                    key={form.key(`plant.address.complement`)}
-                    {...form.getInputProps(`plant.address.complement`)} 
+                        label="Complemento"
+                        placeholder=""
+                        key={form.key(`plant.address.complement`)}
+                        {...form.getInputProps(`plant.address.complement`)} 
                     />
                 </Grid.Col>
                 <Grid.Col span={3}>
@@ -1310,6 +1343,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                     placeholder="Digite o bairro"
                     key={form.key(`plant.address.district`)}
                     {...form.getInputProps(`plant.address.district`)} 
+
                     />
                 </Grid.Col>
                 <Grid.Col span={2}>
@@ -1318,7 +1352,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                     placeholder="Digite o estado" 
                     key={form.key(`plant.address.state`)}
                     {...form.getInputProps(`plant.address.state`)} 
-                    data={loadingStates ? ["Carregando..."] : states.map((state) => state.sigla)}                
+                    data={loadingStates ? ["Carregando..."] : states?.map((state) => state.sigla)} 
                     required
                     />
                 </Grid.Col>
@@ -1360,8 +1394,15 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                 </Grid.Col>
                 <GridCol span={3} mt="lg">
                     <MapModalGetSinglePoint
-                    onSetPoint={handleSalvepointPlant}
-                    centerMap={{lat:-15.783608157298113,lng:-47.933789069620715}}
+                        onSetPoint={handleSalvepointPlant}
+                        pointDefault={
+                            isEditing?
+                            ({lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng})
+                            :
+                            (null)
+                        }
+                        centerDefault={{lat:-15.78421850,lng:-47.93389432}}
+                        zoom={18}
                     />
                 </GridCol>
                 </Grid> 
@@ -1637,7 +1678,8 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                 </Grid>
             </Stepper.Step>
             <Stepper.Completed>
-                <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise:</p>
+
+                <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise: {isEditing?"EDIÇÃO":"NOVO"}</p>
                 <pre>{JSON.stringify(form.getValues(), null, 4)}</pre>
                 
             </Stepper.Completed>
@@ -1659,7 +1701,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues }) =>{
                 </Button>
                 )} 
                 {activeStep === 6 && (
-                <Button type='submit'>Enviar para análise</Button>
+                <Button type='submit'>{isEditing?"Salvar Alterações":"Enviar para análise"}</Button>
                 )}
             </Group>    
             </form>            

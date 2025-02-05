@@ -1,8 +1,11 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-import { Button, Modal, TextInput, Textarea, Group, Table, Loader } from '@mantine/core';
-import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';
+import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon } from '@mantine/core';
+import { IProjectDataValues } from '@/components/Forms/ProjectForm';
+import { Delete, Search } from '@/api/project';
+import { useRouter } from 'next/navigation';
+import { IconEdit, IconPhoto, IconSearch, IconSun, IconTrash } from '@tabler/icons-react';
+import MapModalGetSinglePoint from '@/components/MapModal/MapModalGetSinglePoint';
 
 type Project = {
   id: number;
@@ -10,104 +13,113 @@ type Project = {
   description: string;
 };
 
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
+export default function ProjectsList() {
+  const router = useRouter();
+  const isMounted = useRef(false);
+  const [projects, setProjects] = useState<IProjectDataValues[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal State
-  const [modalOpened, setModalOpened] = useState(false);
-
-  // Form State
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-
-//   useEffect(() => {
-//     async function fetchProjects() {
-//       const response = await axios.get('/api/projects');
-//       setProjects(response.data);
-//       setLoading(false);
-//     }
-//     fetchProjects();
-
-//   }, []);
   useEffect(() => {
-    const data = [
-        {id:1,name:"João",description:"Descrição 1"},
-        {id:2,name:"Tereza",description:"Descrição 2"},
-        {id:3,name:"Alberto",description:"Descrição 3"},
-        {id:4,name:"Cristina",description:"Descrição 4"},]
-
-    setProjects(data);
-    setLoading(false);
+    if (!isMounted.current )
+    {
+        isMounted.current = true;
+        fetchProjects();
+    }
+    else 
+        return;        
   }, []);
 
-  const handleAddProject = async () => {
-    try {
-      const response = await axios.post('/api/projects', { name, description });
-      setProjects((prev) => [...prev, response.data]); // Atualiza a lista com o novo projeto
-      setModalOpened(false); // Fecha o modal
-      setName(''); // Reseta o formulário
-      setDescription('');
-    } catch (error) {
-      console.error('Erro ao adicionar projeto:', error);
-    }
+  const handleCreate = () => {
+    router.push("/project/create"); // Redireciona para a página "/destination-page"
   };
 
+  const handleEdit = (id:string) => {
+    router.push(`/project/update/${id}`); // Redireciona para a página "/destination-page"
+  };
+
+  const handleDelete = (id:string) => {
+    const deleteproject = async () => {      
+      const response = await Delete(id);
+      if(response.error === 'none')
+      {
+        alert(`Deletado com sucesso: ${response.data}`)
+        fetchProjects();
+      }
+      else 
+      {
+        alert(`Erro ao deletar: ${response.data}`)
+      }
+    };   
+
+    deleteproject();
+  };
+
+  const fetchProjects = async () => {
+    setLoading(true);
+    const response = await Search("");
+    if(response.error === 'none')
+    {
+      setProjects(response.data as IProjectDataValues[])
+    }            
+    setLoading(false);
+  };  
+
+  if (!projects) {
+    return <><LoadingOverlay visible={!projects} zIndex={1} overlayProps={{ radius: "sm", blur: 2 }} /></>;
+  } 
+ 
+
+  const rows = projects.map((element) => (
+    <Table.Tr key={element._id}>
+      <Table.Td>{element.name}</Table.Td>
+      <Table.Td>{element.description}</Table.Td>
+      <Table.Td>{element.client.name}</Table.Td>
+      <Table.Td>
+        <MapModalGetSinglePoint
+          title={ `Localização da usina ${element.plant.name}`}
+          pointDefault={{lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}}          
+          zoom={16}
+          changePoint={false}
+        />
+      </Table.Td>
+      <Table.Td>{element.status}</Table.Td>
+      <Table.Td>        
+        <ActionIcon.Group>
+          <ActionIcon variant="default" size="lg" aria-label="Gallery">
+            <IconEdit onClick={()=>handleEdit(element._id)} style={{ width: '70%', height: '70%' }} stroke={1.5} />
+          </ActionIcon>
+          <ActionIcon variant="default" size="lg" aria-label="Settings">
+            <IconSearch style={{ width: '70%', height: '70%' }} stroke={1.5} />
+          </ActionIcon>
+          <ActionIcon variant="default" size="lg" aria-label="Likes">
+            <IconTrash onClick={()=>handleDelete(element._id)} style={{ width: '70%', height: '70%' }} stroke={1.5} />
+          </ActionIcon>
+        </ActionIcon.Group>
+      </Table.Td>
+    </Table.Tr>
+  ));
+
   return (
-    <div>
-      <Group position="apart" mb="md">
-        <h1>Projetos</h1>
-        <Button onClick={() => setModalOpened(true)}>Novo Projeto</Button>
+    <>
+      <Group justify="space-between" mb="lg" mt="lg">
+        <Text fw={700}>Listagem dos projetos</Text >        
+        <Button onClick={handleCreate}>Novo Projeto</Button>
       </Group>
-
-      {loading ? (
-        <Loader />
-      ) : (
-        <Table highlightOnHover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Descrição</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.map((project) => (
-              <tr key={project.id}>
-                <td>{project.id}</td>
-                <td>{project.name}</td>
-                <td>{project.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-
-      {/* Modal */}
-      <Modal
-        opened={modalOpened}
-        onClose={() => setModalOpened(false)}
-        title="Adicionar Novo Projeto"
-      >
-        <TextInput
-          label="Nome"
-          placeholder="Digite o nome do projeto"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <Textarea
-          label="Descrição"
-          placeholder="Descreva o projeto"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          mt="md"
-        />
-        <Group position="right" mt="md">
-          <Button onClick={handleAddProject}>Salvar</Button>
-        </Group>
-      </Modal>
-    </div>
+      
+      <Table withTableBorder striped highlightOnHover>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Nome</Table.Th>
+            <Table.Th>Descrição</Table.Th>
+            <Table.Th>Nome do cliente</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Ações</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>{rows}</Table.Tbody>
+      </Table>
+    </>
+    
   );
 }
+
