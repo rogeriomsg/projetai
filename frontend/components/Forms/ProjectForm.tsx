@@ -1,6 +1,6 @@
 'use client';
 import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
-import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid, FileInput,} from '@mantine/core';
+import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid, FileInput, Center, Space, Alert,} from '@mantine/core';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -17,6 +17,8 @@ import {
   IconHome,
   IconCheckupList,
   IconCheckbox,
+  IconDeviceComputerCamera,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 
 import axios from "axios";
@@ -24,6 +26,7 @@ import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalG
 import Api, { Create, Update } from '@/api/project';
 import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
+import ProjectView from './ProjectView';
 
 
 export interface IProjectDataValues {
@@ -178,7 +181,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
         initialValues: initialValues || { 
             _id : "",
             status : 'Em cadastro',
-            project_type : 'Até 10kWp',
+            project_type : "",
             is_active: true, // Indica se o projeto está ativo
             name: "", // Nome do projeto (opcional)
             description: "", // Descrição do projeto (opcional)
@@ -889,9 +892,11 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
             alert("O formulário contem pendências!");
         }
     };
-
     return (
         <>
+        {/* <Alert variant="filled" color="red" title="Atenção" withCloseButton icon={<IconInfoCircle size={30} />} radius="lg" onClose={()=>alert("Teste")}>
+            Este aviso serve para que você possar.
+        </Alert> */}
         <form onSubmit={form.onSubmit(handleSubmit)}  >            
             <Stepper 
             active={activeStep} 
@@ -908,7 +913,9 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 <Grid mt="sm">
                 <Grid.Col span={3}>
                     <Autocomplete
-                    label="Tipo de projeto"
+                    //label="Tipo de projeto"
+                    placeholder="Tipo de projeto"
+                    rightSection={<IconDeviceComputerCamera></IconDeviceComputerCamera>}
                     data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
                     key={form.key("project_type")}
                     {...form.getInputProps("project_type")} 
@@ -917,17 +924,19 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 </Grid.Col>
                 <Grid.Col span={6}>
                     <TextInput
-                    label="Nome do projeto"
-                    placeholder="Digite um nome para o projeto"
+                    //label="Nome do projeto"
+                    placeholder="Nome do projeto"
+                    rightSection={<IconCheck></IconCheck>}
                     key={form.key("name")}
                     {...form.getInputProps("name")} 
                     required 
+
                     /> 
                 </Grid.Col>
                 <Grid.Col span={3}>
                     <Autocomplete
-                    label="Distribuidora"
-                    placeholder="Selecione o nome da distribuidora"
+                    //label="Distribuidora"
+                    placeholder="Selecione a distribuidora"
                     data={['Neoenergia Brasília', 'Goiás', ]}
                     key={form.key("dealership")}
                     {...form.getInputProps("dealership")} 
@@ -936,7 +945,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 </Grid.Col>            
                 <Grid.Col span={12}>
                     <Textarea
-                    label="Descrição"
+                    //label="Descrição"
                     placeholder="Digite uma descrição para o projeto (Opcional)"
                     key={form.key("description")}
                     {...form.getInputProps("description")}  
@@ -1675,10 +1684,15 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 </Grid>
             </Stepper.Step>
             <Stepper.Completed>
-
-                <p>Confirme os dados abaixo, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise: {isEditing?"EDIÇÃO":"NOVO"}</p>
-                <pre>{JSON.stringify(form.getValues(), null, 4)}</pre>
-                
+                <Space h="xl"> </Space>
+                <Center>
+                    <Text size={"xl"} fw={500}>
+                        Confira os dados, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise: {isEditing?"EDIÇÃO":"NOVO"}
+                    </Text>
+                </Center>
+                <Center h={200} >
+                    <ProjectView labelButton="Verificar" isOpen={activeStep === 6} valuesView={form.getValues()}/> 
+                </Center>                
             </Stepper.Completed>
             </Stepper>
             <Group justify="right" mt="xl" mr="xl">        
@@ -1693,15 +1707,19 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 </>          
                 )}        
                 {activeStep < 6 && (
-                <Button onClick={nextStep} color='green' >
+                <Button 
+                    onClick={nextStep} 
+                    color='green' 
+                >
                     {activeStep === 5 ? "Conferir tudo" : "Próximo passo"}
                 </Button>
                 )} 
                 {activeStep === 6 && (
-                <Button type='submit'>{isEditing?"Salvar Alterações":"Enviar para análise"}</Button>
+                    <Button type='submit'>{isEditing?"Salvar Alterações":"Enviar para análise"}</Button>
                 )}
             </Group>    
-            </form>            
+            </form>  
+                 
         </>    
     );
 

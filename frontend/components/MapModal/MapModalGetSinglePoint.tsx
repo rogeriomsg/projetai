@@ -112,9 +112,10 @@ const MapModalGetSinglePoint: React.FC<MapModalProps> = ({
       <>       
         <ActionIcon 
           size="xl" 
+          variant="subtle"
           onClick={() => setOpened(true)}
         >
-          <IconMap2  size={30} stroke={1.5} />
+          <IconMap2  style={{ width: '80%', height: '80%' }} stroke={1.5} />
         </ActionIcon>                 
         <Modal
           title={title}
