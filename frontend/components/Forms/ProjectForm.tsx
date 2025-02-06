@@ -15,10 +15,12 @@ import {
   IconCheck,
   IconX,
   IconHome,
+  IconCheckupList,
+  IconCheckbox,
 } from '@tabler/icons-react';
 
 import axios from "axios";
-import MapModalGetSinglePoint from '@/components/MapModal/MapModalGetSinglePoint';
+import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalGetSinglePoint';
 import Api, { Create, Update } from '@/api/project';
 import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
@@ -133,6 +135,7 @@ interface IZipCodeDataValues {
     ddd: string,
     siafi: string,
 };
+
 interface IStatesDataValues {
     id: number,
     sigla: string,
@@ -143,7 +146,6 @@ interface IStatesDataValues {
       nome: string
     }
 }
-
 
 interface FormProps {
     initialValues?: IProjectDataValues | null; // Valores iniciais para edição
@@ -567,10 +569,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
         setPorcentagem(_porcentagem!==100?false:true)
     }    
 
-    const handleSalvepointPlant = (point:{lat:number;lng:number}) => {
-        if (point) {
-            form.setFieldValue("plant.geolocation.lat", point.lat);
-            form.setFieldValue("plant.geolocation.lng", point.lng);
+    const handleSalvepointPlant = (selecteds:IMarker[]) => {
+        if (selecteds.length>0) {
+            form.setFieldValue("plant.geolocation.lat", selecteds[0].lat);
+            form.setFieldValue("plant.geolocation.lng", selecteds[0].lng);
         }
     };  
     
@@ -837,8 +839,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
         </Table.Tr>
     ));
 
-    const handleSubmit = async (_values: any ) => {   
-        
+    const handleSubmit = async (_values: any ) => {           
         if (!form.validate().hasErrors) {
             if(isEditing)
             {
@@ -891,12 +892,11 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
 
     return (
         <>
-        <form onSubmit={form.onSubmit(handleSubmit)}  >
-            
+        <form onSubmit={form.onSubmit(handleSubmit)}  >            
             <Stepper 
             active={activeStep} 
             onStepClick={setActiveStep} 
-            completedIcon={<IconCircleCheck size={20} />}
+            completedIcon={<IconCheckbox size={20} />}
             allowNextStepsSelect={false}
             mx="auto" mt="xl" ml="xl" mr="xl"      
             >
@@ -1394,14 +1394,19 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 </Grid.Col>
                 <GridCol span={3} mt="lg">
                     <MapModalGetSinglePoint
-                        onSetPoint={handleSalvepointPlant}
-                        pointDefault={
+                        onSelectionChange={handleSalvepointPlant}                        
+                        dataMarkers={
                             isEditing?
-                            ({lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng})
+                            [ {id:"0",available:true,selected:true,draggable:true,clickable:false,lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}]
                             :
-                            (null)
+                            [{id:"0",available:true,selected:true,draggable:true,clickable:false,lat:-15.78421850,lng:-47.93389432}]
                         }
-                        centerDefault={{lat:-15.78421850,lng:-47.93389432}}
+                        centerDefault={
+                            Number(form.getValues().plant.geolocation.lat)!==0&&Number(form.getValues().plant.geolocation.lng)!==0?
+                            {lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}
+                            :
+                            {lat:-15.78421850,lng:-47.93389432}
+                        }
                         zoom={18}
                     />
                 </GridCol>
@@ -1432,6 +1437,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     {...form.getInputProps(`compensation_system`)}                
                     required
                     ml="lg"
+                    mt="xl"
                 /> 
                 </SimpleGrid>
                 <Table.ScrollContainer minWidth={900} type="native" mt="xl">
@@ -1489,40 +1495,34 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 description="Equipamentos"
                 icon={<IconFileUpload size={18} />}
             >
-                <Tabs color="orange" variant="pills" defaultValue="inverters" mt="xl">
-                <Tabs.List grow>
-                    <Tabs.Tab value="inverters" ><Text fw={500}> Inversor(es) </Text></Tabs.Tab>
-                    <Tabs.Tab value="modules" ><Text fw={500}> Módulo(s) </Text></Tabs.Tab>              
-                </Tabs.List>
-
-                <Tabs.Panel value="inverters" pt="xl">
-                    <Table.ScrollContainer minWidth={900} type="native">
+                <Text fw={700} size="xl" tt="capitalize" mb="lg" mt="xl"> Inversores </Text>
+                <Table.ScrollContainer minWidth={900} type="native">
                     <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                         <Table.Tr>
-                        <Grid ml="sm" mr="md" >          
-                            <Grid.Col span={4}>  
-                            <Text fw={500}> Modelo </Text>
-                            </Grid.Col>
-                            <Grid.Col span={4}>  
-                            <Text fw={500}> Fabricante </Text>
-                            </Grid.Col>
-                            <Grid.Col span={2}>
-                            <Text fw={500}> Potência (kW) </Text>
-                            </Grid.Col> 
-                            <Grid.Col span={1}>
-                            <Text fw={500}> Quantidade </Text>
-                            </Grid.Col> 
-                            <Grid.Col span={1}>
-                            <Text fw={500}> Total (kW) </Text>
-                            </Grid.Col>                           
-                        </Grid>
+                            <Grid ml="sm" mr="md" >          
+                                <Grid.Col span={4}>  
+                                <Text fw={500}> Modelo </Text>
+                                </Grid.Col>
+                                <Grid.Col span={4}>  
+                                <Text fw={500}> Fabricante </Text>
+                                </Grid.Col>
+                                <Grid.Col span={2}>
+                                <Text fw={500}> Potência (kW) </Text>
+                                </Grid.Col> 
+                                <Grid.Col span={1}>
+                                <Text fw={500}> Quantidade </Text>
+                                </Grid.Col> 
+                                <Grid.Col span={1}>
+                                <Text fw={500}> Total (kW) </Text>
+                                </Grid.Col>                           
+                            </Grid>
                         </Table.Tr >
                         <Table.Tbody>{invertersDataRows}</Table.Tbody>
                     </Table>
-                    </Table.ScrollContainer>         
+                </Table.ScrollContainer>         
 
-                    <Group justify="center" mt="md" mb="xl">
-                    <ActionIcon 
+                <Group justify="right" mt="sm">
+                    {/* <ActionIcon 
                         color="green" 
                         variant="subtle" 
                         size="xl" 
@@ -1531,11 +1531,11 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                         }} 
                     >
                         <IconCheck  size={28} stroke={1.5} />
-                    </ActionIcon>
+                    </ActionIcon> */}
 
                     <ActionIcon 
-                        color="green" 
-                        variant="subtle" 
+                        color="orange" 
+                        //variant="subtle" 
                         size="xl" 
                         onClick={() => {
                         form.insertListItem('inverters', { 
@@ -1550,11 +1550,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     >
                         <IconPlus  size={28} stroke={1.5} />
                     </ActionIcon>
-                    </Group>
-                </Tabs.Panel>
+                </Group>
 
-                <Tabs.Panel value="modules" pt="xl">
-                    <Table.ScrollContainer minWidth={900} type="native">
+                <Text fw={700} size="xl" tt="capitalize" mb="lg"> Módulos </Text>
+                <Table.ScrollContainer minWidth={900} type="native">
                     <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                         <Table.Tr>
                         <Grid ml="sm" mr="md" >          
@@ -1586,10 +1585,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                         </Table.Tr >
                         <Table.Tbody>{modulesDataRows}</Table.Tbody>
                     </Table>
-                    </Table.ScrollContainer>         
+                </Table.ScrollContainer>         
 
-                    <Group justify="center" mt="md"> 
-                    <ActionIcon 
+                <Group justify="right" mt="sm"> 
+                    {/* <ActionIcon 
                         color="green" 
                         variant="subtle" 
                         size="xl" 
@@ -1598,10 +1597,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                         }} 
                     >
                         <IconCheck  size={28} stroke={1.5} />
-                    </ActionIcon>
+                    </ActionIcon> */}
                     <ActionIcon 
-                        color="green" 
-                        variant="subtle" 
+                        color="orange" 
+                        //variant="subtle" 
                         size="xl" 
                         onClick={() => {
                         form.insertListItem('modules', { 
@@ -1620,16 +1619,14 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     >
                         <IconPlus  size={28} stroke={1.5} />
                     </ActionIcon>                
-                    </Group>
-                </Tabs.Panel>
-                </Tabs>
+                </Group>
             </Stepper.Step>
             <Stepper.Step 
                 label="Passo 5" 
                 description="Documentos"
                 icon={<IconFileUpload size={18} />}
             >
-                <Grid>
+                <Grid mt="xl">
                 <GridCol >
                     <FileInput 
                     accept="image/png,image/jpeg,application/pdf" 
@@ -1690,8 +1687,8 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 <Button variant="default" onClick={prevStep}>
                     Voltar
                 </Button>
-                <Button variant="default" onClick={prevStep} disabled={false}>
-                Salvar e editar depois
+                <Button variant="default" disabled={false}>
+                    Salvar e editar depois
                 </Button>
                 </>          
                 )}        

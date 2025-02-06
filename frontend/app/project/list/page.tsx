@@ -4,8 +4,8 @@ import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon
 import { IProjectDataValues } from '@/components/Forms/ProjectForm';
 import { Delete, Search } from '@/api/project';
 import { useRouter } from 'next/navigation';
-import { IconEdit, IconPhoto, IconSearch, IconSun, IconTrash } from '@tabler/icons-react';
-import MapModalGetSinglePoint from '@/components/MapModal/MapModalGetSinglePoint';
+import { IconEdit, IconHome, IconPhoto, IconSearch, IconSun, IconTrash } from '@tabler/icons-react';
+import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalGetSinglePoint';
 
 type Project = {
   id: number;
@@ -66,20 +66,20 @@ export default function ProjectsList() {
 
   if (!projects) {
     return <><LoadingOverlay visible={!projects} zIndex={1} overlayProps={{ radius: "sm", blur: 2 }} /></>;
-  } 
- 
-
+  }
+  
   const rows = projects.map((element) => (
-    <Table.Tr key={element._id}>
+    <Table.Tr key={element._id} >
       <Table.Td>{element.name}</Table.Td>
       <Table.Td>{element.description}</Table.Td>
       <Table.Td>{element.client.name}</Table.Td>
       <Table.Td>
         <MapModalGetSinglePoint
-          title={ `Localização da usina ${element.plant.name}`}
-          pointDefault={{lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}}          
-          zoom={16}
-          changePoint={false}
+          centerDefault={{lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}}          
+          zoom={18}
+          dataMarkers={[ 
+            {available:true,selected:true,clickable:false,id:"0",lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}
+          ]}           
         />
       </Table.Td>
       <Table.Td>{element.status}</Table.Td>
@@ -102,7 +102,7 @@ export default function ProjectsList() {
   return (
     <>
       <Group justify="space-between" mb="lg" mt="lg">
-        <Text fw={700}>Listagem dos projetos</Text >        
+        <Text fw={700} c="red" size='lg'>Listagem dos projetos</Text >        
         <Button onClick={handleCreate}>Novo Projeto</Button>
       </Group>
       
@@ -112,11 +112,31 @@ export default function ProjectsList() {
             <Table.Th>Nome</Table.Th>
             <Table.Th>Descrição</Table.Th>
             <Table.Th>Nome do cliente</Table.Th>
+            <Table.Th>Local da usina</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Ações</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>{rows}</Table.Tbody>
+      </Table>
+
+      <Group justify="space-between" mb="lg" mt="xl">
+        <Text fw={700} c="red" size='lg'>Rascunhos</Text >        
+        {/* <Button onClick={handleCreate}>Novo Projeto</Button> */}
+      </Group>
+
+      <Table withTableBorder striped highlightOnHover>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Nome</Table.Th>
+            <Table.Th>Descrição</Table.Th>
+            <Table.Th>Nome do cliente</Table.Th>
+            <Table.Th>Local da usina</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Ações</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody></Table.Tbody>
       </Table>
     </>
     
