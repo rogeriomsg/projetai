@@ -53,7 +53,9 @@ export default function ProjectsList() {
       {
         alert(`Erro ao deletar: ${response.data}`)
       }
-    };   
+    };  
+    
+    
 
     deleteproject();
   };
@@ -118,7 +120,7 @@ export default function ProjectsList() {
             {/* <Menu.Divider /> */}
             <Menu.Item
               leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
-              onClick={() => stack.open('delete-project')}
+              onClick={()=>handleDelete(element._id)}
               c="red"
               fw={570}
             >
