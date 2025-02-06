@@ -161,15 +161,15 @@ export default function  NewProject() {
           // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
           break;
         case 1: //informaçõe do cliente
-          errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-          errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-          errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-          errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-          errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-          errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-          errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
-          errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-          errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+          // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+          // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+          // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+          // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+          // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+          // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+          // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+          // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+          // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
           break; 
         case 2: //informações da usina
           // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
