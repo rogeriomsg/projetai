@@ -3,7 +3,12 @@ const app = express();
 const router = require("./ROUTERS")
 const { errors } = require('celebrate');
 const { ValidationErrorMessage } = require('./MIDDLEWARES/message');
+const cors = require('cors');
+
 var bodyParser = require('body-parser')
+
+// Habilitar CORS
+app.use(cors());
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }))

@@ -20,7 +20,7 @@ import { usePathname } from 'next/navigation';
 
 const data = [
   { link: '/', label: 'Início', icon: IconBellRinging },
-  { link: '/project/new', label: 'Projetos', icon: IconReceipt2 },
+  { link: '/project/list', label: 'Projetos', icon: IconReceipt2 },
   { link: '/map', label: 'Mapa', icon: IconMap },
   { link: '/mapMulti', label: 'Mapa2', icon: IconKey },
   // { link: '', label: 'Databases', icon: IconDatabaseImport },

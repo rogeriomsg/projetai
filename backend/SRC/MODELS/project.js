@@ -10,6 +10,9 @@ const addressSchema = new mongoose.Schema({
   state: {type : String , require : true}, // Estado
   zip : {type : Number , require : true}, // CEP
 
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const clientSchema = new mongoose.Schema({   
@@ -21,6 +24,9 @@ const clientSchema = new mongoose.Schema({
   email: {type : String , require : false}, // E-mail do cliente (opcional)
   phone : {type : String , require : false}, // Telefone do cliente (opcional)
   address:{type: addressSchema, require:true}, // Endereço do cliente
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const plantSchema = new mongoose.Schema({  
@@ -44,7 +50,7 @@ const plantSchema = new mongoose.Schema({
     "Subterrânea",
   ] ,default: "Aérea"},
   branch_section: { type : Number ,  require : true },
-  subgroup: { type : Number ,  default : "B1" },
+  subgroup: { type : String ,  default : "B1" },
   circuit_breaker : { type : Number ,  require : true }, // Valor do disjuntor em amperes do padrão de entrada da unidade consumidora 
   installed_load : { type : Number ,  require : true }, //Carga instalada - refere-se a carga instalada na residência 
   installed_power : { type : Number ,  require : true }, // Potência instalada da usina em kW - geralmente é a potência total máxima dos módulos 
@@ -55,6 +61,9 @@ const plantSchema = new mongoose.Schema({
     lng: { type : Number , default : 0.0  }, // Longitude
     link_point:{type:String,require:false}
   },
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const consumerUnitSchema = new mongoose.Schema({       
@@ -63,6 +72,9 @@ const consumerUnitSchema = new mongoose.Schema({
   description: {type : String ,default: ""} , // Descrição da unidade consumidora (opcional)
   percentage : { type : Number , default: 0 , require : false }, // Porcentagem de participação no sistema de compensação(opcional)
   is_plant: { type: Boolean , default: false}, // Indica se essa unidade consumidora será instalada a usina
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
 
 const inverterSchema = new mongoose.Schema({       
@@ -72,6 +84,9 @@ const inverterSchema = new mongoose.Schema({
   quantity: {type : Number , require : true}, // Quantidade de inversores
   total_power : {type : Number , require : true},
   description: {type : String ,default: ""}, // Descrição do inversor (opcional)
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
   
 const moduleSchema = new mongoose.Schema({       
@@ -84,6 +99,9 @@ const moduleSchema = new mongoose.Schema({
   power : {type : Number , require : true}, // Potência do módulo em kW
   quantity: {type : Number , default: 2.23, require : true}, // Quantidade de módulos
   total_power : {type : Number , require : true},
+},
+{ 
+  _id:false //excluir o _id do subdocumento
 });
     
 const projectSchema = new mongoose.Schema(
@@ -103,14 +121,15 @@ const projectSchema = new mongoose.Schema(
     dealership: {type : String , require : false}, // Nome da concessionária ou distribuidora (opcional)
     client: { type: clientSchema, require: true}, // Cliente associado ao projeto
     plant:{type: plantSchema,}, // Dados da sina associada ao projeto
+    compensation_system: {type:String, require: true},
     consumerUnit: {type : [consumerUnitSchema], default: []}, // Lista de unidades consumidoras participantes do sistema de 
     inverters:{type : [inverterSchema], default: []}, // Lista de inversores usados no projeto
     modules:{type : [moduleSchema], default: []}, // Lista de módulos fotovoltaicos usados no projeto
-    path_meter_pole: { type: String, required: false }, // Caminho para a foto do poste do medidor (opcional)
-    path_meter: { type: String, required: false }, // Caminho para a foto do medidor (opcional)
-    path_bill: { type: String, required: false }, // Caminho para a fatura de energia (opcional)
-    path_identity:{ type: String, required: false }, // Caminho para a identidade do cliente (opcional)
-    path_procuration:{ type: String, required: false}, // Caminho para o arquivo de procuração (opcional)
+    path_meter_pole: { data: Buffer, contentType: String }, // Caminho para a foto do poste do medidor (opcional)
+    path_meter: { data: Buffer, contentType: String }, // Caminho para a foto do medidor (opcional)
+    path_bill: { data: Buffer, contentType: String }, // Caminho para a fatura de energia (opcional)
+    path_identity:{ data: Buffer, contentType: String }, // Caminho para a identidade do cliente (opcional)
+    path_procuration:{ data: Buffer, contentType: String }, // Caminho para o arquivo de procuração (opcional)
     status : { // Status do projeto
       type: String , 
       enum :[

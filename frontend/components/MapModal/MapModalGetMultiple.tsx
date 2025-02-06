@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { Modal, Button, Grid, GridCol } from "@mantine/core";
-import { Icon123, Icon12Hours } from "@tabler/icons-react";
 
 interface DataItem {
     id: string;
@@ -77,7 +76,7 @@ const MapModalGetMultiple: React.FC<Props> = ({ title,labelButton,description, d
         title={ title || "Selecione os objetos"}
         keepMounted={true}
         withCloseButton={false}
-        size="lg"
+        size="xl"
       >        
           
         {isLoaded ? (
