@@ -4,6 +4,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { Logo } from '@/components/Logo/Logo';
 import { NavbarSimple } from '../NavbarSimple/NavbarSimple';
 import { usePathname } from 'next/navigation';
+import { Notifications } from '@mantine/notifications';
 
 export function BasicAppShell({
     children,
@@ -41,7 +42,10 @@ export function BasicAppShell({
       <AppShell.Navbar p="md">
         <NavbarSimple/>
       </AppShell.Navbar>
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        
+        {children}
+      </AppShell.Main>
     </AppShell>
   );
 }

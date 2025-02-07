@@ -2,6 +2,8 @@ import '@mantine/core/styles.css';
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { BasicAppShell } from '@/components/BasicAppShell/BasicAppShell';
 import { theme } from "../theme";
+import { Notifications } from '@mantine/notifications';
+import { ModalsProvider } from '@mantine/modals';
 
 export const metadata = {
   title: 'PR Solar Projetos',
@@ -26,8 +28,11 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <MantineProvider theme={theme}>  
-            <BasicAppShell >{children}</BasicAppShell> 
+        <MantineProvider theme={theme}>
+          <Notifications />
+          <ModalsProvider>
+            <BasicAppShell>{children}</BasicAppShell>
+          </ModalsProvider>
         </MantineProvider>
       </body>
     </html>

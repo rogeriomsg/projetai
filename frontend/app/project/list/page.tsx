@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon, Center, Menu, useModalsStack, Modal } from '@mantine/core';
+import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon, Center, Menu, useModalsStack, Modal, Loader } from '@mantine/core';
 import { IProjectDataValues } from '@/components/Forms/ProjectForm';
 import { Delete, Search } from '@/api/project';
 import { useRouter } from 'next/navigation';
 import { IconDots, IconDotsVertical, IconEdit, IconHome, IconPhoto, IconSearch, IconSun, IconTrash } from '@tabler/icons-react';
 import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalGetSinglePoint';
 import ProjectView from '@/components/Forms/ProjectView';
+import { notifications, showNotification} from "@mantine/notifications";
+import { modals, openConfirmModal } from '@mantine/modals';
 
 type Project = {
   id: number;
@@ -18,10 +20,12 @@ export default function ProjectsList() {
   const router = useRouter();
   const isMounted = useRef(false);
   const [projects, setProjects] = useState<IProjectDataValues[]>([]);
+  const [selectedProject, setSelectedProject] = useState<IProjectDataValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [openProjectView, setOpenProjectView] = useState(false);
   const [projectView, setProjectView] = useState<IProjectDataValues | null>(null);
-  const stack = useModalsStack(['delete-project', 'confirm-action']);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   useEffect(() => {
     if (!isMounted.current )
@@ -41,23 +45,71 @@ export default function ProjectsList() {
     router.push(`/project/update/${id}`); // Redireciona para a página "/destination-page"
   };
 
-  const handleDelete = (id:string) => {
-    const deleteproject = async () => {      
-      const response = await Delete(id);
-      if(response.error === 'none')
-      {
-        alert(`Deletado com sucesso: ${response.data}`)
-        fetchProjects();
-      }
-      else 
-      {
-        alert(`Erro ao deletar: ${response.data}`)
-      }
-    };  
-    
-    
+  const handleDeleteClick = (project: IProjectDataValues) => {
+    //setSelectedProject(project);
+      //setIsDeleteModalOpen(true);
+      //showNotification({ message: 'Hello' });
 
-    deleteproject();
+      showNotification({ message: 'Hello' });
+
+  };
+
+  const handleOpenConfirmModal = () => {
+    openConfirmModal({
+      title: 'Confirmar ação',
+      children: <p>Você realmente deseja realizar esta ação?</p>,
+      labels: { confirm: 'Sim', cancel: 'Não' },
+      onConfirm: () => console.log('Ação confirmada'),
+    });
+  };
+
+
+  const handleDelete = async () =>{
+    if (!selectedProject) return;
+
+    // showNotification({
+    //   title: "Sucesso",
+    //   message: `Projeto "${selectedProject.name}" foi deletado com sucesso.`,
+    //   color: "green",
+    // });
+
+    // notifications.show({
+    //   title:"Sucesso" ,
+    //   message: `Projeto "${selectedProject.name}" foi deletado com sucesso.🌟` ,
+    //   color: "green",
+    // })
+
+    notifications.show({
+      title: 'Notification with custom styles',
+      message: 'It is default blue',
+      position: 'top-center',
+    })
+         
+    setLoadingDelete(true);
+    // const response = await Delete(selectedProject._id);
+    // if(response.error === 'none')
+    // {
+    //   alert(`Deletado com sucesso: ${response.data}`)
+    //   setProjects((prev) => prev.filter((p) => p._id !== selectedProject._id));
+    //   showNotification({
+    //     title: "Sucesso",
+    //     message: `Projeto "${selectedProject.name}" foi deletado com sucesso.`,
+    //     color: "green",
+    //   });
+      
+    // }
+    // else 
+    // {
+    //   showNotification({
+    //     title: "Erro",
+    //     message: `Falha ao deletar o projeto: ${response.error}`,
+    //     color: "red",
+    //   });
+    // }
+    setLoadingDelete(false);
+    setIsDeleteModalOpen(false);
+    setSelectedProject(null);
+    
   };
 
   const handleView = (item:IProjectDataValues) => {
@@ -120,8 +172,7 @@ export default function ProjectsList() {
             {/* <Menu.Divider /> */}
             <Menu.Item
               leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
-              onClick={()=>handleDelete(element._id)}
-              c="red"
+              onClick={()=>handleDeleteClick(element)}
               fw={570}
             >
               Deletar
@@ -176,6 +227,38 @@ export default function ProjectsList() {
       <Center h={200} >
           <ProjectView noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
       </Center>
+
+      {/* Modal de Confirmação */}
+      <Modal
+        opened={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmação de Exclusão"
+        c={"red"}
+        centered
+      >
+        <Text>
+          Tem certeza que deseja deletar o projeto{" "}
+          <strong>{selectedProject?.name}</strong>?
+        </Text>
+        <Group justify="center" mt="md">
+          <Button variant="default" onClick={() => setIsDeleteModalOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            color="red"
+            onClick={handleDelete}
+            disabled={loadingDelete}
+          >
+            {loadingDelete ? (
+              <Center>
+                <Loader size="sm" />
+              </Center>
+            ) : (
+              "Confirmar"
+            )}
+          </Button>
+        </Group>
+      </Modal>
 
       
     </>
