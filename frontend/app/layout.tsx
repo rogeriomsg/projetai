@@ -4,6 +4,7 @@ import { BasicAppShell } from '@/components/BasicAppShell/BasicAppShell';
 import { theme } from "../theme";
 import { Notifications } from '@mantine/notifications';
 import { ModalsProvider } from '@mantine/modals';
+import { DialogsProvider } from '@toolpad/core/useDialogs';
 
 export const metadata = {
   title: 'PR Solar Projetos',
@@ -29,10 +30,10 @@ export default function RootLayout({
       </head>
       <body>
         <MantineProvider theme={theme}>
-          <Notifications />
-          <ModalsProvider>
+          
             <BasicAppShell>{children}</BasicAppShell>
-          </ModalsProvider>
+          
+            
         </MantineProvider>
       </body>
     </html>

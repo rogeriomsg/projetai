@@ -9,12 +9,15 @@ const {Validations} = require('../MIDDLEWARES');
 *   5XX = Erro do Servidor
 */
 
-router.get(`/search`,Controllers.Project.search);
+router.get(`/`,Controllers.Project.search);
 
-router.post(`/create`,  Controllers.Project.create );
+router.get(`/:id`,Controllers.Project.byId);
+
+router.post(`/`,  Controllers.Project.create );
+
+router.patch(`/:id`,  Controllers.Project.update );
 
 router.delete(`/:id`,Controllers.Project.delete);
 
-router.patch(`/:id`,  Controllers.Project.update );
 
 module.exports = router;

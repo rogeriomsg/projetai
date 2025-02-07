@@ -23,6 +23,19 @@ exports.search = async (req, res) => {
         res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({ message: err.message});
     });       
 };
+exports.byId = async (req, res) => {
+    const {id} = req.params ;
+    console.log(id);
+    
+    await Models.Project.findById(id).then(data => { 
+        if(data.length === 0)
+            res.status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code).json({ message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message});        
+        else
+            res.status(Services.HTTPStatus.SUCCESS.code).json(data);          
+    }).catch( err => {
+        res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({ message: err.message});
+    });       
+};
 
     // exports.create = async (req, res) => {
     //     console.log("Criação: " )

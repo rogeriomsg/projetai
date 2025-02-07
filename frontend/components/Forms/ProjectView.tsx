@@ -1,5 +1,5 @@
+import { IProjectDataValues } from "@/types/IProject";
 import { Button, Center, Modal, ScrollArea, Table } from "@mantine/core";
-import { IProjectDataValues } from "./ProjectForm";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect } from "react";
 

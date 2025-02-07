@@ -1,9 +1,10 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import ProjectForm, {IProjectDataValues} from "@/components/Forms/ProjectForm"
 import { LoadingOverlay } from "@mantine/core";
 import { Search } from '@/api/project'
+import { IProjectDataValues } from '@/types/IProject';
+import ProjectForm from '@/components/Forms/ProjectForm';
 
 
 export default function EditProject(){

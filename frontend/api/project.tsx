@@ -1,8 +1,8 @@
-import { IProjectDataValues } from "@/components/Forms/ProjectForm";
+import { IProjectDataValues } from "@/types/IProject";
 import axios from "axios";
 
 const Api = axios.create({
-    baseURL: 'http://localhost:3333', // URL base da API
+    baseURL: 'http://localhost:3333/project', // URL base da API
     timeout: 10000,                    // Timeout em milissegundos
     headers: {
       'Content-Type': 'application/json',
@@ -12,7 +12,7 @@ const Api = axios.create({
 
 export const Search = async (params:string) => {
     try {
-        const response = await Api.get(`/project/search${params}`);
+        const response = await Api.get(`/${params}`);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
         if (Array.isArray(response.data) && response.data.length > 0) {            
             return {is_array: true , count: response.data.length , error:"none", status_code: response.status , data: response.data }
@@ -33,10 +33,10 @@ export const Search = async (params:string) => {
     }
 };
 
-export const Create = async (projectDataCreate:string) => {
+export const Create = async (projectDataCreate:IProjectDataValues) => {
 
     try {
-        const response = await Api.post(`/project/create`,projectDataCreate);
+        const response = await Api.post(`/`,projectDataCreate);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
         if (response.status === 201) {            
             return {is_array: false , count: 0 , error:"none",  status_code: response.status ,data: response.data }
@@ -57,10 +57,10 @@ export const Create = async (projectDataCreate:string) => {
     }
 };
 
-export const Update = async (id:object,projectdataUpdate:IProjectDataValues) => {
+export const Update = async (id:string,projectdataUpdate:IProjectDataValues) => {
 
     try {
-        const response = await Api.patch(`/project/${id}`,projectdataUpdate);
+        const response = await Api.patch(`/${id}`,projectdataUpdate);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
         if (response.status === 200) {            
             return {is_array: false , count: 0 , error:"none",  status_code: response.status ,data: response.data }
@@ -84,7 +84,7 @@ export const Update = async (id:object,projectdataUpdate:IProjectDataValues) => 
 export const Delete = async (id:string) => {
 
     try {
-        const response = await Api.delete(`/project/${id}`);
+        const response = await Api.delete(`/${id}`);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
         if (response.status === 200) {            
             return {is_array: false , count: 0 , error:"none",  status_code: response.status ,data: response.data }

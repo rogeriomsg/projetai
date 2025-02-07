@@ -27,128 +27,9 @@ import Api, { Create, Update } from '@/api/project';
 import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
 import ProjectView from './ProjectView';
+import { IProjectDataValues } from '@/types/IProject';
+import { IProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
 
-
-export interface IProjectDataValues {
-    _id:string ,
-    status : string,
-    project_type : string;
-    is_active: boolean; // Indica se o projeto está ativo
-    name: string; // Nome do projeto (opcional)
-    description: string; // Descrição do projeto (opcional)
-    dealership: string; // Nome da concessionária ou distribuidora (opcional)
-    path_meter_pole: Buffer | null; // Caminho para a foto do poste do medidor (opcional)
-    path_meter: Buffer | null; // Caminho para a foto do medidor (opcional)
-    path_bill: Buffer | null; // Caminho para a fatura de energia (opcional)
-    path_identity:Buffer | null; // Caminho para a identidade do cliente (opcional)
-    path_procuration:Buffer | null; // Caminho para o arquivo de procuração (opcional)  
-    compensation_system: string;
-    client: {
-        client_code: number;
-        name: string;
-        cpf: string;
-        identity: string;
-        identity_issuer:string;
-        email: string;
-        phone: string;
-        address: {
-            street: string;
-            complement:string;
-            no_number: boolean;
-            number: number;
-            district:string;
-            state: string;
-            city: string;
-            zip: number;
-        };
-    };
-    plant: { 
-        consumer_unit_code: number ; 
-        name: string; 
-        description: string;
-        class:string;
-        subgroup:string;
-        connection_type:string;
-        generation_type:string;
-        type_branch:string;
-        branch_section: number; 
-        circuit_breaker: number;
-        installed_load: number;
-            installed_power: number;
-            service_voltage: number;        
-        address: { 
-            street: string;
-            complement:string;
-            no_number: boolean;
-            number: number;
-            district:string;
-            state: string;
-            city: string;
-            zip: number
-        };
-        geolocation: {
-            lat: number;
-            lng: number;
-            link_point:string;
-        }; 
-    };
-    consumerUnit: { 
-        key:string;
-        consumer_unit_code: number ; 
-        name: string; 
-        description: string;         
-        percentage: number;
-        is_plant: Boolean;
-    }[]; 
-    inverters: {
-        key:string;
-        model: string;
-        manufacturer: string;
-        power: number;
-        quantity: number;
-        total_power : number;
-        description: string
-    }[];
-    modules: {
-        key:string;
-        model: string;
-        manufacturer: string;
-        description: string;
-        quantity: number;
-        width: number;
-        height: number;
-        total_area: number;
-        power: number;
-        total_power : number;
-    }[];
-};
-
-interface IZipCodeDataValues {
-    cep: string,
-    logradouro: string,
-    complemento: string,
-    unidade: string,
-    bairro: string,
-    localidade: string,
-    uf: string,
-    estado: string,
-    regiao: string,
-    ibge: string,
-    gia: string,
-    ddd: string,
-    siafi: string,
-};
-
-interface IStatesDataValues {
-    id: number,
-    sigla: string,
-    nome: string,
-    regiao: {
-      id: number,
-      sigla: string,
-      nome: string
-    }
-}
 
 interface FormProps {
     initialValues?: IProjectDataValues | null; // Valores iniciais para edição
@@ -167,7 +48,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
     const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
     const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
     const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
-    const [isEditing, setIsEditing] = useState(false); //
+    const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<IProjectFormSubmissionType>(IProjectFormSubmissionType.Create); //
     const router = useRouter();
 
     const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
@@ -473,7 +354,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
         };
         fetchStates();
 
-        setIsEditing(initialValues!==undefined)
+        setprojectFormSubmissionType(initialValues!==undefined?IProjectFormSubmissionType.update:IProjectFormSubmissionType.Create)
     }, []);
 
     const fetchMunicipalities = async (selectedState:string) => {    
@@ -842,35 +723,19 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
         </Table.Tr>
     ));
 
-    const handleSubmit = async (_values: any ) => {           
+    const handleSubmit = async (values: IProjectDataValues , event : React.FormEvent<HTMLFormElement>) => { 
+        event?.preventDefault() 
+
         if (!form.validate().hasErrors) {
-            if(isEditing)
+
+            alert(projectFormSubmissionType.toString()) 
+
+            switch(projectFormSubmissionType)
             {
-                alert("editando")
-                const updateProject = async () => {
+                case IProjectFormSubmissionType.Create:                
                     setSaving(true);
-                    const response = await Update(_values._id,_values);
-                    if(response.error === 'none')
-                    {
-                        //redirecionar sucesso  
-                        alert(`Salvou com sucesso: ${response.data}`) 
-                    }
-                    else 
-                    {
-                        //redirecionar erro
-                        alert(`Erro ao salvar: ${response.data}`) 
-                    }
-                    router.push("/project/list"); // Redireciona para a página de listagem"
-                    setSaving(false);
-                };    
-                
-                updateProject(); 
-            }
-            else{
-                const createProject = async () => {
-                    setSaving(true);
-                    const response = await Create(_values);
-                    if(response.error === 'none')
+                    const responseCreate = await Create(values);
+                    if(responseCreate.error === 'none')
                     {
                         //redirecionar sucesso  
                         alert("Salvou com sucesso!")                  
@@ -882,11 +747,27 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     }
                     router.push("/project/list"); // Redireciona para a página de listagem"
                     setSaving(false);
-                };    
-                
-                createProject(); 
-            }
-                       
+                    break;
+                case IProjectFormSubmissionType.update:
+                    setSaving(true);
+                    const responseUpdate = await Update(values._id,values);
+                    if(responseUpdate.error === 'none')
+                    {
+                        //redirecionar sucesso  
+                        alert(`Salvou com sucesso: ${responseUpdate.data}`) 
+                    }
+                    else 
+                    {
+                        //redirecionar erro
+                        alert(`Erro ao salvar: ${responseUpdate.data}`) 
+                    }
+                    router.push("/project/list"); // Redireciona para a página de listagem"
+                    setSaving(false);
+                    break;
+                case IProjectFormSubmissionType.recreate:
+
+                    break;
+            }                       
         }
         else{
             alert("O formulário contem pendências!");
@@ -897,7 +778,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
         {/* <Alert variant="filled" color="red" title="Atenção" withCloseButton icon={<IconInfoCircle size={30} />} radius="lg" onClose={()=>alert("Teste")}>
             Este aviso serve para que você possar.
         </Alert> */}
-        <form onSubmit={form.onSubmit(handleSubmit)}  >            
+        <form onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  >            
             <Stepper 
             active={activeStep} 
             onStepClick={setActiveStep} 
@@ -1405,7 +1286,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     <MapModalGetSinglePoint
                         onSelectionChange={handleSalvepointPlant}                        
                         dataMarkers={
-                            isEditing?
+                            projectFormSubmissionType===IProjectFormSubmissionType.update?
                             [ {id:"0",available:true,selected:true,draggable:true,clickable:false,lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}]
                             :
                             [{id:"0",available:true,selected:true,draggable:true,clickable:false,lat:-15.78421850,lng:-47.93389432}]
@@ -1687,7 +1568,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 <Space h="xl"> </Space>
                 <Center>
                     <Text size={"xl"} fw={500}>
-                        Confira os dados, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise: {isEditing?"EDIÇÃO":"NOVO"}
+                        Confira os dados, se estiver tudo certo você pode salvar e continuar editando depois ou enviar para análise: {projectFormSubmissionType}
                     </Text>
                 </Center>
                 <Center h={200} >
@@ -1715,7 +1596,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 </Button>
                 )} 
                 {activeStep === 6 && (
-                    <Button type='submit'>{isEditing?"Salvar Alterações":"Enviar para análise"}</Button>
+                    <Button type='submit'>{projectFormSubmissionType==='update'?"Salvar Alterações":"Enviar para análise"}</Button>
                 )}
             </Group>    
             </form>  

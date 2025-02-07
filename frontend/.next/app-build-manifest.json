@@ -6,10 +6,10 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/map/page": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/map/page.js"
+      "static/chunks/app/page.js"
     ],
     "/project/list/page": [
       "static/chunks/webpack.js",

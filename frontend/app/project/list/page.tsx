@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon, Center, Menu, useModalsStack, Modal, Loader } from '@mantine/core';
-import { IProjectDataValues } from '@/components/Forms/ProjectForm';
 import { Delete, Search } from '@/api/project';
 import { useRouter } from 'next/navigation';
 import { IconDots, IconDotsVertical, IconEdit, IconHome, IconPhoto, IconSearch, IconSun, IconTrash } from '@tabler/icons-react';
@@ -9,6 +8,10 @@ import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalG
 import ProjectView from '@/components/Forms/ProjectView';
 import { notifications, showNotification} from "@mantine/notifications";
 import { modals, openConfirmModal } from '@mantine/modals';
+import { IProjectDataValues } from '@/types/IProject';
+import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import { DialogsProvider, useDialogs, DialogProps } from '@toolpad/core/useDialogs';
 
 type Project = {
   id: number;
@@ -27,6 +30,11 @@ export default function ProjectsList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
+  const [openMessageSuccess, setOpenMessageSuccess] = useState(false);
+  const [openMessageFail, setOpenMessageFail] = useState(false);
+  const [alertProp, setalertProp] = useState<{}|null>(null);
+
+
   useEffect(() => {
     if (!isMounted.current )
     {
@@ -43,73 +51,45 @@ export default function ProjectsList() {
 
   const handleEdit = (id:string) => {
     router.push(`/project/update/${id}`); // Redireciona para a página "/destination-page"
+  };   
+
+  const handleClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenMessageSuccess(false);
+    setOpenMessageFail(false);
   };
 
-  const handleDeleteClick = (project: IProjectDataValues) => {
-    //setSelectedProject(project);
-      //setIsDeleteModalOpen(true);
-      //showNotification({ message: 'Hello' });
-
-      showNotification({ message: 'Hello' });
-
-  };
-
-  const handleOpenConfirmModal = () => {
-    openConfirmModal({
-      title: 'Confirmar ação',
-      children: <p>Você realmente deseja realizar esta ação?</p>,
-      labels: { confirm: 'Sim', cancel: 'Não' },
-      onConfirm: () => console.log('Ação confirmada'),
-    });
-  };
-
+  const handleDeleteClick = (project:IProjectDataValues)=>{
+    setSelectedProject(project)
+    setIsDeleteModalOpen(true)
+  }
 
   const handleDelete = async () =>{
-    if (!selectedProject) return;
-
-    // showNotification({
-    //   title: "Sucesso",
-    //   message: `Projeto "${selectedProject.name}" foi deletado com sucesso.`,
-    //   color: "green",
-    // });
-
-    // notifications.show({
-    //   title:"Sucesso" ,
-    //   message: `Projeto "${selectedProject.name}" foi deletado com sucesso.🌟` ,
-    //   color: "green",
-    // })
-
-    notifications.show({
-      title: 'Notification with custom styles',
-      message: 'It is default blue',
-      position: 'top-center',
-    })
+    if (!selectedProject) return;    
          
     setLoadingDelete(true);
+
+      setalertProp({severity:'success',message:"Deletado com sucesso!"})
+      setOpenMessageSuccess(true);
     // const response = await Delete(selectedProject._id);
     // if(response.error === 'none')
-    // {
-    //   alert(`Deletado com sucesso: ${response.data}`)
+    // {      
     //   setProjects((prev) => prev.filter((p) => p._id !== selectedProject._id));
-    //   showNotification({
-    //     title: "Sucesso",
-    //     message: `Projeto "${selectedProject.name}" foi deletado com sucesso.`,
-    //     color: "green",
-    //   });
-      
+    //   setalertProp({severity:'success',children:"Deletado com sucesso!"})
+    //   setOpenMessageSuccess(true);
     // }
     // else 
     // {
-    //   showNotification({
-    //     title: "Erro",
-    //     message: `Falha ao deletar o projeto: ${response.error}`,
-    //     color: "red",
-    //   });
+    //   setOpenMessageFail(true)
     // }
     setLoadingDelete(false);
     setIsDeleteModalOpen(false);
-    setSelectedProject(null);
-    
+    setSelectedProject(null);    
   };
 
   const handleView = (item:IProjectDataValues) => {
@@ -173,6 +153,7 @@ export default function ProjectsList() {
             <Menu.Item
               leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
               onClick={()=>handleDeleteClick(element)}
+              //onClick={handleNewDelete}
               fw={570}
             >
               Deletar
@@ -184,81 +165,104 @@ export default function ProjectsList() {
   ));
 
   return (
-    <>
-      
-      <Group justify="space-between"  mb="sm" mt="lg">
-        <Text fw={700} c="red" size='lg'>Listagem dos projetos</Text >        
-        <Button onClick={handleCreate}>Novo Projeto</Button>
-      </Group>
-      
-      <Table withTableBorder striped highlightOnHover>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Nome</Table.Th>
-            <Table.Th>Descrição</Table.Th>
-            <Table.Th>Nome do cliente</Table.Th>
-            <Table.Th>Local da usina</Table.Th>
-            <Table.Th>Status</Table.Th>
-            <Table.Th>Ações</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>      
-
-      <Group justify="space-between" mb="sm" mt="xl">
-        <Text fw={700} c="red" size='lg'>Rascunhos</Text >        
-        {/* <Button onClick={handleCreate}>Novo Projeto</Button> */}
-      </Group>
-
-      <Table withTableBorder striped highlightOnHover>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Nome</Table.Th>
-            <Table.Th>Descrição</Table.Th>
-            <Table.Th>Nome do cliente</Table.Th>
-            <Table.Th>Local da usina</Table.Th>
-            <Table.Th>Status</Table.Th>
-            <Table.Th>Ações</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody></Table.Tbody>
-      </Table>
-
-      <Center h={200} >
-          <ProjectView noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
-      </Center>
-
-      {/* Modal de Confirmação */}
-      <Modal
-        opened={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Confirmação de Exclusão"
-        c={"red"}
-        centered
-      >
-        <Text>
-          Tem certeza que deseja deletar o projeto{" "}
-          <strong>{selectedProject?.name}</strong>?
-        </Text>
-        <Group justify="center" mt="md">
-          <Button variant="default" onClick={() => setIsDeleteModalOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            color="red"
-            onClick={handleDelete}
-            disabled={loadingDelete}
-          >
-            {loadingDelete ? (
-              <Center>
-                <Loader size="sm" />
-              </Center>
-            ) : (
-              "Confirmar"
-            )}
-          </Button>
+    <>      
+        <Group justify="space-between"  mb="sm" mt="lg">
+          <Text fw={700} c="red" size='lg'>Listagem dos projetos</Text >        
+          <Button onClick={handleCreate}>Novo Projeto</Button>
         </Group>
-      </Modal>
+        
+        <Table withTableBorder striped highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Nome</Table.Th>
+              <Table.Th>Descrição</Table.Th>
+              <Table.Th>Nome do cliente</Table.Th>
+              <Table.Th>Local da usina</Table.Th>
+              <Table.Th>Status</Table.Th>
+              <Table.Th>Ações</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>      
+
+        <Group justify="space-between" mb="sm" mt="xl">
+          <Text fw={700} c="red" size='lg'>Rascunhos</Text >        
+          {/* <Button onClick={handleCreate}>Novo Projeto</Button> */}
+        </Group>
+
+        <Table withTableBorder striped highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Nome</Table.Th>
+              <Table.Th>Descrição</Table.Th>
+              <Table.Th>Nome do cliente</Table.Th>
+              <Table.Th>Local da usina</Table.Th>
+              <Table.Th>Status</Table.Th>
+              <Table.Th>Ações</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody></Table.Tbody>
+        </Table>
+
+        <Center h={200} >
+            <ProjectView noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
+        </Center>
+
+        {/* Modal de Confirmação */}
+        <Modal
+          opened={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Confirmação de Exclusão"
+          c={"red"}
+          centered
+        >
+          <Text>
+            Tem certeza que deseja deletar o projeto{" "}
+            <strong>{selectedProject?.name}</strong>?
+          </Text>
+          <Group justify="center" mt="md">
+            <Button variant="default" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              color="red"
+              onClick={handleDelete}
+              disabled={loadingDelete}
+            >
+              {loadingDelete ? (
+                <Center>
+                  <Loader size="sm" />
+                </Center>
+              ) : (
+                "Confirmar"
+              )}
+            </Button>
+          </Group>
+        </Modal>
+        
+        <Snackbar open={openMessageSuccess} autoHideDuration={5000} onClose={handleClose} anchorOrigin={ {vertical: 'top', horizontal: 'center'} } >
+          <Alert
+            onClose={handleClose}
+            severity="success"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            Deletado com sucesso!
+          </Alert>          
+        </Snackbar>
+
+        <Snackbar open={openMessageFail} autoHideDuration={5000} onClose={handleClose} anchorOrigin={ {vertical: 'top', horizontal: 'center'} }>
+          <Alert
+            onClose={handleClose}
+            severity="error"
+            variant="filled"
+            sx={{ width: '100%' }}            
+          >
+            <Text>
+              Falha ao tentar deletar!              
+            </Text>
+          </Alert>
+        </Snackbar>
 
       
     </>
