@@ -103,7 +103,7 @@ const moduleSchema = new mongoose.Schema({
 { 
   _id:false //excluir o _id do subdocumento
 });
-    
+
 const projectSchema = new mongoose.Schema(
   {  
     project_type : { // Status do projeto

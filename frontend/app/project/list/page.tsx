@@ -8,7 +8,7 @@ import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalG
 import ProjectView from '@/components/Forms/ProjectView';
 import { notifications, showNotification} from "@mantine/notifications";
 import { modals, openConfirmModal } from '@mantine/modals';
-import { IProjectDataValues } from '@/types/IProject';
+import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DialogsProvider, useDialogs, DialogProps } from '@toolpad/core/useDialogs';
@@ -101,7 +101,7 @@ export default function ProjectsList() {
   const fetchProjects = async () => {
     setLoading(true);
     const response = await Search("");
-    if(response.error === 'none')
+    if((response as IProjectResponse).error === false)
     {
       setProjects(response.data as IProjectDataValues[])
     }            

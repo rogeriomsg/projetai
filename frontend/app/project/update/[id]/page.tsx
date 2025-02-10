@@ -3,8 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { LoadingOverlay } from "@mantine/core";
 import { Search } from '@/api/project'
-import { IProjectDataValues } from '@/types/IProject';
+import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import ProjectForm from '@/components/Forms/ProjectForm';
+import { IProjectFormSubmissionType } from '@/types/IUtils';
 
 
 export default function EditProject(){
@@ -21,13 +22,13 @@ export default function EditProject(){
             const fetchRecord = async () => {
                 setLoading(true);
                 const response = await Search(`?id=${id}`);
-                if(response.error === 'none')
+                if((response as IProjectResponse).error === false)
                 {
                     setProjectData(response.data)
                 }
                 else 
                 {
-                    setError(response.error)
+                    setError(response.message)
                 }
                 setLoading(false);
             };    
@@ -48,7 +49,7 @@ export default function EditProject(){
     }    
 
     return(     
-        <ProjectForm initialValues={projectData[0]} />
+        <ProjectForm formSubmissionType={IProjectFormSubmissionType.update} initialValues={projectData[0]}  />
     );
     
     

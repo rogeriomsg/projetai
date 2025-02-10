@@ -1,5 +1,5 @@
 'use client';
-import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX,} from '@mantine/form';
+import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX, zodResolver,} from '@mantine/form';
 import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid, FileInput, Center, Space, Alert,} from '@mantine/core';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
@@ -21,21 +21,23 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react';
 
-import axios from "axios";
 import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalGetSinglePoint';
 import Api, { Create, Update } from '@/api/project';
 import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
 import ProjectView from './ProjectView';
-import { IProjectDataValues } from '@/types/IProject';
+import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { IProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
+import { fullProjectchema, getSchema, parcialProjectchema } from '@/validations/project';
+import { ZodObject } from 'zod';
 
 
 interface FormProps {
     initialValues?: IProjectDataValues | null; // Valores iniciais para edição
+    formSubmissionType?: IProjectFormSubmissionType
 };
 
-const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{   
+const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }) =>{   
     const [saving, setSaving] = useState(false); 
     const [activeStep, setActiveStep] = useState(0); 
     const [checked, setChecked] = useState(false);
@@ -48,16 +50,21 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
     const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
     const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
     const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
+
+    const [schema, setSchema] = useState(parcialProjectchema);
+
     const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<IProjectFormSubmissionType>(IProjectFormSubmissionType.Create); //
     const router = useRouter();
 
     const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
     const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
 
+var isSketch2 = false;
+
     const form = useForm<IProjectDataValues>({
         mode: 'uncontrolled',
 
-        validateInputOnBlur:true,
+        //validateInputOnBlur:true,
 
         initialValues: initialValues || { 
             _id : "",
@@ -153,80 +160,81 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
             }],
                 
         },
+        validate: zodResolver(schema),
 
-        validate: (values) => {
-            const errors: Record<string, any> = {};      
-            switch (activeStep) {
-                case 0: //informações do projeto
-                // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
-                // errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
-                // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
-                // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
-                break;
-                case 1: //informaçõe do cliente
-                // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-                // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-                // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-                // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-                // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-                // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-                // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
-                // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-                // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
-                break; 
-                case 2: //informações da usina
-                // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
-                // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
-                // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
+        // validate: (values) => {
+        //     const errors: Record<string, any> = {};      
+        //     switch (activeStep) {
+        //         case 0: //informações do projeto
+        //         // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
+        //         // errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
+        //         // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
+        //         // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
+        //         break;
+        //         case 1: //informaçõe do cliente
+        //         // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+        //         // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+        //         // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+        //         // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+        //         // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+        //         // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+        //         // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+        //         // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+        //         // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+        //         break; 
+        //         case 2: //informações da usina
+        //         // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
+        //         // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
+        //         // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
                 
-                // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
-                // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
-                // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
-                // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
-                // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
-                // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
-                // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
-                // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
-                // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
-                // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
-                // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
-                // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
-                break;
-                case 3: //Sistema de compensação
-                // errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
-                // values.consumerUnit.map((item,index)=>(
-                //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
-                // )) 
-                // values.consumerUnit.forEach((_, index) => {
-                //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
-                // });
-                break; 
-                case 4: //Equipamentos      
-                // values.inverters.map((itemInv,index)=>(
-                //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
-                //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
-                //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
-                // ));
+        //         // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
+        //         // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
+        //         // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
+        //         // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
+        //         // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
+        //         // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
+        //         // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
+        //         // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
+        //         // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
+        //         // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
+        //         // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
+        //         // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
+        //         break;
+        //         case 3: //Sistema de compensação
+        //         // errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
+        //         // values.consumerUnit.map((item,index)=>(
+        //         //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
+        //         // )) 
+        //         // values.consumerUnit.forEach((_, index) => {
+        //         //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
+        //         // });
+        //         break; 
+        //         case 4: //Equipamentos      
+        //         // values.inverters.map((itemInv,index)=>(
+        //         //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
+        //         //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
+        //         //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
+        //         // ));
                 
-                // values.modules.map((item,index)=>(  
-                //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
-                //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
-                //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
-                //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
-                //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
-                // ));
-                // const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
-                //   return Object.keys(obj).some((key) => key.startsWith(prefix));
-                // };
-                // if(hasKeyStartingWith(errors, 'inverters.'))
-                //   changeTab("inverters")
-                // else if(hasKeyStartingWith(errors, 'modules.'))
-                //   changeTab("modules")
-                break;
-            }
-            //alert(JSON.stringify(errors) ) 
-            return errors;
-        },
+        //         // values.modules.map((item,index)=>(  
+        //         //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
+        //         //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
+        //         //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
+        //         //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
+        //         //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
+        //         // ));
+        //         // const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
+        //         //   return Object.keys(obj).some((key) => key.startsWith(prefix));
+        //         // };
+        //         // if(hasKeyStartingWith(errors, 'inverters.'))
+        //         //   changeTab("inverters")
+        //         // else if(hasKeyStartingWith(errors, 'modules.'))
+        //         //   changeTab("modules")
+        //         break;
+        //     }
+        //     //alert(JSON.stringify(errors) ) 
+        //     return errors;
+        // },
 
         transformValues: (values) => ({
             _id: values._id,
@@ -343,7 +351,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
             } 
         },
     });
-
+    
     // Buscar estados
     useEffect(() => {
         const fetchStates = async () => {    
@@ -353,6 +361,8 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
             setLoadingStates(false);
         };
         fetchStates();
+
+
 
         setprojectFormSubmissionType(initialValues!==undefined?IProjectFormSubmissionType.update:IProjectFormSubmissionType.Create)
     }, []);
@@ -730,12 +740,12 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
 
             alert(projectFormSubmissionType.toString()) 
 
-            switch(projectFormSubmissionType)
+            switch(formSubmissionType)
             {
                 case IProjectFormSubmissionType.Create:                
                     setSaving(true);
                     const responseCreate = await Create(values);
-                    if(responseCreate.error === 'none')
+                    if((responseCreate as IProjectResponse).error === false)
                     {
                         //redirecionar sucesso  
                         alert("Salvou com sucesso!")                  
@@ -751,7 +761,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                 case IProjectFormSubmissionType.update:
                     setSaving(true);
                     const responseUpdate = await Update(values._id,values);
-                    if(responseUpdate.error === 'none')
+                    if((responseUpdate as IProjectResponse).error === false)
                     {
                         //redirecionar sucesso  
                         alert(`Salvou com sucesso: ${responseUpdate.data}`) 
@@ -759,12 +769,15 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     else 
                     {
                         //redirecionar erro
-                        alert(`Erro ao salvar: ${responseUpdate.data}`) 
+                        alert(`Erro ao salvar: ${responseUpdate.message}`) 
                     }
                     router.push("/project/list"); // Redireciona para a página de listagem"
                     setSaving(false);
                     break;
-                case IProjectFormSubmissionType.recreate:
+                case IProjectFormSubmissionType.createSketch:
+
+                    break;
+                case IProjectFormSubmissionType.updateSketch:
 
                     break;
             }                       
@@ -839,10 +852,24 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues  }) =>{
                     variant="subtle" 
                     size="xl" 
                     onClick={() => {
+
+                       setSchema(parcialProjectchema)
                     form.validate()
                     }} 
                 >
                     <IconCheck  size={28} stroke={1.5} />
+                </ActionIcon> 
+
+                <ActionIcon 
+                    color="green" 
+                    variant="subtle" 
+                    size="xl" 
+                    onClick={() => {
+                        setSchema(fullProjectchema)
+                    form.validate()
+                    }} 
+                >
+                    <IconCircleCheck  size={28} stroke={1.5} />
                 </ActionIcon> 
                 </Group>         
             </Stepper.Step>

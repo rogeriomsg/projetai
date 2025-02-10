@@ -75,3 +75,9 @@ export interface IProjectDataValues {
         total_power : number;
     }[];
 };
+
+export interface IProjectResponse {
+    error: boolean;
+    message: string;
+    data:any
+}

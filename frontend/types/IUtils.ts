@@ -40,5 +40,6 @@ export interface IAddress {
 export enum IProjectFormSubmissionType {
   Create = "create",
   update = "update",
-  recreate = "recreate",
+  createSketch = "createSketch",
+  updateSketch = "updateSketch"
 }

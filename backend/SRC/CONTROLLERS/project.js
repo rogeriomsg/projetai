@@ -16,22 +16,53 @@ exports.search = async (req, res) => {
 
     await Models.Project.find(filtros).then(data => { 
         if(data.length === 0)
-            res.status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code).json({ message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message});        
+            res
+                .status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code)
+                .json({
+                    error:false,
+                    message: "no records found",
+                    data: [],
+                });       
         else
-            res.status(Services.HTTPStatus.SUCCESS.code).json(data);          
+            res
+                .status(Services.HTTPStatus.SUCCESS.code)
+                .json({ 
+                    error:false,
+                    message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message,
+                    data: data,
+                });                           
     }).catch( err => {
-        res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({ message: err.message});
+        res
+            .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
+            .json({ 
+                error:true,
+                message: err.message,
+                data:null
+            });
     });       
 };
+
 exports.byId = async (req, res) => {
     const {id} = req.params ;
     console.log(id);
     
     await Models.Project.findById(id).then(data => { 
         if(data.length === 0)
-            res.status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code).json({ message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message});        
+            res
+                .status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code)
+                .json({ 
+                    error: false,
+                    message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message,
+                    data : data,
+                });        
         else
-            res.status(Services.HTTPStatus.SUCCESS.code).json(data);          
+            res
+                .status(Services.HTTPStatus.SUCCESS.code)
+                .json({
+                    error:false,
+                    message: "record not found",
+                    data:null,
+                });          
     }).catch( err => {
         res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({ message: err.message});
     });       
@@ -177,20 +208,60 @@ exports.create = async (req, res) => {
       console.log("Projeto criado com sucesso:", newProject);
   
       // Retornar resposta de sucesso
+        res
+            .status(Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.code)
+            .json({
+                error:false,
+                message: Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.message,
+                data: newProject,
+            });
+    } catch (error) {
+      console.error("Erro ao criar projeto:", error);
+  
+      // Retornar erro apropriado
+        res
+            .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
+            .json({
+                error: true,
+                message: `Erro ao criar o projeto: ${error.message}`,
+                data : null,
+            });
+    }
+};
+
+exports.createSketch = async (req, res) => {
+    console.log("Recebendo dados para criação de projeto rascunho:", req.body);
+  
+    try {
+      // Validação básica (pode ser expandida)
+      if (!req.body.name || !req.body.client || !req.body.plant) {
+        return res.status(400).json({ message: "Os campos 'name' e 'client' são obrigatórios." });
+      }
+  
+      // Criar o projeto diretamente no banco
+      const newProject = await Models.Project.create(req.body);
+  
+      console.log("Projeto rascunho criado com sucesso:", newProject);
+  
+      // Retornar resposta de sucesso
       res
         .status(Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.code)
         .json({
-          message: Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.message,
-          project: newProject,
+            error: false,
+            message: Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.message,
+            data: newProject,
         });
     } catch (error) {
       console.error("Erro ao criar projeto:", error);
   
       // Retornar erro apropriado
-      res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({
-        message: "Erro ao criar o projeto.",
-        error: error.message,
-      });
+        res
+            .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
+            .json({
+                error: true,
+                message: `Erro ao criar o projeto: ${error.message}`,
+                data : null,
+            });
     }
 };
 
@@ -199,9 +270,21 @@ exports.delete = async (req, res) => {
     console.log(id);
 
     await Models.Project.findByIdAndDelete(id).then(data => {      
-        res.status(Services.HTTPStatus.RECORD_DELETED_SUCCESSFULLY.code).json({message: Services.HTTPStatus.RECORD_DELETED_SUCCESSFULLY.message });   
+        res
+            .status(Services.HTTPStatus.RECORD_DELETED_SUCCESSFULLY.code)
+            .json({
+                error:false,
+                message: Services.HTTPStatus.RECORD_DELETED_SUCCESSFULLY.message ,
+                data: data,
+            });   
     }).catch(err => {
-        res.status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code).json({message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message });
+        res
+            .status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code)
+            .json({
+                error:true,
+                message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message,
+                data: null
+            });
     }); 
 };
 
@@ -228,9 +311,21 @@ exports.update = async (req, res) => {
     };
 
     await Models.Project.findByIdAndUpdate(id, projectUpdateData , {new: true}).then(data => {        
-        res.status(Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.code).json({ message: Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.message});             
+        res
+            .status(Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.code)
+            .json({ 
+                error: false,
+                message: Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.message,
+                data : data,
+            });             
     }).catch( err => {
-        res.status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code).json({message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message });
+        res
+            .status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code)
+            .json({
+                error:true,
+                message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message, 
+                data:null,
+            });
     }); 
 };
 
