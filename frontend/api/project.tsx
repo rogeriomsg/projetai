@@ -12,7 +12,7 @@ const Api = axios.create({
 
 export const Search = async (params:string) => {
     try {
-        const response = await Api.get(`${params}`);
+        const response = await Api.get(`?${params}`);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
         const data  = response.data as IProjectResponse ;
 

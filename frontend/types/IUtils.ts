@@ -37,7 +37,7 @@ export interface IAddress {
 };
 
 // Definindo uma enumeração do 
-export enum IProjectFormSubmissionType {
+export enum EProjectFormSubmissionType {
   Create = "create",
   update = "update",
   createSketch = "createSketch",

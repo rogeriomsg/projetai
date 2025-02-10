@@ -229,42 +229,6 @@ exports.create = async (req, res) => {
     }
 };
 
-exports.createSketch = async (req, res) => {
-    console.log("Recebendo dados para criação de projeto rascunho:", req.body);
-  
-    try {
-      // Validação básica (pode ser expandida)
-      if (!req.body.name || !req.body.client || !req.body.plant) {
-        return res.status(400).json({ message: "Os campos 'name' e 'client' são obrigatórios." });
-      }
-  
-      // Criar o projeto diretamente no banco
-      const newProject = await Models.Project.create(req.body);
-  
-      console.log("Projeto rascunho criado com sucesso:", newProject);
-  
-      // Retornar resposta de sucesso
-      res
-        .status(Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.code)
-        .json({
-            error: false,
-            message: Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.message,
-            data: newProject,
-        });
-    } catch (error) {
-      console.error("Erro ao criar projeto:", error);
-  
-      // Retornar erro apropriado
-        res
-            .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
-            .json({
-                error: true,
-                message: `Erro ao criar o projeto: ${error.message}`,
-                data : null,
-            });
-    }
-};
-
 exports.delete = async (req, res) => {
     const {id} = req.params ;
     console.log(id);
@@ -289,28 +253,9 @@ exports.delete = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    const {id} = req.params ;
-    
-    // Prepara o objeto de atualização com base no corpo da requisiçãoo
-    const projectUpdateData = {
-        is_active: req.body.is_active !== undefined ? req.body.is_active : true, // Padrão é true
-        client: req.body.client, // Cliente associado ao projeto
-        name: req.body.name, // Nome do projeto (opcional)
-        description: req.body.description,// Descrição do projeto (opcional)
-        dealership: req.body.dealership,// Nome da concessionária ou revendedora (opcional)
-        plant: req.body.plant,   // Dados da usina associada ao projeto
-        consumerUnit:   req.body.consumerUnit,  // Lista de unidades consumidoras
-        inverters: req.body.inverters, // Lista de inversores usados no projeto
-        modules: req.body.modules, // Lista de módulos fotovoltaicos usados no projeto
-        path_meter_pole: req.body.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
-        path_meter: req.body.path_meter, // Caminho para a foto do medidor (opcional)
-        path_bill: req.body.path_bill, // Caminho para a fatura de energia (opcional)
-        path_identity: req.body.path_identity, // Caminho para a identidade do cliente (opcional)
-        path_procuration: req.body.path_procuration, // Caminho para o arquivo de procuração (opcional)
-        status: req.body.status, // Status do projeto - Status padrão: "Em cadastro"
-    };
+    const {id} = req.params ;      
 
-    await Models.Project.findByIdAndUpdate(id, projectUpdateData , {new: true}).then(data => {        
+    await Models.Project.findByIdAndUpdate(id, req.body , {new: true}).then(data => {        
         res
             .status(Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.code)
             .json({ 

@@ -7,7 +7,7 @@ import { ModalsProvider } from '@mantine/modals';
 import { DialogsProvider } from '@toolpad/core/useDialogs';
 
 export const metadata = {
-  title: 'PR Solar Projetos',
+  title: 'xxx',
   description: 'Ambiente para gerenciar seus projetos',
 };
 

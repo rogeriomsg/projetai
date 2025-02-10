@@ -15,8 +15,6 @@ router.get(`/:id`,Controllers.Project.byId);
 
 router.post(`/`,  Controllers.Project.create );
 
-router.post(`/sketch`,  Controllers.Project.createSketch );
-
 router.patch(`/:id`,  Controllers.Project.update );
 
 router.delete(`/:id`,Controllers.Project.delete);

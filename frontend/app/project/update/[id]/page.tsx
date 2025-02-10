@@ -5,7 +5,7 @@ import { LoadingOverlay } from "@mantine/core";
 import { Search } from '@/api/project'
 import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import ProjectForm from '@/components/Forms/ProjectForm';
-import { IProjectFormSubmissionType } from '@/types/IUtils';
+import { EProjectFormSubmissionType } from '@/types/IUtils';
 
 
 export default function EditProject(){
@@ -49,7 +49,7 @@ export default function EditProject(){
     }    
 
     return(     
-        <ProjectForm formSubmissionType={IProjectFormSubmissionType.update} initialValues={projectData[0]}  />
+        <ProjectForm formSubmissionType={EProjectFormSubmissionType.update} initialValues={projectData[0]}  />
     );
     
     

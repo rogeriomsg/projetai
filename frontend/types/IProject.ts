@@ -81,3 +81,14 @@ export interface IProjectResponse {
     message: string;
     data:any
 }
+
+// Definindo uma enumeração para definir o esquema de validação do formulário de projetos 
+export enum EProjectSchemaType {
+    stepInfoProject = "stepInfoProject",
+    stepInfoClient = "stepInfoClient",
+    stepInfoPlant = "stepInfoPlant",
+    stepCompensationsystem = "stepCompensationsystem",
+    stepEquipments = "stepEquipments",
+    stepDocuments = "stepDocuments",
+    sketch = "Sketch"
+  }

@@ -26,15 +26,15 @@ import Api, { Create, Update } from '@/api/project';
 import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
 import ProjectView from './ProjectView';
-import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
-import { IProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
-import { fullProjectchema, getSchema, parcialProjectchema } from '@/validations/project';
-import { ZodObject } from 'zod';
+import { EProjectSchemaType, IProjectDataValues, IProjectResponse } from '@/types/IProject';
+import { EProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
+import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
+import { z } from 'zod';
 
 
 interface FormProps {
     initialValues?: IProjectDataValues | null; // Valores iniciais para edição
-    formSubmissionType?: IProjectFormSubmissionType
+    formSubmissionType?: EProjectFormSubmissionType
 };
 
 const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }) =>{   
@@ -51,16 +51,15 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
     const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
     const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
 
-    const [schema, setSchema] = useState(parcialProjectchema);
+    const [schemaType, setSchemaType] = useState<EProjectSchemaType>(EProjectSchemaType.stepInfoClient);
 
-    const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<IProjectFormSubmissionType>(IProjectFormSubmissionType.Create); //
+    const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<EProjectFormSubmissionType>(EProjectFormSubmissionType.Create); //
     const router = useRouter();
 
-    const nextStep = () => setActiveStep((currentStep) => (form.validate().hasErrors ? currentStep : currentStep + 1));     
+    
+    const nextStep = () => setActiveStep((currentStep) => (validateForm(getSchemaFromActiveStep(currentStep)) ? currentStep + 1 : currentStep ));    
     const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
-
-var isSketch2 = false;
-
+    
     const form = useForm<IProjectDataValues>({
         mode: 'uncontrolled',
 
@@ -68,7 +67,7 @@ var isSketch2 = false;
 
         initialValues: initialValues || { 
             _id : "",
-            status : 'Em cadastro',
+            status : "",
             project_type : "",
             is_active: true, // Indica se o projeto está ativo
             name: "", // Nome do projeto (opcional)
@@ -160,85 +159,85 @@ var isSketch2 = false;
             }],
                 
         },
-        validate: zodResolver(schema),
 
-        // validate: (values) => {
-        //     const errors: Record<string, any> = {};      
-        //     switch (activeStep) {
-        //         case 0: //informações do projeto
-        //         // errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
-        //         // errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
-        //         // errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
-        //         // errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
-        //         break;
-        //         case 1: //informaçõe do cliente
-        //         // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
-        //         // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
-        //         // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
-        //         // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
-        //         // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
-        //         // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
-        //         // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
-        //         // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
-        //         // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
-        //         break; 
-        //         case 2: //informações da usina
-        //         // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
-        //         // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
-        //         // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;
-                
-        //         // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
-        //         // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
-        //         // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
-        //         // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
-        //         // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
-        //         // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
-        //         // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
-        //         // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
-        //         // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
-        //         // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
-        //         // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
-        //         // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
-        //         break;
-        //         case 3: //Sistema de compensação
-        //         // errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
-        //         // values.consumerUnit.map((item,index)=>(
-        //         //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
-        //         // )) 
-        //         // values.consumerUnit.forEach((_, index) => {
-        //         //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
-        //         // });
-        //         break; 
-        //         case 4: //Equipamentos      
-        //         // values.inverters.map((itemInv,index)=>(
-        //         //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
-        //         //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
-        //         //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
-        //         // ));
-                
-        //         // values.modules.map((item,index)=>(  
-        //         //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
-        //         //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
-        //         //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
-        //         //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
-        //         //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
-        //         // ));
-        //         // const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
-        //         //   return Object.keys(obj).some((key) => key.startsWith(prefix));
-        //         // };
-        //         // if(hasKeyStartingWith(errors, 'inverters.'))
-        //         //   changeTab("inverters")
-        //         // else if(hasKeyStartingWith(errors, 'modules.'))
-        //         //   changeTab("modules")
-        //         break;
-        //     }
-        //     //alert(JSON.stringify(errors) ) 
-        //     return errors;
-        // },
+        validate: {},
+
+        //validate: (values) => {             
+            // const errors: Record<string, any> = {};      
+            // switch (activeStep) {
+            //     case 0: //informações do projeto
+            //         errors.project_type =  values.project_type.length === 0?"O tipo do projeto é obrigatório":null;
+            //         errors.name =  values.name.length === 0?"O nome do projeto é obrigatório":null;
+            //         errors.name = values.name.length < 3?"O nome do projeto deve ter pelo menos 3 caracters":null;
+            //         errors.dealership = values.dealership.length === 0?"A distribuidora é obrigatória":null;
+            //     break;
+            //     case 1: //informaçõe do cliente
+            //         // errors["client.client_code"] = values.client.client_code < 2?"Verifique o código do cliente":null; 
+            //         // errors["client.name"] = values.client.name.length < 3?"O nome do cliente deve ter pelo menos 3 caracters":null  
+            //         // errors["client.cpf"] = values.client.cpf.length === 14?null:"O CPF está incompleto"      
+            //         // errors["client.email"] = /^\S+@\S+$/.test(values.client.email)?null:"O e-mail esta inválido"
+            //         // errors["client.phone"] = values.client.phone.length < 15?"O telefone está incompleto":null
+            //         // errors["client.address.street"] = values.client.address.street.length < 3?"O logradouro é obrigatório":null
+            //         // errors["client.address.number"] = Number(values.client.address.number) < 3?values.client.address.no_number?null:"O número é obrigatório":null
+            //         // errors["client.address.state"] = values.client.address.state.length < 2?"O estado é obrigatório":null          
+            //         // errors["client.address.city"] = values.client.address.city.length < 3?"O município é obrigatório":null
+            //     break; 
+            //     case 2: //informações da usina
+            //         // errors["plant.consumer_unit_code"] = Number(values.plant.consumer_unit_code) < 1?"verifique o código do cliente":null; 
+            //         // errors["plant.class"] = values.plant.class.length < 3?"Verifique a classe da UC":null;
+            //         // errors["plant.subgroup"] = values.plant.subgroup.length < 1?"Verifique a subgrupo da UC":null;                
+            //         // errors["plant.connection_type"] = values.plant.connection_type.length < 3?"Verifique o tipo de conexão da UC":null; 
+            //         // errors["plant.generation_type"] = values.plant.generation_type.length < 3?"Verifique o tipo de geração da usina":null;
+            //         // errors["plant.type_branch"] = values.plant.type_branch.length < 3?"Verifique o tipo de ramal de entrada da UC":null; 
+            //         // errors["plant.branch_section"] = Number(values.plant.branch_section) < 10?"Verifique a seção de entrda da UC":null; 
+            //         // errors["plant.service_voltage"] = Number(values.plant.service_voltage) === 0?"Verifique a tensão fase neutro":null; 
+            //         // errors["plant.circuit_breaker"] = Number(values.plant.circuit_breaker) < 20?"O valor do disjuntor deve ser no mínimo 20A":null
+            //         // errors["plant.address.street"] = values.plant.address.street.length < 3?"O logradouro é obrigatório":null
+            //         // errors["plant.address.district"] = values.plant.address.district.length < 2?"O Bairro é obrigatório":null
+            //         // errors["plant.address.city"] = values.plant.address.city.length < 3?"O município é obrigatório":null
+            //         // errors["plant.address.state"] = values.plant.address.state.length < 2?"O estado é obrigatório":null
+            //         // errors["plant.geolocation.lat"] = Number(values.plant.geolocation.lat) === 0?"A latitude é obrigatória":null
+            //         // errors["plant.geolocation.lng"] = Number(values.plant.geolocation.lng) === 0?"A longitude é obrigatória":null          
+            //         break;
+            //     case 3: //Sistema de compensação
+            //         // errors[`compensatiom_system`] = values.compensation_system.length < 2?"Selecione o tipo de compensação":null
+            //         // values.consumerUnit.map((item,index)=>(
+            //         //   errors[`consumerUnit.${index}.consumer_unit_code`] = Number(item.consumer_unit_code) < 2?"Verifique o código da UC ":null
+            //         // )) 
+            //         // values.consumerUnit.forEach((_, index) => {
+            //         //   errors[`consumerUnit.${index}.percentage`] = !porcentagem?"A soma dos percentuais deve ser igual a 100.":null;
+            //         // });
+            //     break; 
+            //     case 4: //Equipamentos      
+            //         // values.inverters.map((itemInv,index)=>(
+            //         //   errors[`inverters.${index}.model`] = itemInv.model.length < 3?"O modelo é obrigatório":null,
+            //         //   errors[`inverters.${index}.manufacturer`] = itemInv.manufacturer.length < 3?"O fabricante é obrigatório":null,
+            //         //   errors[`inverters.${index}.power`] = Number(itemInv.power) === 0?"A potência não pode ser 0":null
+            //         // ));
+                    
+            //         // values.modules.map((item,index)=>(  
+            //         //   errors[`modules.${index}.model`] = item.model.length < 3?"Teste":null,
+            //         //   errors[`modules.${index}.manufacturer`] = item.manufacturer.length < 3?"O fabricante é obrigatório":null,          
+            //         //   errors[`modules.${index}.power`] = Number(item.power) === 0?"A potência é obrigatória":null,
+            //         //   errors[`modules.${index}.width`] = Number(item.width) === 0?"O largura deve ser maior que 0":null,
+            //         //   errors[`modules.${index}.height`] = Number(item.height) === 0?"A altura deve ser maior que 0":null           
+            //         // ));
+            //         // const hasKeyStartingWith = (obj: Record<string, any>, prefix: string): boolean => {
+            //         //   return Object.keys(obj).some((key) => key.startsWith(prefix));
+            //         // };
+            //         // if(hasKeyStartingWith(errors, 'inverters.'))
+            //         //   changeTab("inverters")
+            //         // else if(hasKeyStartingWith(errors, 'modules.'))
+            //         //   changeTab("modules")
+            //     break;
+            // }
+            // //alert(JSON.stringify(errors) ) 
+            // return errors;
+        //},
 
         transformValues: (values) => ({
             _id: values._id,
-            status : 'Em cadastro',
+            status : values.status,
             project_type : values.project_type,
             is_active: true, // Indica se o projeto está ativo
             name: values.name, // Nome do projeto (opcional)
@@ -362,9 +361,7 @@ var isSketch2 = false;
         };
         fetchStates();
 
-
-
-        setprojectFormSubmissionType(initialValues!==undefined?IProjectFormSubmissionType.update:IProjectFormSubmissionType.Create)
+        setprojectFormSubmissionType(initialValues!==undefined?EProjectFormSubmissionType.update:EProjectFormSubmissionType.Create)
     }, []);
 
     const fetchMunicipalities = async (selectedState:string) => {    
@@ -733,65 +730,83 @@ var isSketch2 = false;
         </Table.Tr>
     ));
 
-    const handleSubmit = async (values: IProjectDataValues , event : React.FormEvent<HTMLFormElement>) => { 
-        event?.preventDefault() 
-
-        if (!form.validate().hasErrors) {
-
-            alert(projectFormSubmissionType.toString()) 
-
-            switch(formSubmissionType)
-            {
-                case IProjectFormSubmissionType.Create:                
-                    setSaving(true);
-                    const responseCreate = await Create(values);
-                    if((responseCreate as IProjectResponse).error === false)
-                    {
-                        //redirecionar sucesso  
-                        alert("Salvou com sucesso!")                  
-                    }
-                    else 
-                    {
-                        //redirecionar erro
-                        alert("Erro ao salvar!") 
-                    }
-                    router.push("/project/list"); // Redireciona para a página de listagem"
-                    setSaving(false);
-                    break;
-                case IProjectFormSubmissionType.update:
-                    setSaving(true);
-                    const responseUpdate = await Update(values._id,values);
-                    if((responseUpdate as IProjectResponse).error === false)
-                    {
-                        //redirecionar sucesso  
-                        alert(`Salvou com sucesso: ${responseUpdate.data}`) 
-                    }
-                    else 
-                    {
-                        //redirecionar erro
-                        alert(`Erro ao salvar: ${responseUpdate.message}`) 
-                    }
-                    router.push("/project/list"); // Redireciona para a página de listagem"
-                    setSaving(false);
-                    break;
-                case IProjectFormSubmissionType.createSketch:
-
-                    break;
-                case IProjectFormSubmissionType.updateSketch:
-
-                    break;
-            }                       
-        }
-        else{
-            alert("O formulário contem pendências!");
+    const validateForm = (schema: z.ZodSchema<any>) => {
+        try {
+            // Validar os valores do formulário usando o esquema Zod
+            schema.parse(form.getValues());
+            return true;
+        } catch (err) {
+            if (err instanceof z.ZodError) {
+            // Mapear os erros para o formulário
+            const errors = err.errors.reduce((acc, error) => {
+                const path = error.path.join(".");
+                acc[path] = error.message;
+                return acc;
+            }, {} as Record<string, string>);
+            alert(JSON.stringify(errors))
+            form.setErrors(errors);
+            return false;
+            }
         }
     };
+    
+    const handleSubmit = async (isSketch:boolean) => {                 
+        alert(projectFormSubmissionType.toString()) 
+        setSaving(true);
+        switch(form.getValues().status)
+        {
+            case "":  //Criação de projeto enviado ou rascunho    
+                alert("Criação de projeto ou rascunho")            
+                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                    form.setFieldValue("status",isSketch?"Em cadastro":"Recebido pela Projetai")
+                    const responseCreate = await Create(form.getValues());
+                    if((responseCreate as IProjectResponse).error === false){
+                        alert(isSketch?"Rascunho salvo com sucesso":"Projeto salvo com sucesso")
+                    }else{
+                        alert(isSketch?"Erro ao salvar rascunho":"Erro ao salvar projeto")
+                    }
+                }              
+                
+                break;
+            case "Em cadastro": //Edição de sketch que pode virar projeto enviado
+                alert("Edição de sketch "+form.getValues().project_type)
+                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                    form.setFieldValue("status",isSketch?"Em cadastro":"Recebido pela Projetai")
+                    const responseUpdate= await Update(form.getValues()._id,form.getValues());
+                    if((responseUpdate as IProjectResponse).error === false){
+                        alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado salvo com sucesso")
+                    }else{
+                        alert(isSketch?"Erro ao atualizar rascunho":"Erro ao salvar projeto editado")
+                    }
+                }    
+                break;
+            case "Recebido pela Projetai":
+            case "Analisado com pendências": //Edição de projeto enviado 
+                if(isSketch) return;
+                alert("Edição de projeto enviado")
+                if(validateForm(fullProjectSchema)){                    
+                    const responseUpdate = await Update(form.getValues()._id,form.getValues());
+                    if((responseUpdate as IProjectResponse).error === false){
+                        alert("Projeto enviado atualizado com sucesso")
+                    }else{
+                        alert("Erro ao atualizar projeto enviado")
+                    }
+                }    
+                break;
+        } 
+        setSaving(false);
+        router.push("/project/list"); // Redireciona para a página de listagem"
+    }
+    
     return (
         <>
         {/* <Alert variant="filled" color="red" title="Atenção" withCloseButton icon={<IconInfoCircle size={30} />} radius="lg" onClose={()=>alert("Teste")}>
             Este aviso serve para que você possar.
         </Alert> */}
-        <form onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  >            
+        <form 
+            //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
+            onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
+        >            
             <Stepper 
             active={activeStep} 
             onStepClick={setActiveStep} 
@@ -805,72 +820,58 @@ var isSketch2 = false;
                 icon={<IconFileUpload size={18} />}
             >
                 <Grid mt="sm">
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    //label="Tipo de projeto"
-                    placeholder="Tipo de projeto"
-                    rightSection={<IconDeviceComputerCamera></IconDeviceComputerCamera>}
-                    data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
-                    key={form.key("project_type")}
-                    {...form.getInputProps("project_type")} 
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={6}>
-                    <TextInput
-                    //label="Nome do projeto"
-                    placeholder="Nome do projeto"
-                    rightSection={<IconCheck></IconCheck>}
-                    key={form.key("name")}
-                    {...form.getInputProps("name")} 
-                    required 
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        //label="Tipo de projeto"
+                        placeholder="Tipo de projeto"
+                        rightSection={<IconDeviceComputerCamera></IconDeviceComputerCamera>}
+                        data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
+                        key={form.key("project_type")}
+                        {...form.getInputProps("project_type")} 
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput
+                        //label="Nome do projeto"
+                        placeholder="Nome do projeto"
+                        rightSection={<IconCheck></IconCheck>}
+                        key={form.key("name")}
+                        {...form.getInputProps("name")} 
+                        required 
 
-                    /> 
-                </Grid.Col>
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    //label="Distribuidora"
-                    placeholder="Selecione a distribuidora"
-                    data={['Neoenergia Brasília', 'Goiás', ]}
-                    key={form.key("dealership")}
-                    {...form.getInputProps("dealership")} 
-                    required
-                    />
-                </Grid.Col>            
-                <Grid.Col span={12}>
-                    <Textarea
-                    //label="Descrição"
-                    placeholder="Digite uma descrição para o projeto (Opcional)"
-                    key={form.key("description")}
-                    {...form.getInputProps("description")}  
-                    /> 
-                </Grid.Col>            
+                        /> 
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        //label="Distribuidora"
+                        placeholder="Selecione a distribuidora"
+                        data={['Neoenergia Brasília', 'Goiás', ]}
+                        key={form.key("dealership")}
+                        {...form.getInputProps("dealership")} 
+                        required
+                        />
+                    </Grid.Col>            
+                    <Grid.Col span={12}>
+                        <Textarea
+                        //label="Descrição"
+                        placeholder="Digite uma descrição para o projeto (Opcional)"
+                        key={form.key("description")}
+                        {...form.getInputProps("description")}  
+                        /> 
+                    </Grid.Col>            
                 </Grid> 
                 <Group justify="center" mt="xl">   
-                <ActionIcon 
-                    color="green" 
-                    variant="subtle" 
-                    size="xl" 
-                    onClick={() => {
-
-                       setSchema(parcialProjectchema)
-                    form.validate()
-                    }} 
-                >
-                    <IconCheck  size={28} stroke={1.5} />
-                </ActionIcon> 
-
-                <ActionIcon 
-                    color="green" 
-                    variant="subtle" 
-                    size="xl" 
-                    onClick={() => {
-                        setSchema(fullProjectchema)
-                    form.validate()
-                    }} 
-                >
-                    <IconCircleCheck  size={28} stroke={1.5} />
-                </ActionIcon> 
+                    <ActionIcon 
+                        color="green" 
+                        variant="subtle" 
+                        size="xl" 
+                        onClick={() => {
+                            validateForm(getSchemaFromActiveStep(activeStep))            
+                        }} 
+                    >
+                        <IconCheck  size={28} stroke={1.5} />
+                    </ActionIcon> 
                 </Group>         
             </Stepper.Step>
             <Stepper.Step 
@@ -879,177 +880,177 @@ var isSketch2 = false;
                 icon={<IconUserCheck size={18} />}
             >  
                 <Grid mt="xl">
-                <Grid.Col span={2}>              
-                    <NumberInput
-                        label="Código do cliente"
-                        placeholder="Código do cliente"
+                    <Grid.Col span={2}>              
+                        <NumberInput
+                            label="Código do cliente"
+                            placeholder="Código do cliente"
+                            allowDecimal={false}
+                            allowLeadingZeros={false}
+                            hideControls={true}
+                            min={1}
+                            key={form.key("client.client_code")}
+                            {...form.getInputProps("client.client_code")} 
+                            required           
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={10}>
+                        <Tooltip label="Nome do cliente da conta onde será instalada a usina" position="top-start" offset={24}>
+                        <TextInput
+                            label="Nome completo do cliente titular UC"
+                            placeholder="Nome"
+                            key={form.key("client.name")}
+                            {...form.getInputProps("client.name")}
+                            required
+                        />
+                        </Tooltip>
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <InputBase
+                        label="CPF"
+                        component={IMaskInput}
+                        mask="000.000.000-00"
+                        key={form.key("client.cpf")}
+                        {...form.getInputProps("client.cpf")}
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <TextInput
+                        label="RG"
+                        placeholder="Numero da indentidade"
+                        key={form.key("client.identity")}
+                        {...form.getInputProps("client.identity")}  
+                        /> 
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <TextInput
+                        label="Orgão expedidor"
+                        placeholder='Emissor da identidade'
+                        key={form.key("client.identity_issuer")}
+                        {...form.getInputProps("client.identity_issuer")}  
+                        /> 
+                    </Grid.Col>
+                    <Grid.Col span={4}>
+                        <TextInput
+                        label="E-mail"
+                        key={form.key("client.email")}
+                        {...form.getInputProps("client.email")}
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <InputBase
+                        label="Telefone"
+                        component={IMaskInput}
+                        placeholder='Celular com DDD'
+                        mask="(00) 00000-0000"
+                        key={form.key("client.phone")}
+                        {...form.getInputProps("client.phone")}
+                        required
+                        />              
+                    </Grid.Col>
+                    <GridCol span={12}>
+                    <Divider my="sm" 
+                        label={
+                        <>
+                            <IconHome size={20} />
+                            <Box ml={5}>Endereço da fatura do cliente</Box>
+                        </>
+                        } 
+                        labelPosition="center" 
+                    />
+                    </GridCol>
+                    <Grid.Col span={2}> 
+                        <NumberInput               
+                        label="Código postal"
+                        placeholder='Digite o CEP' 
+                        allowLeadingZeros={false}
+                        allowDecimal={false}
+                        hideControls={true}
+                        maxLength={8}
+                        rightSection={loadingZipCode && <Loader size={20} mr="sm"/>}   
+                        key={form.key(`client.address.zip`)}
+                        {...form.getInputProps(`client.address.zip`)}
+                        required
+                        /> 
+                    </Grid.Col>               
+                    <Grid.Col span={7}>             
+                        <TextInput
+                        label="Logradouro"
+                        key={form.key(`client.address.street`)}
+                        {...form.getInputProps(`client.address.street`)}
+                        required
+                        />    
+                    </Grid.Col>
+                    <Grid.Col span={1}>             
+                        <Checkbox
+                        mt="xl"
+                        label="Sem número"
+                        key={form.key(`client.address.no_number`)}
+                        {...form.getInputProps(`client.address.no_number`,{ type: "checkbox" })}                
+                        />    
+                    </Grid.Col>            
+                    <Grid.Col span={2}>
+                        <NumberInput
+                        label="Número"
                         allowDecimal={false}
                         allowLeadingZeros={false}
                         hideControls={true}
+                        disabled={noNumberClient}
                         min={1}
-                        key={form.key("client.client_code")}
-                        {...form.getInputProps("client.client_code")} 
-                        required           
-                    />
-                </Grid.Col>
-                <Grid.Col span={10}>
-                    <Tooltip label="Nome do cliente da conta onde será instalada a usina" position="top-start" offset={24}>
-                    <TextInput
-                        label="Nome completo do cliente titular UC"
-                        placeholder="Nome"
-                        key={form.key("client.name")}
-                        {...form.getInputProps("client.name")}
+                        key={form.key(`client.address.number`)}
+                        {...form.getInputProps(`client.address.number`)} 
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={5}>
+                        <TextInput
+                        label="Complemento"
+                        placeholder=""
+                        key={form.key(`client.address.complement`)}
+                        {...form.getInputProps(`client.address.complement`)} 
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <TextInput
+                        label="Bairro"
+                        placeholder="Digite o bairro"
+                        key={form.key(`client.address.district`)}
+                        {...form.getInputProps(`client.address.district`)} 
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>              
+                        <Autocomplete
+                        label="Estado"
+                        placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
+                        key={form.key(`client.address.state`)}
+                        {...form.getInputProps(`client.address.state`)}                             
+                        data={loadingStates ? ["Carregando..."] : states?.map((state) => state.sigla)}
                         required
-                    />
-                    </Tooltip>
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <InputBase
-                    label="CPF"
-                    component={IMaskInput}
-                    mask="000.000.000-00"
-                    key={form.key("client.cpf")}
-                    {...form.getInputProps("client.cpf")}
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <TextInput
-                    label="RG"
-                    placeholder="Numero da indentidade"
-                    key={form.key("client.identity")}
-                    {...form.getInputProps("client.identity")}  
-                    /> 
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <TextInput
-                    label="Orgão expedidor"
-                    placeholder='Emissor da identidade'
-                    key={form.key("client.identity_issuer")}
-                    {...form.getInputProps("client.identity_issuer")}  
-                    /> 
-                </Grid.Col>
-                <Grid.Col span={4}>
-                    <TextInput
-                    label="E-mail"
-                    key={form.key("client.email")}
-                    {...form.getInputProps("client.email")}
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <InputBase
-                    label="Telefone"
-                    component={IMaskInput}
-                    placeholder='Celular com DDD'
-                    mask="(00) 00000-0000"
-                    key={form.key("client.phone")}
-                    {...form.getInputProps("client.phone")}
-                    required
-                    />              
-                </Grid.Col>
-                <GridCol span={12}>
-                <Divider my="sm" 
-                    label={
-                    <>
-                        <IconHome size={20} />
-                        <Box ml={5}>Endereço da fatura do cliente</Box>
-                    </>
-                    } 
-                    labelPosition="center" 
-                />
-                </GridCol>
-                <Grid.Col span={2}> 
-                    <NumberInput               
-                    label="Código postal"
-                    placeholder='Digite o CEP' 
-                    allowLeadingZeros={false}
-                    allowDecimal={false}
-                    hideControls={true}
-                    maxLength={8}
-                    rightSection={loadingZipCode && <Loader size={20} mr="sm"/>}   
-                    key={form.key(`client.address.zip`)}
-                    {...form.getInputProps(`client.address.zip`)}
-                    required
-                    /> 
-                </Grid.Col>               
-                <Grid.Col span={7}>             
-                    <TextInput
-                    label="Logradouro"
-                    key={form.key(`client.address.street`)}
-                    {...form.getInputProps(`client.address.street`)}
-                    required
-                    />    
-                </Grid.Col>
-                <Grid.Col span={1}>             
-                    <Checkbox
-                    mt="xl"
-                    label="Sem número"
-                    key={form.key(`client.address.no_number`)}
-                    {...form.getInputProps(`client.address.no_number`,{ type: "checkbox" })}                
-                    />    
-                </Grid.Col>            
-                <Grid.Col span={2}>
-                    <NumberInput
-                    label="Número"
-                    allowDecimal={false}
-                    allowLeadingZeros={false}
-                    hideControls={true}
-                    disabled={noNumberClient}
-                    min={1}
-                    key={form.key(`client.address.number`)}
-                    {...form.getInputProps(`client.address.number`)} 
-                    />
-                </Grid.Col>
-                <Grid.Col span={5}>
-                    <TextInput
-                    label="Complemento"
-                    placeholder=""
-                    key={form.key(`client.address.complement`)}
-                    {...form.getInputProps(`client.address.complement`)} 
-                    />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                    <TextInput
-                    label="Bairro"
-                    placeholder="Digite o bairro"
-                    key={form.key(`client.address.district`)}
-                    {...form.getInputProps(`client.address.district`)} 
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>              
-                    <Autocomplete
-                    label="Estado"
-                    placeholder={loadingStates ?"Carregando...":"Digite o estado"}                  
-                    key={form.key(`client.address.state`)}
-                    {...form.getInputProps(`client.address.state`)}                             
-                    data={loadingStates ? ["Carregando..."] : states?.map((state) => state.sigla)}
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <Autocomplete
-                    label="Município"
-                    placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
-                    key={form.key(`client.address.city`)}
-                    {...form.getInputProps(`client.address.city`)} 
-                    data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}     
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}></Grid.Col>
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <Autocomplete
+                        label="Município"
+                        placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
+                        key={form.key(`client.address.city`)}
+                        {...form.getInputProps(`client.address.city`)} 
+                        data={loadingMunicipalities ?  ["Carregando..."] : municipalities.map((item) => item.nome)}     
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}></Grid.Col>
                 </Grid> 
                 <Group justify="center" mt="xl">   
-                <ActionIcon 
-                    color="green" 
-                    variant="subtle" 
-                    size="xl" 
-                    onClick={() => {
-                    form.validate()
-                    }} 
-                >
-                    <IconCheck  size={28} stroke={1.5} />
-                </ActionIcon>
+                    <ActionIcon 
+                        color="green" 
+                        variant="subtle" 
+                        size="xl" 
+                        onClick={() => {                        
+                            validateForm(getSchemaFromActiveStep(activeStep))
+                        }} 
+                    >
+                        <IconCheck  size={28} stroke={1.5} />
+                    </ActionIcon>
                 </Group>            
             </Stepper.Step>
             <Stepper.Step 
@@ -1058,287 +1059,287 @@ var isSketch2 = false;
                 icon={<IconHomeBolt size={18} />}
             >                 
                 <Grid mt="xl">                
-                <Grid.Col span={2}>  
-                    <TextInput
-                    label="Código da UC"
-                    placeholder="Código da UC"
-                    min={1}
-                    key={form.key(`plant.consumer_unit_code`)}
-                    {...form.getInputProps(`plant.consumer_unit_code`)}
-                    onBlur={(e)=>{
-                        form.setFieldValue("consumerUnit.0.consumer_unit_code",e.target.value)
-                    }}
-                    required
-                    />
-                </Grid.Col>                
-                <Grid.Col span={8} >
-                    <TextInput
-                    placeholder="Digite um nome para usina (opcional)"
-                    label="Nome da usina"
-                    key={form.key(`plant.name`)}
-                    {...form.getInputProps(`plant.name`)}
-                    />
-                </Grid.Col> 
-                <Grid.Col span={2} >
-                    <NumberInput
-                    label="Potência instalada da usina(kWp)"
-                    placeholder="Digite"
-                    decimalScale={3}
-                    allowedDecimalSeparators={['.',',']}
-                    hideControls={true}
-                    min={0}
-                    key={form.key(`plant.installed_power`)}
-                    {...form.getInputProps(`plant.installed_power`)} 
-                    //readOnly          
-                    />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Tipo de geração"
-                    placeholder="Selecione"
-                    data={['Solar', 'Eólica']}
-                    key={form.key(`plant.generation_type`)}
-                    {...form.getInputProps(`plant.generation_type`)} 
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Classe da UC geradora"
-                    placeholder="Selecione"
-                    data={['Residencial', 'Condominio']}
-                    key={form.key(`plant.class`)}
-                    {...form.getInputProps(`plant.class`)} 
-                    required
-                    />
-                </Grid.Col> 
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Subgrupo UC geradora"
-                    placeholder="Selecione"
-                    data={['B1', 'B2']}
-                    key={form.key(`plant.subgroup`)}
-                    {...form.getInputProps(`plant.subgroup`)} 
-                    required
-                    />
-                </Grid.Col> 
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Tensão Fase neutro (kV)"
-                    placeholder="Selecione"
-                    data={['0.22', '0.38', '1', '6.9','13.8']}
-                    key={form.key(`plant.service_voltage`)}
-                    {...form.getInputProps(`plant.service_voltage`)} 
-                    required
-                    />
-                </Grid.Col>              
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Tipo de ramal"
-                    placeholder="Selecione"
-                    data={["Aérea","Subterrânea"]}
-                    key={form.key(`plant.type_branch`)}
-                    {...form.getInputProps(`plant.type_branch`)} 
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <Autocomplete
-                    label="Seção do ramal de entrada(mm²)"
-                    placeholder="Selecione"
-                    data={['10','16','25']}
-                    key={form.key(`plant.branch_section`)}
-                    {...form.getInputProps(`plant.branch_section`)} 
-                    required
-                    />
-                </Grid.Col> 
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Tipo de conexão"
-                    placeholder="Selecione"
-                    data={['Monofásico', 'Bifásico', 'Trifásico']}
-                    key={form.key(`plant.connection_type`)}
-                    {...form.getInputProps(`plant.connection_type`)} 
-                    required
-                    />
-                </Grid.Col>                                                      
-                <Grid.Col span={2}>
-                    <Autocomplete
-                    label="Disjuntor padrão de entrada(A)"
-                    placeholder="Digite"
-                    data={['20', '30', '50', '63','80','100','120']}
-                    key={form.key(`plant.circuit_breaker`)}
-                    {...form.getInputProps(`plant.circuit_breaker`)} 
-                    required
-                    />              
-                </Grid.Col> 
-                {/* <Grid.Col span={2}>
-                    <NumberInput
-                    label="Carga disponibilizada"
-                    placeholder="Em (kW)"
-                    min={0}
-                    decimalScale={3}
-                    hideControls={true}
-                    allowedDecimalSeparators={['.',',']}
-                    key={form.key(`plant.installed_load`)}
-                    {...form.getInputProps(`plant.installed_load`)} 
-                    readOnly         
-                    />
-                </Grid.Col>  */}
-                <Grid.Col span={12}>
-                    <Switch
-                    onChange={(e) =>{ 
-                        setChecked(e.currentTarget.checked)
-                        CopyAddressFromClientToPlant(e.currentTarget.checked);
-                    }}
-                    checked={checked}
-                    color="teal"
-                    size="md"
-                    label="Copiar o endereço do cliente titular"
-                    thumbIcon={
-                        checked ? (
-                        <IconCheck size={12} color="var(--mantine-color-teal-6)" stroke={3} />
-                        ) : (
-                        <IconX size={12} color="var(--mantine-color-red-6)" stroke={3} />
-                        )
-                    }
-                    />
-                </Grid.Col>  
-                <Grid.Col span={2}>  
-                    <NumberInput
-                    label="Código postal"
-                    placeholder='Digite o CEP' 
-                    allowDecimal={false}
-                    allowLeadingZeros={false}
-                    hideControls={true} 
-                    rightSection={loadingZipCode && <Loader size={20} mr="sm"/>}                 
-                    maxLength={8} // Limita o número de caracteres no CEP
-                    key={form.key(`plant.address.zip`)}
-                    {...form.getInputProps(`plant.address.zip`)}
-                    required
-                    />  
-                </Grid.Col>               
-                <Grid.Col span={7}>             
-                    <TextInput
-                    label="Logradouro"
-                    key={form.key(`plant.address.street`)}
-                    {...form.getInputProps(`plant.address.street`)}
-                    required
-                    />    
-                </Grid.Col>
-                <Grid.Col span={1}>             
-                    <Checkbox
-                    mt="xl"
-                    label="Sem número"
-                    key={form.key(`plant.address.no_number`)}
-                    {...form.getInputProps(`plant.address.no_number`,{ type: "checkbox" })}
-                    />    
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                    label="Número"
-                    allowDecimal={false}
-                    allowLeadingZeros={false}
-                    hideControls={true}
-                    disabled={noNumberPlant}
-                    min={1}
-                    key={form.key(`plant.address.number`)}
-                    {...form.getInputProps(`plant.address.number`)} 
-                    />
-                </Grid.Col>
-                <Grid.Col span={4}>
-                    <TextInput
-                        label="Complemento"
-                        placeholder=""
-                        key={form.key(`plant.address.complement`)}
-                        {...form.getInputProps(`plant.address.complement`)} 
-                    />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                    <TextInput
-                    label="Bairro"
-                    placeholder="Digite o bairro"
-                    key={form.key(`plant.address.district`)}
-                    {...form.getInputProps(`plant.address.district`)} 
+                    <Grid.Col span={2}>  
+                        <TextInput
+                        label="Código da UC"
+                        placeholder="Código da UC"
+                        min={1}
+                        key={form.key(`plant.consumer_unit_code`)}
+                        {...form.getInputProps(`plant.consumer_unit_code`)}
+                        onBlur={(e)=>{
+                            form.setFieldValue("consumerUnit.0.consumer_unit_code",e.target.value)
+                        }}
+                        required
+                        />
+                    </Grid.Col>                
+                    <Grid.Col span={8} >
+                        <TextInput
+                        placeholder="Digite um nome para usina (opcional)"
+                        label="Nome da usina"
+                        key={form.key(`plant.name`)}
+                        {...form.getInputProps(`plant.name`)}
+                        />
+                    </Grid.Col> 
+                    <Grid.Col span={2} >
+                        <NumberInput
+                        label="Potência instalada da usina(kWp)"
+                        placeholder="Digite"
+                        decimalScale={3}
+                        allowedDecimalSeparators={['.',',']}
+                        hideControls={true}
+                        min={0}
+                        key={form.key(`plant.installed_power`)}
+                        {...form.getInputProps(`plant.installed_power`)} 
+                        //readOnly          
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Tipo de geração"
+                        placeholder="Selecione"
+                        data={['Solar', 'Eólica']}
+                        key={form.key(`plant.generation_type`)}
+                        {...form.getInputProps(`plant.generation_type`)} 
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Classe da UC geradora"
+                        placeholder="Selecione"
+                        data={['Residencial', 'Condominio']}
+                        key={form.key(`plant.class`)}
+                        {...form.getInputProps(`plant.class`)} 
+                        required
+                        />
+                    </Grid.Col> 
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Subgrupo UC geradora"
+                        placeholder="Selecione"
+                        data={['B1', 'B2']}
+                        key={form.key(`plant.subgroup`)}
+                        {...form.getInputProps(`plant.subgroup`)} 
+                        required
+                        />
+                    </Grid.Col> 
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Tensão Fase neutro (kV)"
+                        placeholder="Selecione"
+                        data={['0.22', '0.38', '1', '6.9','13.8']}
+                        key={form.key(`plant.service_voltage`)}
+                        {...form.getInputProps(`plant.service_voltage`)} 
+                        required
+                        />
+                    </Grid.Col>              
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Tipo de ramal"
+                        placeholder="Selecione"
+                        data={["Aérea","Subterrânea"]}
+                        key={form.key(`plant.type_branch`)}
+                        {...form.getInputProps(`plant.type_branch`)} 
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <Autocomplete
+                        label="Seção do ramal de entrada(mm²)"
+                        placeholder="Selecione"
+                        data={['10','16','25']}
+                        key={form.key(`plant.branch_section`)}
+                        {...form.getInputProps(`plant.branch_section`)} 
+                        required
+                        />
+                    </Grid.Col> 
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Tipo de conexão"
+                        placeholder="Selecione"
+                        data={['Monofásico', 'Bifásico', 'Trifásico']}
+                        key={form.key(`plant.connection_type`)}
+                        {...form.getInputProps(`plant.connection_type`)} 
+                        required
+                        />
+                    </Grid.Col>                                                      
+                    <Grid.Col span={2}>
+                        <Autocomplete
+                        label="Disjuntor padrão de entrada(A)"
+                        placeholder="Digite"
+                        data={['20', '30', '50', '63','80','100','120']}
+                        key={form.key(`plant.circuit_breaker`)}
+                        {...form.getInputProps(`plant.circuit_breaker`)} 
+                        required
+                        />              
+                    </Grid.Col> 
+                    {/* <Grid.Col span={2}>
+                        <NumberInput
+                        label="Carga disponibilizada"
+                        placeholder="Em (kW)"
+                        min={0}
+                        decimalScale={3}
+                        hideControls={true}
+                        allowedDecimalSeparators={['.',',']}
+                        key={form.key(`plant.installed_load`)}
+                        {...form.getInputProps(`plant.installed_load`)} 
+                        readOnly         
+                        />
+                    </Grid.Col>  */}
+                    <Grid.Col span={12}>
+                        <Switch
+                        onChange={(e) =>{ 
+                            setChecked(e.currentTarget.checked)
+                            CopyAddressFromClientToPlant(e.currentTarget.checked);
+                        }}
+                        checked={checked}
+                        color="teal"
+                        size="md"
+                        label="Copiar o endereço do cliente titular"
+                        thumbIcon={
+                            checked ? (
+                            <IconCheck size={12} color="var(--mantine-color-teal-6)" stroke={3} />
+                            ) : (
+                            <IconX size={12} color="var(--mantine-color-red-6)" stroke={3} />
+                            )
+                        }
+                        />
+                    </Grid.Col>  
+                    <Grid.Col span={2}>  
+                        <NumberInput
+                        label="Código postal"
+                        placeholder='Digite o CEP' 
+                        allowDecimal={false}
+                        allowLeadingZeros={false}
+                        hideControls={true} 
+                        rightSection={loadingZipCode && <Loader size={20} mr="sm"/>}                 
+                        maxLength={8} // Limita o número de caracteres no CEP
+                        key={form.key(`plant.address.zip`)}
+                        {...form.getInputProps(`plant.address.zip`)}
+                        required
+                        />  
+                    </Grid.Col>               
+                    <Grid.Col span={7}>             
+                        <TextInput
+                        label="Logradouro"
+                        key={form.key(`plant.address.street`)}
+                        {...form.getInputProps(`plant.address.street`)}
+                        required
+                        />    
+                    </Grid.Col>
+                    <Grid.Col span={1}>             
+                        <Checkbox
+                        mt="xl"
+                        label="Sem número"
+                        key={form.key(`plant.address.no_number`)}
+                        {...form.getInputProps(`plant.address.no_number`,{ type: "checkbox" })}
+                        />    
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                        label="Número"
+                        allowDecimal={false}
+                        allowLeadingZeros={false}
+                        hideControls={true}
+                        disabled={noNumberPlant}
+                        min={1}
+                        key={form.key(`plant.address.number`)}
+                        {...form.getInputProps(`plant.address.number`)} 
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={4}>
+                        <TextInput
+                            label="Complemento"
+                            placeholder=""
+                            key={form.key(`plant.address.complement`)}
+                            {...form.getInputProps(`plant.address.complement`)} 
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <TextInput
+                        label="Bairro"
+                        placeholder="Digite o bairro"
+                        key={form.key(`plant.address.district`)}
+                        {...form.getInputProps(`plant.address.district`)} 
 
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <Autocomplete
-                    label="Estado"
-                    placeholder="Digite o estado" 
-                    key={form.key(`plant.address.state`)}
-                    {...form.getInputProps(`plant.address.state`)} 
-                    data={loadingStates ? ["Carregando..."] : states?.map((state) => state.sigla)} 
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                    <Autocomplete
-                    label="Município"
-                    placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
-                    data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
-                    key={form.key(`plant.address.city`)}
-                    {...form.getInputProps(`plant.address.city`)}                
-                    required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                    label="Latitude"
-                    placeholder=""
-                    min={1}
-                    decimalScale={8}
-                    allowedDecimalSeparators={['.',',']}
-                    hideControls={true}
-                    key={form.key(`plant.geolocation.lat`)}
-                    {...form.getInputProps(`plant.geolocation.lat`)} 
-                    required           
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                    label="Longitude"
-                    placeholder=""
-                    min={1}
-                    decimalScale={8}
-                    allowedDecimalSeparators={['.',',']}
-                    hideControls={true}
-                    key={form.key(`plant.geolocation.lng`)}
-                    {...form.getInputProps(`plant.geolocation.lng`)} 
-                    required           
-                    />
-                </Grid.Col>
-                <GridCol span={3} mt="lg">
-                    <MapModalGetSinglePoint
-                        onSelectionChange={handleSalvepointPlant}                        
-                        dataMarkers={
-                            projectFormSubmissionType===IProjectFormSubmissionType.update?
-                            [ {id:"0",available:true,selected:true,draggable:true,clickable:false,lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}]
-                            :
-                            [{id:"0",available:true,selected:true,draggable:true,clickable:false,lat:-15.78421850,lng:-47.93389432}]
-                        }
-                        centerDefault={
-                            Number(form.getValues().plant.geolocation.lat)!==0&&Number(form.getValues().plant.geolocation.lng)!==0?
-                            {lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}
-                            :
-                            {lat:-15.78421850,lng:-47.93389432}
-                        }
-                        zoom={18}
-                    />
-                </GridCol>
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <Autocomplete
+                        label="Estado"
+                        placeholder="Digite o estado" 
+                        key={form.key(`plant.address.state`)}
+                        {...form.getInputProps(`plant.address.state`)} 
+                        data={loadingStates ? ["Carregando..."] : states?.map((state) => state.sigla)} 
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <Autocomplete
+                        label="Município"
+                        placeholder={loadingMunicipalities?"Carregando...":"Digite o município"}
+                        data={loadingMunicipalities ? ["Carregando..."] : municipalities.map((item) => item.nome)}
+                        key={form.key(`plant.address.city`)}
+                        {...form.getInputProps(`plant.address.city`)}                
+                        required
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                        label="Latitude"
+                        placeholder=""
+                        min={1}
+                        decimalScale={8}
+                        allowedDecimalSeparators={['.',',']}
+                        hideControls={true}
+                        key={form.key(`plant.geolocation.lat`)}
+                        {...form.getInputProps(`plant.geolocation.lat`)} 
+                        required           
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                        label="Longitude"
+                        placeholder=""
+                        min={1}
+                        decimalScale={8}
+                        allowedDecimalSeparators={['.',',']}
+                        hideControls={true}
+                        key={form.key(`plant.geolocation.lng`)}
+                        {...form.getInputProps(`plant.geolocation.lng`)} 
+                        required           
+                        />
+                    </Grid.Col>
+                    <GridCol span={3} mt="lg">
+                        <MapModalGetSinglePoint
+                            onSelectionChange={handleSalvepointPlant}                        
+                            dataMarkers={
+                                projectFormSubmissionType===EProjectFormSubmissionType.update?
+                                [ {id:"0",available:true,selected:true,draggable:true,clickable:false,lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}]
+                                :
+                                [{id:"0",available:true,selected:true,draggable:true,clickable:false,lat:-15.78421850,lng:-47.93389432}]
+                            }
+                            centerDefault={
+                                Number(form.getValues().plant.geolocation.lat)!==0&&Number(form.getValues().plant.geolocation.lng)!==0?
+                                {lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}
+                                :
+                                {lat:-15.78421850,lng:-47.93389432}
+                            }
+                            zoom={18}
+                        />
+                    </GridCol>
                 </Grid> 
                 <Group justify="center" mt="xl">   
-                <ActionIcon 
-                    color="green" 
-                    variant="subtle" 
-                    size="xl" 
-                    onClick={() => {
-                    form.validate()
-                    }} 
-                >
-                    <IconCheck  size={28} stroke={1.5} />
-                </ActionIcon> 
+                    <ActionIcon 
+                        color="green" 
+                        variant="subtle" 
+                        size="xl" 
+                        onClick={() => {
+                            validateForm(getSchemaFromActiveStep(activeStep))
+                        }} 
+                    >
+                        <IconCheck  size={28} stroke={1.5} />
+                    </ActionIcon> 
                 </Group>  
             </Stepper.Step>
             <Stepper.Step 
@@ -1376,34 +1377,34 @@ var isSketch2 = false;
                 </Table>
                 </Table.ScrollContainer>         
 
-                <Group justify="center" mt="md"> 
+                <Group justify="right" mt="md"> 
                     <ActionIcon 
                     color="green" 
-                    variant="subtle" 
-                    size="xl" 
-                    onClick={() => {
-                        form.validate()
-                    }} 
+                        //variant="subtle" 
+                        size="xl" 
+                        onClick={() => {
+                            validateForm(getSchemaFromActiveStep(activeStep))
+                        }} 
                     >
-                    <IconCheck  size={28} stroke={1.5} />
+                        <IconCheck  size={28} stroke={1.5} />
                     </ActionIcon>
 
                     <ActionIcon 
-                    color="green" 
-                    variant="subtle" 
-                    size="xl" 
-                    onClick={() => {
-                        form.insertListItem('consumerUnit', { 
-                        key: randomId(),
-                        consumer_unit_code: 0 , 
-                        name: '', 
-                        description: '',         
-                        percentage: 50,
-                        is_plant: false
-                        })              
-                    }} 
+                        color="orange" 
+                        //variant="subtle" 
+                        size="xl" 
+                        onClick={() => {
+                            form.insertListItem('consumerUnit', { 
+                            key: randomId(),
+                            consumer_unit_code: 0 , 
+                            name: '', 
+                            description: '',         
+                            percentage: 50,
+                            is_plant: false
+                            })              
+                        }} 
                     >
-                    <IconPlus  size={28} stroke={1.5} />
+                        <IconPlus  size={28} stroke={1.5} />
                     </ActionIcon>
                 </Group>
             </Stepper.Step>
@@ -1438,18 +1439,7 @@ var isSketch2 = false;
                     </Table>
                 </Table.ScrollContainer>         
 
-                <Group justify="right" mt="sm">
-                    {/* <ActionIcon 
-                        color="green" 
-                        variant="subtle" 
-                        size="xl" 
-                        onClick={() => {
-                        form.validate()
-                        }} 
-                    >
-                        <IconCheck  size={28} stroke={1.5} />
-                    </ActionIcon> */}
-
+                <Group justify="right" mt="sm">  
                     <ActionIcon 
                         color="orange" 
                         //variant="subtle" 
@@ -1544,51 +1534,51 @@ var isSketch2 = false;
                 icon={<IconFileUpload size={18} />}
             >
                 <Grid mt="xl">
-                <GridCol >
-                    <FileInput 
-                    accept="image/png,image/jpeg,application/pdf" 
-                    label="Foto da conta de energia do cliente" 
-                    placeholder="Upload de arquivos" 
-                    key={form.key(`path_bill`)}
-                    {...form.getInputProps(`path_bill`)}   
-                    /> 
-                </GridCol>
-                <GridCol >
-                    <FileInput 
-                    accept="image/png,image/jpeg,application/pdf" 
-                    label="Cópia do documento de identidade do cliente" 
-                    placeholder="Upload de arquivos" 
-                    key={form.key(`path_identity`)}
-                    {...form.getInputProps(`path_identity`)}   
-                    /> 
-                </GridCol>
-                <GridCol >
-                    <FileInput 
-                    accept="image/png,image/jpeg" 
-                    label="Foto do padrão de entrada " 
-                    placeholder="Upload de arquivos" 
-                    key={form.key(`path_meter`)}
-                    {...form.getInputProps(`path_meter`)} 
-                    /> 
-                </GridCol>
-                <GridCol >
-                    <FileInput 
-                    accept="image/png,image/jpeg" 
-                    label="Foto do poste do padrão de entrada" 
-                    placeholder="Upload de arquivos" 
-                    key={form.key(`path_meter_pole`)}
-                    {...form.getInputProps(`path_meter_pole`)} 
-                    /> 
-                </GridCol>
-                <GridCol >
-                    <FileInput 
-                    accept="image/png,image/jpeg,application/pdf" 
-                    label="Foto da procuração" 
-                    placeholder="Upload de arquivos" 
-                    key={form.key(`path_procuration`)}
-                    {...form.getInputProps(`path_procuration`)}                     
-                    /> 
-                </GridCol>
+                    <GridCol >
+                        <FileInput 
+                        accept="image/png,image/jpeg,application/pdf" 
+                        label="Foto da conta de energia do cliente" 
+                        placeholder="Upload de arquivos" 
+                        key={form.key(`path_bill`)}
+                        {...form.getInputProps(`path_bill`)}   
+                        /> 
+                    </GridCol>
+                    <GridCol >
+                        <FileInput 
+                        accept="image/png,image/jpeg,application/pdf" 
+                        label="Cópia do documento de identidade do cliente" 
+                        placeholder="Upload de arquivos" 
+                        key={form.key(`path_identity`)}
+                        {...form.getInputProps(`path_identity`)}   
+                        /> 
+                    </GridCol>
+                    <GridCol >
+                        <FileInput 
+                        accept="image/png,image/jpeg" 
+                        label="Foto do padrão de entrada " 
+                        placeholder="Upload de arquivos" 
+                        key={form.key(`path_meter`)}
+                        {...form.getInputProps(`path_meter`)} 
+                        /> 
+                    </GridCol>
+                    <GridCol >
+                        <FileInput 
+                        accept="image/png,image/jpeg" 
+                        label="Foto do poste do padrão de entrada" 
+                        placeholder="Upload de arquivos" 
+                        key={form.key(`path_meter_pole`)}
+                        {...form.getInputProps(`path_meter_pole`)} 
+                        /> 
+                    </GridCol>
+                    <GridCol >
+                        <FileInput 
+                        accept="image/png,image/jpeg,application/pdf" 
+                        label="Foto da procuração" 
+                        placeholder="Upload de arquivos" 
+                        key={form.key(`path_procuration`)}
+                        {...form.getInputProps(`path_procuration`)}                     
+                        /> 
+                    </GridCol>
                 </Grid>
             </Stepper.Step>
             <Stepper.Completed>
@@ -1609,7 +1599,11 @@ var isSketch2 = false;
                 <Button variant="default" onClick={prevStep}>
                     Voltar
                 </Button>
-                <Button variant="default" disabled={false}>
+                <Button 
+                    variant="default" 
+                    disabled={form.getValues().status!==""&&form.getValues().status!=="Em cadastro"}
+                    onClick={() => handleSubmit(true)}
+                >
                     Salvar e editar depois
                 </Button>
                 </>          
@@ -1623,11 +1617,16 @@ var isSketch2 = false;
                 </Button>
                 )} 
                 {activeStep === 6 && (
-                    <Button type='submit'>{projectFormSubmissionType==='update'?"Salvar Alterações":"Enviar para análise"}</Button>
+                    //<Button type='submit'>{projectFormSubmissionType==='update'?"Salvar Alterações":"Enviar para análise"}</Button>
+                    <Button 
+                        type="button"
+                        onClick={() => handleSubmit(false)}
+                    >
+                        {projectFormSubmissionType==='update'?"Salvar Alterações":"Enviar para análise"}
+                    </Button>
                 )}
             </Group>    
             </form>  
-                 
         </>    
     );
 

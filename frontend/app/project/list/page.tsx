@@ -11,8 +11,6 @@ import { modals, openConfirmModal } from '@mantine/modals';
 import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { DialogsProvider, useDialogs, DialogProps } from '@toolpad/core/useDialogs';
-
 type Project = {
   id: number;
   name: string;
@@ -100,7 +98,7 @@ export default function ProjectsList() {
 
   const fetchProjects = async () => {
     setLoading(true);
-    const response = await Search("");
+    const response = await Search("status=Recebido pela Projetai");
     if((response as IProjectResponse).error === false)
     {
       setProjects(response.data as IProjectDataValues[])
