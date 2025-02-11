@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon, Center, Menu, useModalsStack, Modal, Loader } from '@mantine/core';
 import { Delete, Search } from '@/api/project';
 import { useRouter } from 'next/navigation';
-import { IconDots, IconDotsVertical, IconEdit, IconHome, IconPhoto, IconSearch, IconSun, IconTrash } from '@tabler/icons-react';
+import { IconDots, IconDotsVertical, IconEdit, IconCopyCheck, IconPhoto, IconSearch, IconSun, IconTrash, IconCopy } from '@tabler/icons-react';
 import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalGetSinglePoint';
 import ProjectView from '@/components/Forms/ProjectView';
 import { notifications, showNotification} from "@mantine/notifications";
@@ -52,6 +52,9 @@ export default function ProjectsList() {
   const handleEdit = (id:string) => {
     router.push(`/project/update/${id}`); // Redireciona para a página "/destination-page"
   };   
+  const handleSaveAs = (id:string) => {
+    router.push(`/project/update/${id}?opt=SaveAs`); // Redireciona para a página "/destination-page"
+  };   
 
   const handleClose = (
     event?: React.SyntheticEvent | Event,
@@ -74,19 +77,19 @@ export default function ProjectsList() {
          
     setLoadingDelete(true);
 
-      setalertProp({severity:'success',message:"Deletado com sucesso!"})
+    setalertProp({severity:'success',message:"Deletado com sucesso!"})
+    setOpenMessageSuccess(true);
+    const response = await Delete(selectedProject._id);
+    if(response.error === false)
+    {      
+      setProjects((prev) => prev.filter((p) => p._id !== selectedProject._id));
+      setalertProp({severity:'success',children:"Deletado com sucesso!"})
       setOpenMessageSuccess(true);
-    // const response = await Delete(selectedProject._id);
-    // if(response.error === 'none')
-    // {      
-    //   setProjects((prev) => prev.filter((p) => p._id !== selectedProject._id));
-    //   setalertProp({severity:'success',children:"Deletado com sucesso!"})
-    //   setOpenMessageSuccess(true);
-    // }
-    // else 
-    // {
-    //   setOpenMessageFail(true)
-    // }
+    }
+    else 
+    {
+      setOpenMessageFail(true)
+    }
     setLoadingDelete(false);
     setIsDeleteModalOpen(false);
     setSelectedProject(null);    
@@ -131,10 +134,10 @@ export default function ProjectsList() {
       <Table.Td>{element.client.name}</Table.Td>
       <Table.Td>
         <MapModalGetSinglePoint
-          centerDefault={{lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}}          
+          centerDefault={{lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}}          
           zoom={18}
           dataMarkers={[ 
-            {available:true,selected:true,clickable:false,id:"0",lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}
+            {available:true,selected:true,clickable:false,id:"0",lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}
           ]}           
         />
       </Table.Td>
@@ -152,9 +155,15 @@ export default function ProjectsList() {
               leftSection={<IconEdit  style={{ width: '80%', height: '80%' }} stroke={1.5} />}
               onClick={()=>handleEdit(element._id)}
               c="green"
-              disabled={true}
             >
               Editar
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconCopy  style={{ width: '80%', height: '80%' }} stroke={1.5} />}
+              onClick={()=>handleSaveAs(element._id)}
+              c="green"
+            >
+              Usar como modelo
             </Menu.Item>
             <Menu.Item
               leftSection={<IconSearch  style={{ width: '80%', height: '80%' }} stroke={1.5} />}
@@ -184,10 +193,10 @@ export default function ProjectsList() {
       <Table.Td>{element.client.name}</Table.Td>
       <Table.Td>
         <MapModalGetSinglePoint
-          centerDefault={{lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}}          
+          centerDefault={{lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}}          
           zoom={18}
           dataMarkers={[ 
-            {available:true,selected:true,clickable:false,id:"0",lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}
+            {available:true,selected:true,clickable:false,id:"0",lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}
           ]}           
         />
       </Table.Td>
@@ -233,7 +242,7 @@ export default function ProjectsList() {
     <>      
         <Group justify="space-between"  mb="sm" mt="lg">
           <Text fw={700} c="red" size='lg'>Listagem dos projetos</Text >        
-          <Button onClick={handleCreate}>Novo Projeto</Button>
+          <Button onClick={handleCreate}>Iniciar Novo Projeto</Button>
         </Group>
         
         <Table withTableBorder striped highlightOnHover>

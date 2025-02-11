@@ -16,15 +16,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/project/list/page.js"
     ],
+    "/project/update/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/project/update/[id]/page.js"
+    ],
     "/project/create/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/project/create/page.js"
     ],
-    "/project/update/[id]/page": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/project/update/[id]/page.js"
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

@@ -10,6 +10,14 @@ const addressSchema = z.object({
     state: z.string().min(1,{message:"O estado deve ser selecionado"})  ,
     city: z.string().min(1,{message:"O município deve ser selecionado"})  ,
     zip: z.number().min(1,{message:"O CEP deve ser especificado"}) ,
+}).superRefine((data, ctx) => {    
+    if (data.no_number===false && data.number===0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "O numero deve ser fornecido",
+        path: ["number"], // Deixar o path vazio para indicar erro geral
+      });
+    }
 });
 
 const clientSchema = z.object({
@@ -48,16 +56,16 @@ const plantSchema = z.object({
 });
 
 const consumerUnitSchema = z.object({
-    consumer_unit_code: z.number().min(0,{message: 'Código da UC deve ser especificado'}), 
+    consumer_unit_code: z.number().min(1,{message: 'Código da UC deve ser especificado'}), 
     name: z.string().min(2, { message: 'Nome da UC deve ser informado' }) ,
     description: z.string(),         
-    percentage: z.number(),
+    percentage: z.number().min(0).max(100),
     is_plant: z.boolean(),
 });
 
 const invertersSchema = z.object({
-    model: z.string().min(2, { message: 'Modelo de ve ser informado' }) ,
-    manufacturer: z.string() ,
+    model: z.string().min(2, { message: 'Modelo deve ser informado' }) ,
+    manufacturer: z.string().min(2, { message: 'Fabricante deve ser informado' }) ,
     power: z.number() ,
     quantity: z.number() ,
     total_power : z.number() ,
@@ -66,7 +74,7 @@ const invertersSchema = z.object({
 
 const modulesSchema = z.object({
     model: z.string().min(2, { message: 'Nome da UC deve ser informado' }) ,
-    manufacturer: z.string() ,
+    manufacturer: z.string().min(2, { message: 'Fabricante deve ser informado' }) ,
     description: z.string() ,
     quantity: z.number() ,
     width: z.number() ,
@@ -97,8 +105,21 @@ export const projectPlantSchema = z.object({
 
 // Definindo o esquema de validação do cliente
 export const projectConsumerUnitSchema = z.object({
-    consumerUnit: z.array(consumerUnitSchema).min(1, "Pelo menos uma UC deve ser fornecida."),   
-});
+    consumerUnit: z.array(consumerUnitSchema)
+   
+}).superRefine((data, ctx) => {
+    // Calcular o somatório dos percentuais
+    const totalPercentage = data.consumerUnit.reduce((sum, unit) => sum + unit.percentage, 0);
+  
+    // Se o total não for exatamente 100, adicionar um erro geral
+    if (totalPercentage !== 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `O somatório dos percentuais de todas as UCs deve ser exatamente 100. Atualmente ${totalPercentage}`,
+        path: ['consumerUnit.0.percentage'], // Deixar o path vazio para indicar erro geral        
+      });
+    }
+  });
 
 export const projectEquipamentsSchema = z.object({
     inverters:  z.array(invertersSchema).min(1, "Pelo menos um inversor deve ser fornecido."),

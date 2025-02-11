@@ -26,10 +26,10 @@ import Api, { Create, Update } from '@/api/project';
 import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
 import ProjectView from './ProjectView';
-import { EProjectSchemaType, IProjectDataValues, IProjectResponse } from '@/types/IProject';
+import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
 import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
-import { z } from 'zod';
+import { number, object, z } from 'zod';
 
 
 interface FormProps {
@@ -37,7 +37,7 @@ interface FormProps {
     formSubmissionType?: EProjectFormSubmissionType
 };
 
-const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }) =>{   
+const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmissionType  }) =>{   
     const [saving, setSaving] = useState(false); 
     const [activeStep, setActiveStep] = useState(0); 
     const [checked, setChecked] = useState(false);
@@ -60,14 +60,14 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
     const nextStep = () => setActiveStep((currentStep) => (validateForm(getSchemaFromActiveStep(currentStep)) ? currentStep + 1 : currentStep ));    
     const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
     
-    const form = useForm<IProjectDataValues>({
+    const  form = useForm<IProjectDataValues>({
         mode: 'uncontrolled',
 
         //validateInputOnBlur:true,
 
         initialValues: initialValues || { 
             _id : "",
-            status : "",
+            status : EProjectStatus.None,
             project_type : "",
             is_active: true, // Indica se o projeto está ativo
             name: "", // Nome do projeto (opcional)
@@ -88,14 +88,14 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 email: "",
                 phone: "",
                 address: {
-                street: "",
-                complement:"",
-                no_number: false,
-                number: 0,
-                district:"",
-                state: "",
-                city: "",
-                zip: 0,
+                    street: "",
+                    complement:"",
+                    no_number: false,
+                    number: "",
+                    district:"",
+                    state: "",
+                    city: "",
+                    zip: "",
                 },
             },
             plant: { 
@@ -113,24 +113,24 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                     installed_power: 0,
                     service_voltage: 0,        
                 address: { 
-                street: "",
-                complement:"",
-                no_number: false,
-                number: 0,
-                district:"",
-                state: "",
-                city: "",
-                zip: 0
+                    street: "",
+                    complement:"",
+                    no_number: false,
+                    number: "",
+                    district:"",
+                    state: "",
+                    city: "",
+                    zip: ""
                 },
                 geolocation: {
-                lat: 0,
-                lng: 0,
-                link_point:""
+                    lat: 0,
+                    lng: 0,
+                    link_point:""
                 }, 
             },
             consumerUnit: [{ 
                 key: randomId(),
-                consumer_unit_code: 0 , 
+                consumer_unit_code: "" , 
                 name: 'Unidade consumidora geradora', 
                 description: '',         
                 percentage: 100,
@@ -332,9 +332,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
         onValuesChange: (values,previous) => {
             //form.setValues(values)
             CheckPorcentagemConsumerUnit()
+
             if(values.client.address.no_number){ 
                 form.clearFieldError('client.address.number')
-                form.setFieldValue('client.address.number',0)
+                form.setFieldValue('client.address.number',"")
                 setNoNumberClient(true)
             }
             else{        
@@ -342,12 +343,13 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
             }
             if(values.plant.address.no_number){ 
                 form.clearFieldError('plant.address.number')
-                form.setFieldValue('plant.address.number',0)
+                form.setFieldValue('plant.address.number',"")
                 setNoNumberPlant(true)
             }
             else{        
                 setNoNumberPlant(false)
             } 
+
         },
     });
     
@@ -359,7 +361,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
             setStates(response as IStatesDataValues[])
             setLoadingStates(false);
         };
-        fetchStates();
+        fetchStates();  
 
         setprojectFormSubmissionType(initialValues!==undefined?EProjectFormSubmissionType.update:EProjectFormSubmissionType.Create)
     }, []);
@@ -426,9 +428,13 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
     };
 
     const calculatesTotalPowerModules = (index:number) => {
-        // Recalcula a potência total após a alteração
-        const total_power = form.getValues().modules[index].power * form.getValues().modules[index].quantity ;
-        form.setFieldValue(`modules.${index}.total_power`, total_power);
+        const power = Number(form.getValues().modules[index].power);
+        const quantity = Number(form.getValues().modules[index].quantity);
+
+        // Verifica se power é um número válido antes de fazer a multiplicação
+        if (!isNaN(power) && !isNaN(quantity)) {
+            form.setFieldValue(`modules.${index}.total_power`, power * quantity);
+        }
     };
 
     const calculatesTotalPowerInverters = (index:number) => {
@@ -453,8 +459,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
 
     const CheckPorcentagemConsumerUnit = ()=>{
         var _porcentagem = 0
-        form.getValues().consumerUnit.map((item,_index)=>{      
-            _porcentagem += item.percentage
+        form.getValues().consumerUnit.map((item,_index)=>{ 
+            const p = Number(item.percentage) 
+            if(!isNaN(p))    
+                _porcentagem += p
         })    
         setcolorSlider(_porcentagem!==100?"red":"green")
         setPorcentagem(_porcentagem!==100?false:true)
@@ -542,6 +550,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 <NumberInput
                 placeholder="Potência em kw"              
                 min={0}
+                allowLeadingZeros={false}
                 allowedDecimalSeparators={['.',',']}
                 key={form.key(`inverters.${index}.power`)}
                 {...form.getInputProps(`inverters.${index}.power`)}
@@ -643,6 +652,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 <NumberInput
                 placeholder="Largura"
                 min={0}
+                allowLeadingZeros={false}
                 allowedDecimalSeparators={['.',',']}
                 hideControls={true}
                 key={form.key(`modules.${index}.width`)}
@@ -660,6 +670,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 placeholder="Altura"
                 min={0}
                 allowedDecimalSeparators={['.',',']}
+                allowLeadingZeros={false}
                 hideControls={true}
                 key={form.key(`modules.${index}.height`)}
                 {...form.getInputProps(`modules.${index}.height`)}
@@ -683,6 +694,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
             <Grid.Col span={1}>
                 <NumberInput
                 min={0}
+                allowLeadingZeros={false}
                 allowedDecimalSeparators={['.',',']}
                 key={form.key(`modules.${index}.power`)}
                 hideControls={true}
@@ -732,9 +744,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
 
     const validateForm = (schema: z.ZodSchema<any>) => {
         try {
-            // Validar os valores do formulário usando o esquema Zod
-            //alert(projectFormSubmissionType.toString()) 
-            //alert(JSON.stringify(form.getTransformedValues()))
+            
             schema.parse(form.getTransformedValues());
             return true;
         } catch (err) {
@@ -757,10 +767,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
         setSaving(true);
         switch(form.getValues().status)
         {
-            case "":  //Criação de projeto enviado ou rascunho    
+            case EProjectStatus.None:  //Criação de projeto enviado ou rascunho    
                 alert("Criação de projeto ou rascunho")            
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
-                    form.setFieldValue("status",isSketch?"Em cadastro":"Recebido pela Projetai")
+                    form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
                     const responseCreate = await Create(form.getTransformedValues());
                     if((responseCreate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho salvo com sucesso":"Projeto salvo com sucesso")
@@ -770,11 +780,11 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 }              
                 
                 break;
-            case "Em cadastro": //Edição de sketch que pode virar projeto enviado
+            case EProjectStatus.EmCadastro: //Edição de sketch que pode virar projeto enviado
                 alert("Edição de sketch "+form.getValues().project_type)
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
-                    form.setFieldValue("status",isSketch?"Em cadastro":"Recebido pela Projetai")
-                    const responseUpdate= await Update(form.getTransformedValues()._id,form.getValues());
+                    form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
+                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getValues());
                     if((responseUpdate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado salvo com sucesso")
                     }else{
@@ -782,8 +792,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                     }
                 }    
                 break;
-            case "Recebido pela Projetai":
-            case "Analisado com pendências": //Edição de projeto enviado 
+            case EProjectStatus.RecebidoPelaProjetai:
                 if(isSketch) return;
                 alert("Edição de projeto enviado")
                 if(validateForm(fullProjectSchema)){                    
@@ -808,7 +817,13 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
             onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
-        >            
+        > 
+            {/* Exibir mensagem de erro geral no topo */}
+            {form.errors.root && (
+                <div style={{ color: "red", marginBottom: "1rem" }}>
+                {form.errors.root}
+                </div>
+            )}
             <Stepper 
             active={activeStep} 
             onStepClick={setActiveStep} 
@@ -827,7 +842,8 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         //label="Tipo de projeto"
                         placeholder="Tipo de projeto"
                         rightSection={<IconDeviceComputerCamera></IconDeviceComputerCamera>}
-                        data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
+                        //data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
+                        data={Object.values(EProjectType)}
                         key={form.key("project_type")}
                         {...form.getInputProps("project_type")} 
                         required
@@ -848,7 +864,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         //label="Distribuidora"
                         placeholder="Selecione a distribuidora"
-                        data={['Neoenergia Brasília', 'Goiás', ]}
+                        data={Object.values(EDealership)}
                         key={form.key("dealership")}
                         {...form.getInputProps("dealership")} 
                         required
@@ -1087,6 +1103,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         label="Potência instalada da usina(kWp)"
                         placeholder="Digite"
                         decimalScale={3}
+                        allowLeadingZeros={false}
                         allowedDecimalSeparators={['.',',']}
                         hideControls={true}
                         min={0}
@@ -1099,7 +1116,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Tipo de geração"
                         placeholder="Selecione"
-                        data={['Solar', 'Eólica']}
+                        data={Object.values(EGenerationType)}
                         key={form.key(`plant.generation_type`)}
                         {...form.getInputProps(`plant.generation_type`)} 
                         required
@@ -1109,7 +1126,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Classe da UC geradora"
                         placeholder="Selecione"
-                        data={['Residencial', 'Condominio']}
+                        data={Object.values(EClassUC)}
                         key={form.key(`plant.class`)}
                         {...form.getInputProps(`plant.class`)} 
                         required
@@ -1119,7 +1136,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Subgrupo UC geradora"
                         placeholder="Selecione"
-                        data={['B1', 'B2']}
+                        data={Object.values(ESubgroup)}
                         key={form.key(`plant.subgroup`)}
                         {...form.getInputProps(`plant.subgroup`)} 
                         required
@@ -1129,7 +1146,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Tensão Fase neutro (kV)"
                         placeholder="Selecione"
-                        data={['0.22', '0.38', '1', '6.9','13.8']}
+                        data={Object.values(EVoltageskV)}
                         key={form.key(`plant.service_voltage`)}
                         {...form.getInputProps(`plant.service_voltage`)} 
                         required
@@ -1139,7 +1156,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Tipo de ramal"
                         placeholder="Selecione"
-                        data={["Aérea","Subterrânea"]}
+                        data={Object.values(ETypeBranch)}
                         key={form.key(`plant.type_branch`)}
                         {...form.getInputProps(`plant.type_branch`)} 
                         required
@@ -1149,7 +1166,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Seção do ramal de entrada(mm²)"
                         placeholder="Selecione"
-                        data={['10','16','25']}
+                        data={Object.values(EBranchSection)}
                         key={form.key(`plant.branch_section`)}
                         {...form.getInputProps(`plant.branch_section`)} 
                         required
@@ -1159,7 +1176,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Tipo de conexão"
                         placeholder="Selecione"
-                        data={['Monofásico', 'Bifásico', 'Trifásico']}
+                        data={Object.values(EConnectionType)}
                         key={form.key(`plant.connection_type`)}
                         {...form.getInputProps(`plant.connection_type`)} 
                         required
@@ -1169,7 +1186,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Autocomplete
                         label="Disjuntor padrão de entrada(A)"
                         placeholder="Digite"
-                        data={['20', '30', '50', '63','80','100','120']}
+                        data={Object.values(ECircuitBreaker)}
                         key={form.key(`plant.circuit_breaker`)}
                         {...form.getInputProps(`plant.circuit_breaker`)} 
                         required
@@ -1317,13 +1334,13 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                             onSelectionChange={handleSalvepointPlant}                        
                             dataMarkers={
                                 projectFormSubmissionType===EProjectFormSubmissionType.update?
-                                [ {id:"0",available:true,selected:true,draggable:true,clickable:false,lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}]
+                                [ {id:"0",available:true,selected:true,draggable:true,clickable:false,lat:Number(form.getValues().plant.geolocation.lat),lng:Number(form.getValues().plant.geolocation.lng)}]
                                 :
                                 [{id:"0",available:true,selected:true,draggable:true,clickable:false,lat:-15.78421850,lng:-47.93389432}]
                             }
                             centerDefault={
                                 Number(form.getValues().plant.geolocation.lat)!==0&&Number(form.getValues().plant.geolocation.lng)!==0?
-                                {lat:form.getValues().plant.geolocation.lat,lng:form.getValues().plant.geolocation.lng}
+                                {lat:Number(form.getValues().plant.geolocation.lat),lng:Number(form.getValues().plant.geolocation.lng)}
                                 :
                                 {lat:-15.78421850,lng:-47.93389432}
                             }
@@ -1368,7 +1385,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         <Text fw={500}> Código da UC </Text>
                         </Grid.Col>
                         <Grid.Col span={3}>  
-                        <Text fw={500} color={colorSlider}> Porcentagem {porcentagem} </Text>
+                        <Text fw={500} c={colorSlider}> Porcentagem {porcentagem} </Text>
                         </Grid.Col>
                         <Grid.Col span={7}>
                         <Text fw={500}> Nome da Unidade consumidora</Text>
@@ -1398,9 +1415,9 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                         onClick={() => {
                             form.insertListItem('consumerUnit', { 
                             key: randomId(),
-                            consumer_unit_code: 0 , 
-                            name: '', 
-                            description: '',         
+                            consumer_unit_code: "" , 
+                            name: "", 
+                            description: "",         
                             percentage: 50,
                             is_plant: false
                             })              
@@ -1603,7 +1620,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 </Button>
                 <Button 
                     variant="default" 
-                    disabled={form.getValues().status!==""&&form.getValues().status!=="Em cadastro"}
+                    disabled={form.getValues().status!==EProjectStatus.None&&form.getValues().status!==EProjectStatus.EmCadastro}
                     onClick={() => handleSubmit(true)}
                 >
                     Salvar e editar depois

@@ -29,11 +29,11 @@ export interface IAddress {
   street: string;
   complement:string;
   no_number: boolean;
-  number: number;
+  number: number | "";
   district:string;
   state: string;
   city: string;
-  zip: number;
+  zip: number | "";
 };
 
 // Definindo uma enumeração do 
