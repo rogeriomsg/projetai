@@ -21,6 +21,7 @@ export default function ProjectsList() {
   const router = useRouter();
   const isMounted = useRef(false);
   const [projects, setProjects] = useState<IProjectDataValues[]>([]);
+  const [sketchs, setSketchs] = useState<IProjectDataValues[]>([]);
   const [selectedProject, setSelectedProject] = useState<IProjectDataValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [openProjectView, setOpenProjectView] = useState(false);
@@ -38,6 +39,7 @@ export default function ProjectsList() {
     {
         isMounted.current = true;
         fetchProjects();
+        fetchSketchs();
     }
     else 
         return;        
@@ -98,19 +100,84 @@ export default function ProjectsList() {
 
   const fetchProjects = async () => {
     setLoading(true);
-    const response = await Search("status=Recebido pela Projetai");
+    const response = await Search('filter={ "status": { "$nin": ["Em cadastro"] } }');
+    
     if((response as IProjectResponse).error === false)
     {
       setProjects(response.data as IProjectDataValues[])
     }            
     setLoading(false);
+  };
+
+  const fetchSketchs = async () => {
+    setLoading(true);
+    const response = await Search('filter={ "status": { "$in": ["Em cadastro"] } }');
+    //alert(JSON.stringify(response.data))
+    if((response as IProjectResponse).error === false)
+    {
+      setSketchs(response.data as IProjectDataValues[])
+    }            
+    setLoading(false);
   };  
 
-  if (!projects) {
-    return <><LoadingOverlay visible={!projects} zIndex={1} overlayProps={{ radius: "sm", blur: 2 }} /></>;
+  if (loading) {
+    return <><LoadingOverlay visible={loading} zIndex={1} overlayProps={{ radius: "sm", blur: 2 }} /></>;
   }
   
-  const rows = projects.map((element) => (
+  const projectRows = projects.map((element) => (
+    <Table.Tr key={element._id} >
+      <Table.Td>{element.name}</Table.Td>
+      <Table.Td>{element.description}</Table.Td>
+      <Table.Td>{element.client.name}</Table.Td>
+      <Table.Td>
+        <MapModalGetSinglePoint
+          centerDefault={{lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}}          
+          zoom={18}
+          dataMarkers={[ 
+            {available:true,selected:true,clickable:false,id:"0",lat:element.plant.geolocation.lat,lng:element.plant.geolocation.lng}
+          ]}           
+        />
+      </Table.Td>
+      <Table.Td>{element.status}</Table.Td>
+      <Table.Td>  
+        <Menu shadow="md" width={200} position="left-start" withArrow arrowPosition="center" trigger="hover" openDelay={100} closeDelay={200}>
+          <Menu.Target>
+            <ActionIcon variant="subtle" size="lg">
+              <IconDotsVertical  stroke={1.5} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            {/* <Menu.Label>Ferramentas</Menu.Label> */}
+            <Menu.Item
+              leftSection={<IconEdit  style={{ width: '80%', height: '80%' }} stroke={1.5} />}
+              onClick={()=>handleEdit(element._id)}
+              c="green"
+              disabled={true}
+            >
+              Editar
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconSearch  style={{ width: '80%', height: '80%' }} stroke={1.5} />}
+              onClick={()=>handleView(element)}
+            >
+              Visualizar
+            </Menu.Item>
+            {/* <Menu.Divider /> */}
+            <Menu.Item
+              leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
+              onClick={()=>handleDeleteClick(element)}
+              c="red"
+              fw={570}
+            >
+              Deletar
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </Table.Td>
+    </Table.Tr>
+  ));
+
+  const sketchsRows = sketchs.map((element) => (
     <Table.Tr key={element._id} >
       <Table.Td>{element.name}</Table.Td>
       <Table.Td>{element.description}</Table.Td>
@@ -151,7 +218,7 @@ export default function ProjectsList() {
             <Menu.Item
               leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
               onClick={()=>handleDeleteClick(element)}
-              //onClick={handleNewDelete}
+              c="red"
               fw={570}
             >
               Deletar
@@ -180,7 +247,7 @@ export default function ProjectsList() {
               <Table.Th>Ações</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          <Table.Tbody>{rows}</Table.Tbody>
+          <Table.Tbody>{projectRows}</Table.Tbody>
         </Table>      
 
         <Group justify="space-between" mb="sm" mt="xl">
@@ -199,7 +266,7 @@ export default function ProjectsList() {
               <Table.Th>Ações</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          <Table.Tbody></Table.Tbody>
+          <Table.Tbody>{sketchsRows}</Table.Tbody>
         </Table>
 
         <Center h={200} >

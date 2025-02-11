@@ -2,14 +2,14 @@ import { EProjectSchemaType } from '@/types/IProject';
 import { z } from 'zod';
 
 const addressSchema = z.object({
-    street: z.string() ,
+    street: z.string().min(1,{message:"O logradouro deve ser informado"})  ,
     complement:z.string() ,
     no_number: z.boolean() , 
     number: z.number(),
-    district:z.string() ,
-    state: z.string() ,
-    city: z.string() ,
-    zip: z.number(),
+    district:z.string().min(1,{message:"O bairro deve ser informado"})  ,
+    state: z.string().min(1,{message:"O estado deve ser selecionado"})  ,
+    city: z.string().min(1,{message:"O município deve ser selecionado"})  ,
+    zip: z.number().min(1,{message:"O CEP deve ser especificado"}) ,
 });
 
 const clientSchema = z.object({
@@ -30,25 +30,25 @@ const geolocationSchema = z.object({
 });
 
 const plantSchema = z.object({
-    consumer_unit_code: z.number() , 
-    name: z.string().min(2, { message: 'Nome da usina é obrigatório' }), 
+    consumer_unit_code: z.number().min(1,{message:"Preencha numero da UC"}) , 
+    name: z.string().min(2, { message: 'Nome da usina deve ter mínimo 2 caracters' }).nonempty( { message: 'Nome da usina é obrigatório' }), 
     description: z.string(), 
-    class:z.string() ,
-    subgroup:z.string() ,
-    connection_type:z.string() ,
-    generation_type:z.string() ,
-    type_branch:z.string() ,
-    branch_section: z.number() , 
-    circuit_breaker: z.number() ,
+    class:z.string().min(1,{message:"Classe da UC deve ser selecionada"})  ,
+    subgroup:z.string().min(1,{message:"Subgrupo da UC deve ser selecionada"})  ,
+    connection_type:z.string().min(1,{message:"Tipo de conexão deve ser selecionado"})  ,
+    generation_type:z.string().min(1,{message:"Tipo de geração deve ser selecionado"})  ,
+    type_branch:z.string().min(1,{message:"Tipo de ramal deve ser selecionado"})  ,
+    branch_section: z.number().min(1,{message:"Seção do ramal de entrada deve ser especificado"})  , 
+    circuit_breaker: z.number().min(1,{message:"Disjuntor padrão de entrada deve ser especificado"}) ,
     installed_load: z.number() ,
     installed_power: z.number() ,
-    service_voltage: z.number() ,        
+    service_voltage: z.number().gte(0,{message:"Tensão deve ser selecionada"})   ,//(0.1,{message:"Tensão deve ser selecionada"})  ,        
     address: addressSchema,
     geolocation: geolocationSchema,
 });
 
 const consumerUnitSchema = z.object({
-    consumer_unit_code: z.number(), 
+    consumer_unit_code: z.number().min(0,{message: 'Código da UC deve ser especificado'}), 
     name: z.string().min(2, { message: 'Nome da UC deve ser informado' }) ,
     description: z.string(),         
     percentage: z.number(),

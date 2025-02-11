@@ -31,6 +31,27 @@ export const Search = async (params:string) => {
         return {error: true , message:msg , data: null }
     }
 };
+export const Byid = async (id:string) => {
+    try {
+        const response = await Api.get(`/${id}`);
+        // Certifique-se de que `response.data` é um array e tem ao menos um elemento
+        const data  = response.data as IProjectResponse ;
+
+       return(data)
+
+
+    } catch (err:any) {
+        let msg = ""
+        if (err.response) {
+            msg = `data: ${err.response.data}, status: ${err.response.status}, header: ${err.response.headers}`
+        } else if (err.request) { 
+            msg = `request: ${err.request}` 
+        } else {
+            msg = `${err.message || 'Erro desconhecido.'}`
+        } 
+        return {error: true , message:msg , data: null }
+    }
+};
 
 export const Create = async (projectDataCreate:IProjectDataValues) => {
 
@@ -72,7 +93,7 @@ export const CreateSketch = async (projectDataCreate:IProjectDataValues) => {
     }
 };
 
-export const Update = async (id:string,projectdataUpdate:IProjectDataValues) => {
+export const Update = async (id:string , projectdataUpdate:IProjectDataValues) => {
 
     try {
         const response = await Api.patch(`/${id}`,projectdataUpdate);

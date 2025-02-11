@@ -733,7 +733,9 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
     const validateForm = (schema: z.ZodSchema<any>) => {
         try {
             // Validar os valores do formulário usando o esquema Zod
-            schema.parse(form.getValues());
+            //alert(projectFormSubmissionType.toString()) 
+            //alert(JSON.stringify(form.getTransformedValues()))
+            schema.parse(form.getTransformedValues());
             return true;
         } catch (err) {
             if (err instanceof z.ZodError) {
@@ -743,7 +745,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 acc[path] = error.message;
                 return acc;
             }, {} as Record<string, string>);
-            alert(JSON.stringify(errors))
+            //alert(JSON.stringify(errors))
             form.setErrors(errors);
             return false;
             }
@@ -751,7 +753,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
     };
     
     const handleSubmit = async (isSketch:boolean) => {                 
-        alert(projectFormSubmissionType.toString()) 
+        
         setSaving(true);
         switch(form.getValues().status)
         {
@@ -759,7 +761,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 alert("Criação de projeto ou rascunho")            
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?"Em cadastro":"Recebido pela Projetai")
-                    const responseCreate = await Create(form.getValues());
+                    const responseCreate = await Create(form.getTransformedValues());
                     if((responseCreate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho salvo com sucesso":"Projeto salvo com sucesso")
                     }else{
@@ -772,7 +774,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 alert("Edição de sketch "+form.getValues().project_type)
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?"Em cadastro":"Recebido pela Projetai")
-                    const responseUpdate= await Update(form.getValues()._id,form.getValues());
+                    const responseUpdate= await Update(form.getTransformedValues()._id,form.getValues());
                     if((responseUpdate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado salvo com sucesso")
                     }else{
@@ -785,7 +787,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues, formSubmissionType  }
                 if(isSketch) return;
                 alert("Edição de projeto enviado")
                 if(validateForm(fullProjectSchema)){                    
-                    const responseUpdate = await Update(form.getValues()._id,form.getValues());
+                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getValues());
                     if((responseUpdate as IProjectResponse).error === false){
                         alert("Projeto enviado atualizado com sucesso")
                     }else{

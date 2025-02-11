@@ -2,25 +2,39 @@ const Models = require('../MODELS');
 const Services = require("../SERVICES")
 
 exports.search = async (req, res) => {
+    const { filter, sort, limit, skip, fields } = req.query;
 
-    const {name = '', id, client_id, dealership = '', status, service_voltage, is_active} = req.query ;
-    console.log( id, name, client_id, dealership, status, service_voltage, is_active);    
+    // Montando a consulta dinamicamente
+    const query = filter ? JSON.parse(filter) : {};
+    const projection = fields ? fields.split(',').join(' ') : null;
+    const sortOptions = sort ? JSON.parse(sort) : null;
 
-    const filtros = {} ;
-    filtros.name = { $regex: name , $options: 'i' }; // 'i' para case-insensitive = name ;
-    if(id) filtros._id = id ;
-    if(client_id) filtros.client_id = client_id ;
-    if(status) filtros.status = status ;
-    if(service_voltage) filtros.service_voltage = service_voltage ;
-    if(is_active) filtros.is_active = is_active ;
+    // Aplicando limites e paginação
+    const options = {
+      limit: limit ? parseInt(limit, 10) : 10,
+      skip: skip ? parseInt(skip, 10) : 0,
+    };
 
-    await Models.Project.find(filtros).then(data => { 
+
+    // const {name = '', id, client_id, dealership = '', status, service_voltage, is_active} = req.query ;
+    // console.log( id, name, client_id, dealership, status, service_voltage, is_active);    
+
+    // const filtros = {} ;
+    // filtros.name = { $regex: name , $options: 'i' }; // 'i' para case-insensitive = name ;
+    // if(id) filtros._id = id ;
+    // if(client_id) filtros.client_id = client_id ;
+    // if(status) filtros.status = status ;
+    // if(service_voltage) filtros.service_voltage = service_voltage ;
+    // if(is_active) filtros.is_active = is_active ;
+
+    //await Models.Project.find(filtros).then(data => {
+    await Models.Project.find(query, projection, options).sort(sortOptions).then(data => { 
         if(data.length === 0)
             res
                 .status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code)
                 .json({
                     error:false,
-                    message: "no records found",
+                    message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message,
                     data: [],
                 });       
         else
@@ -28,7 +42,7 @@ exports.search = async (req, res) => {
                 .status(Services.HTTPStatus.SUCCESS.code)
                 .json({ 
                     error:false,
-                    message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message,
+                    message: Services.HTTPStatus.SUCCESS.message,
                     data: data,
                 });                           
     }).catch( err => {
@@ -36,7 +50,7 @@ exports.search = async (req, res) => {
             .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
             .json({ 
                 error:true,
-                message: err.message,
+                message:`${Services.HTTPStatus.INTERNAL_SERVER_ERROR.message}: ${err.message}`,
                 data:null
             });
     });       
@@ -44,27 +58,33 @@ exports.search = async (req, res) => {
 
 exports.byId = async (req, res) => {
     const {id} = req.params ;
-    console.log(id);
+    console.log("Busca por id: ",id);
     
     await Models.Project.findById(id).then(data => { 
-        if(data.length === 0)
+        if(data === null)
             res
-                .status(Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.code)
+                .status(Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.code)
                 .json({ 
-                    error: false,
-                    message: Services.HTTPStatus.DATABASE_RETURNED_AN_EMPTY_ARRAY.message,
-                    data : data,
+                    error: true,
+                    message: Services.HTTPStatus.DATABASE_RECORD_NOT_FOUND.message,
+                    data : null,
                 });        
         else
             res
                 .status(Services.HTTPStatus.SUCCESS.code)
                 .json({
                     error:false,
-                    message: "record not found",
-                    data:null,
+                    message: Services.HTTPStatus.SUCCESS.message,
+                    data:data,
                 });          
     }).catch( err => {
-        res.status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code).json({ message: err.message});
+        res
+            .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
+            .json({ 
+                error: true,
+                message: `${Services.HTTPStatus.INTERNAL_SERVER_ERROR.message}: ${err.message}`,
+                data:null
+            });
     });       
 };
 
@@ -181,33 +201,18 @@ exports.create = async (req, res) => {
     console.log("Recebendo dados para criação de projeto:", req.body);
   
     try {
-      // Validação básica (pode ser expandida)
-      if (!req.body.name || !req.body.client || !req.body.plant) {
+        // Validação básica (pode ser expandida)
+        if (!req.body.name || !req.body.client || !req.body.plant) {
         return res.status(400).json({ message: "Os campos 'name' e 'client' são obrigatórios." });
-      }
-  
-      // Criar o projeto diretamente no banco
-      const newProject = await Models.Project.create({
-        is_active: req.body.is_active ?? true, // Padrão é true
-        name: req.body.name,
-        description: req.body.description,
-        dealership: req.body.dealership,
-        client: req.body.client,
-        plant: req.body.plant,
-        consumerUnit: req.body.consumerUnit,
-        inverters: req.body.inverters,
-        modules: req.body.modules,
-        path_meter_pole: req.body.path_meter_pole,
-        path_meter: req.body.path_meter,
-        path_bill: req.body.path_bill,
-        path_identity: req.body.path_identity,
-        path_procuration: req.body.path_procuration,
-        status: req.body.status ?? "Em cadastro", // Padrão é "Em cadastro"
-      });
-  
-      console.log("Projeto criado com sucesso:", newProject);
-  
-      // Retornar resposta de sucesso
+        }
+
+        const { _id, ...data } = req.body; // Exclui _id de req.body
+        // Criar o projeto diretamente no banco
+        const newProject = await Models.Project.create(data);
+
+        console.log("Projeto criado com sucesso:", newProject);
+
+        // Retornar resposta de sucesso
         res
             .status(Services.HTTPStatus.RECORD_CREATED_SUCCESSFULLY.code)
             .json({
@@ -216,14 +221,14 @@ exports.create = async (req, res) => {
                 data: newProject,
             });
     } catch (error) {
-      console.error("Erro ao criar projeto:", error);
-  
-      // Retornar erro apropriado
+        console.error("Erro ao criar projeto:", error);
+
+        // Retornar erro apropriado
         res
             .status(Services.HTTPStatus.INTERNAL_SERVER_ERROR.code)
             .json({
                 error: true,
-                message: `Erro ao criar o projeto: ${error.message}`,
+                message: `${Services.HTTPStatus.INTERNAL_SERVER_ERROR.message}: ${error.message}`,
                 data : null,
             });
     }
@@ -231,7 +236,7 @@ exports.create = async (req, res) => {
 
 exports.delete = async (req, res) => {
     const {id} = req.params ;
-    console.log(id);
+    console.log("Deletando registro:", id);
 
     await Models.Project.findByIdAndDelete(id).then(data => {      
         res
