@@ -52,7 +52,7 @@ export interface IProjectDataValues {
         description: string;         
         percentage: number | "";
         is_plant: Boolean;
-    }[]; 
+    }[] | null; 
     inverters: {
         key:string;
         model: string;
@@ -96,13 +96,15 @@ export enum EProjectSchemaType {
 export enum EProjectStatus {
     None = "None",
     EmCadastro = "Em cadastro",
+    AguardandoPagamento = "Aguardando pagamento",
     RecebidoPelaProjetai = "Recebido pela Projetai",
 };
 
 export enum EProjectType{
-    Ate10kWp = "Até 10kW",
-    MaiorQue1okWp = "Maior que 10kWp",
-    MaiorQue75kWp = "Maior que 75kW"
+    Ate10 = "Micro até 10kW",
+    MicroMaiorQue10 = "Micro > 10 kWp",
+    MicroMaiorQue10MenorIgual75 = "Micro > 10kWp <= 75kW",
+    MiniMaiorQue75MenorIgual5MW = "Mini > 75kWp <= 5MW",
 };
 
 export enum EDealership{

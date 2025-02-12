@@ -6,6 +6,7 @@ import { Byid } from '@/api/project'
 import { EProjectStatus, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import ProjectForm from '@/components/Forms/ProjectForm';
 import { EProjectFormSubmissionType } from '@/types/IUtils';
+import ProjectFormV2 from '@/components/Forms/ProjectFormV2';
 
 
 
@@ -62,7 +63,7 @@ export default function EditProject(){
     }    
 
     return(     
-        <ProjectForm formSubmissionType={EProjectFormSubmissionType.update} initialValues={projectData}  />
+        <ProjectFormV2 formSubmissionType={EProjectFormSubmissionType.update} initialValues={projectData}  />
     );
     
     
