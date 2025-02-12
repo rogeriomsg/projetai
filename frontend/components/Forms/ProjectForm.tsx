@@ -28,7 +28,7 @@ import { useRouter } from 'next/navigation';
 import ProjectView from './ProjectView';
 import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
-import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
+import { fullProjectSchema, getSchemaFromActiveStep, projectBasicsSchema} from '@/validations/project';
 import { number, object, z } from 'zod';
 
 
@@ -696,7 +696,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
         {
             case EProjectStatus.None:  //Criação de projeto enviado ou rascunho    
                 alert("Criação de projeto ou rascunho")            
-                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                if(validateForm(isSketch?projectBasicsSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
                     const responseCreate = await Create(form.getTransformedValues());
                     if((responseCreate as IProjectResponse).error === false){
@@ -709,7 +709,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
                 break;
             case EProjectStatus.EmCadastro: //Edição de sketch que pode virar projeto enviado
                 alert("Edição de sketch "+form.getValues().project_type)
-                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                if(validateForm(isSketch?projectBasicsSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
                     const responseUpdate = await Update(form.getTransformedValues()._id,form.getValues());
                     if((responseUpdate as IProjectResponse).error === false){

@@ -94,7 +94,7 @@ const moduleSchema = new mongoose.Schema({
 
 const projectSchema = new mongoose.Schema(
   {  
-    project_type : { // Status do projeto
+    project_type : { // Tipo de projeto
       type: String ,require : false // Status padrão: "Até 10kWp"
     },
     is_active: { type: Boolean , default: true}, // Indica se o projeto está ativo
@@ -102,7 +102,7 @@ const projectSchema = new mongoose.Schema(
     description: {type : String ,default: ""}, // Descrição do projeto (opcional)
     dealership: {type : String , require : false}, // Nome da concessionária ou distribuidora (opcional)
     client: { type: clientSchema, require: false}, // Cliente associado ao projeto
-    plant:{type: plantSchema, require : false}, // Dados da sina associada ao projeto
+    plant:{type: plantSchema, require : false}, // Dados da usina associada ao projeto
     compensation_system: {type:String, require: false},
     consumerUnit: {type : [consumerUnitSchema], require : false }, // Lista de unidades consumidoras participantes do sistema de 
     inverters:{type : [inverterSchema], require : false}, // Lista de inversores usados no projeto

@@ -21,14 +21,11 @@ const addressSchema = z.object({
 });
 
 const clientSchema = z.object({
-    client_code: z.number().min(1,{message: "O código do cliente é obrigatório" }) ,
+    client_code: z.number(),
     name: z.string().min(2, { message: "O nome do cliente deve ser informado" }),
     cpf: z.string().min(14, { message: "O deve ser informado corretamente" }),
-    identity: z.string() ,
-    identity_issuer: z.string() ,
     email: z.string().email({ message: 'E-mail cliente inválido.' }),
     phone: z.string().min(15, { message: "Informe um número para contato" }) ,
-    address: addressSchema,
 });
 
 const geolocationSchema = z.object({
@@ -38,34 +35,33 @@ const geolocationSchema = z.object({
 });
 
 const plantSchema = z.object({
-    consumer_unit_code: z.number().min(1,{message:"Preencha numero da UC"}) , 
-    name: z.string().min(2, { message: 'Nome da usina deve ter mínimo 2 caracters' }).nonempty( { message: 'Nome da usina é obrigatório' }), 
+    consumer_unit_code: z.number(), 
+    name: z.string(), 
     description: z.string(), 
-    class:z.string().min(1,{message:"Classe da UC deve ser selecionada"})  ,
-    subgroup:z.string().min(1,{message:"Subgrupo da UC deve ser selecionada"})  ,
+    class:z.string()  ,
+    subgroup:z.string()  ,
     connection_type:z.string().min(1,{message:"Tipo de conexão deve ser selecionado"})  ,
-    generation_type:z.string().min(1,{message:"Tipo de geração deve ser selecionado"})  ,
+    generation_type:z.string()  ,
     type_branch:z.string().min(1,{message:"Tipo de ramal deve ser selecionado"})  ,
     branch_section: z.number().min(1,{message:"Seção do ramal de entrada deve ser especificado"})  , 
     circuit_breaker: z.number().min(1,{message:"Disjuntor padrão de entrada deve ser especificado"}) ,
     installed_load: z.number() ,
     installed_power: z.number() ,
-    service_voltage: z.number().gte(0,{message:"Tensão deve ser selecionada"})   ,//(0.1,{message:"Tensão deve ser selecionada"})  ,        
-    address: addressSchema,
+    service_voltage: z.number().gte(0,{message:"Tensão de fornecimento deve ser selecionada"})   ,//(0.1,{message:"Tensão deve ser selecionada"})  , 
     geolocation: geolocationSchema,
 });
 
 const consumerUnitSchema = z.object({
-    consumer_unit_code: z.number().min(1,{message: 'Código da UC deve ser especificado'}), 
-    name: z.string().min(2, { message: 'Nome da UC deve ser informado' }) ,
+    consumer_unit_code: z.number().min(2, { message: 'Código da UC deve ser informado' }) , 
+    name: z.string() ,
     description: z.string(),         
     percentage: z.number().min(0).max(100),
     is_plant: z.boolean(),
 });
 
 const invertersSchema = z.object({
-    model: z.string().min(2, { message: 'Modelo deve ser informado' }) ,
-    manufacturer: z.string().min(2, { message: 'Fabricante deve ser informado' }) ,
+    model: z.string().min(2, { message: 'Modelo do inversor deve ser informado' }) ,
+    manufacturer: z.string().min(2, { message: 'Fabricante do inversor deve ser informado' }) ,
     power: z.number() ,
     quantity: z.number() ,
     total_power : z.number() ,
@@ -73,8 +69,8 @@ const invertersSchema = z.object({
 });
 
 const modulesSchema = z.object({
-    model: z.string().min(2, { message: 'Nome da UC deve ser informado' }) ,
-    manufacturer: z.string().min(2, { message: 'Fabricante deve ser informado' }) ,
+    model: z.string().min(2, { message: 'Modelo do módulo deve ser informado' }) ,
+    manufacturer: z.string().min(2, { message: 'Fabricante do módulo deve ser informado' }) ,
     description: z.string() ,
     quantity: z.number() ,
     width: z.number() ,
@@ -84,24 +80,6 @@ const modulesSchema = z.object({
     total_power : z.number() ,
 });
 
-// Definindo o esquema de validação com Zod
-export const projectMainSchema = z.object({
-    status : z.string(),
-    project_type : z.string().min(2, { message: 'Tipo do projeto deve ser informado' }) ,
-    is_active: z.boolean() , // Indica se o projeto está ativo
-    name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),       
-    dealership: z.string().min(2, { message: 'O nome da distribuidora deve ser informado' }) , // Nome da concessionária ou distribuidora (opcional)       
-});
-
-// Definindo o esquema de validação do cliente
-export const projectClientSchema = z.object({
-    client : clientSchema     
-});
-
-// Definindo o esquema de validação do cliente
-export const projectPlantSchema = z.object({
-    plant : plantSchema     
-});
 
 // Definindo o esquema de validação do cliente
 export const projectConsumerUnitSchema = z.object({
@@ -109,17 +87,33 @@ export const projectConsumerUnitSchema = z.object({
    
 }).superRefine((data, ctx) => {
     // Calcular o somatório dos percentuais
-    const totalPercentage = data.consumerUnit.reduce((sum, unit) => sum + unit.percentage, 0);
-  
-    // Se o total não for exatamente 100, adicionar um erro geral
-    if (totalPercentage !== 100) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `O somatório dos percentuais de todas as UCs deve ser exatamente 100. Atualmente ${totalPercentage}`,
-        path: ['consumerUnit.0.percentage'], // Deixar o path vazio para indicar erro geral        
-      });
-    }
+    if( data.consumerUnit.length > 0) {
+        const totalPercentage = data.consumerUnit.reduce((sum, unit) => sum + unit.percentage, 0);  
+        // Se o total não for exatamente 100, adicionar um erro geral
+        if (totalPercentage !== 100) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `O somatório dos percentuais de todas as UCs deve ser exatamente 100. Atualmente ${totalPercentage}`,
+            path: ['consumerUnit.0.percentage'], // Deixar o path vazio para indicar erro geral        
+        });
+        }
+    }    
   });
+
+// Definindo o esquema de validação com Zod
+export const projectBasicsSchema = z.object({     
+    client : clientSchema  ,
+    plant : plantSchema    
+});
+
+// Definindo o esquema de validação com Zod
+export const projectMainSchema = z.object({
+    status : z.string(),
+    is_active: z.boolean() , // Indica se o projeto está ativo
+    dealership: z.string().min(2, { message: 'O nome da distribuidora deve ser informado' }) , // Nome da concessionária ou distribuidora (opcional)     
+    project_type : z.string().min(2, { message: 'Tipo do projeto deve ser informado' }) ,
+    name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),       
+});
 
 export const projectEquipamentsSchema = z.object({
     inverters:  z.array(invertersSchema).min(1, "Pelo menos um inversor deve ser fornecido."),
@@ -147,36 +141,30 @@ export const projectDocumentsSchema = z.object({
 
 export const fullProjectSchema = z.union([
     projectMainSchema,
-    projectClientSchema,
-    projectPlantSchema,
+    projectBasicsSchema,
     projectConsumerUnitSchema,
     projectEquipamentsSchema,
     projectDocumentsSchema,
 ])
 
 
-
 export const getSchemaFromActiveStep = (activestep:number) => {
     //alert(activestep)
     var schema 
     switch (activestep) {
-        case 0: //informações do projeto
+        case 0: //informações basicas
             schema = projectMainSchema
             break;
-        case 1: //informações do projeto   
-            schema = projectClientSchema
+        case 1: //informações basicas
+            schema = projectBasicsSchema
             break;
-        case 2: //informações da usina
-            schema = projectPlantSchema
-            break;
-        case 3: //informações do sistema de compensação
-        //alert("aqui")
+        case 2: //Sistema de compensação  
             schema = projectConsumerUnitSchema
-            break;
-        case 4: //informações dos equipamentos
+            break;       
+        case 3: //informações dos equipamentos
             schema = projectEquipamentsSchema
             break;
-        case 5: //informações dos documentos
+        case 4: //informações dos documentos
             schema = projectDocumentsSchema
             break;
         default: //informações do projeto

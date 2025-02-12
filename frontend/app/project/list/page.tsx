@@ -11,6 +11,7 @@ import { modals, openConfirmModal } from '@mantine/modals';
 import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import ProjectViewV2 from '@/components/Forms/ProjectViewV2';
 type Project = {
   id: number;
   name: string;
@@ -130,8 +131,9 @@ export default function ProjectsList() {
   const projectRows = projects.map((element) => (
     <Table.Tr key={element._id} >
       <Table.Td>{element.name}</Table.Td>
-      <Table.Td>{element.description}</Table.Td>
-      <Table.Td>{element.client.name}</Table.Td>
+      <Table.Td>{element.dealership}</Table.Td>
+      <Table.Td>{element.plant.installed_power?`${element.plant.installed_power} kWp`:""}</Table.Td>
+      <Table.Td>{element.client?.name}</Table.Td>
       <Table.Td>
         <MapModalGetSinglePoint
           centerDefault={{lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}}          
@@ -196,8 +198,9 @@ export default function ProjectsList() {
   const sketchsRows = sketchs.map((element) => (
     <Table.Tr key={element._id} >
       <Table.Td>{element.name}</Table.Td>
-      <Table.Td>{element.description}</Table.Td>
-      <Table.Td>{element.client.name}</Table.Td>
+      <Table.Td>{element.dealership}</Table.Td>
+      <Table.Td>{element.plant.installed_power?`${element.plant.installed_power} kWp`:""}</Table.Td>
+      <Table.Td>{element.client?.name}</Table.Td>
       <Table.Td>
         <MapModalGetSinglePoint
           centerDefault={{lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}}          
@@ -255,9 +258,10 @@ export default function ProjectsList() {
         <Table withTableBorder striped highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Nome</Table.Th>
-              <Table.Th>Descrição</Table.Th>
-              <Table.Th>Nome do cliente</Table.Th>
+              <Table.Th w={300}>Nome do projeto</Table.Th>
+              <Table.Th>Distribuidora</Table.Th>
+              <Table.Th>Potência de geração</Table.Th>
+              <Table.Th>Nome do titular</Table.Th>
               <Table.Th>Local da usina</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>Ações</Table.Th>
@@ -274,9 +278,10 @@ export default function ProjectsList() {
         <Table withTableBorder striped highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Nome</Table.Th>
-              <Table.Th>Descrição</Table.Th>
-              <Table.Th>Nome do cliente</Table.Th>
+            <Table.Th w={300}>Nome do projeto</Table.Th>
+              <Table.Th>Distribuidora</Table.Th>
+              <Table.Th>Potência de geração</Table.Th>
+              <Table.Th>Nome do titular</Table.Th>
               <Table.Th>Local da usina</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>Ações</Table.Th>
@@ -286,7 +291,7 @@ export default function ProjectsList() {
         </Table>
 
         <Center h={200} >
-            <ProjectView noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
+            <ProjectViewV2 noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
         </Center>
 
         {/* Modal de Confirmação */}
