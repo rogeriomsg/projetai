@@ -176,9 +176,16 @@ export default function ProjectsList() {
               leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
               onClick={()=>handleDeleteClick(element)}
               c="red"
-              fw={570}
             >
               Deletar
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconTrash   style={{ width: '80%', height: '80%' }} stroke={1.5} />}              
+              onClick={()=>handleDeleteClick(element)}
+              c="brown"
+              fw={570}
+            >
+              Histórico
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>
@@ -215,7 +222,7 @@ export default function ProjectsList() {
               onClick={()=>handleEdit(element._id)}
               c="green"
             >
-              Editar
+              Continuar Editando
             </Menu.Item>
             <Menu.Item
               leftSection={<IconSearch  style={{ width: '80%', height: '80%' }} stroke={1.5} />}
