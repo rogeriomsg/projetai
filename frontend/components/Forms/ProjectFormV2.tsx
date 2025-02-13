@@ -57,15 +57,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
 
     const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<EProjectFormSubmissionType>(EProjectFormSubmissionType.Create); //
     const router = useRouter();
-
     
     const nextStep = () => setActiveStep((currentStep) => (validateForm(getSchemaFromActiveStep(currentStep)) ? currentStep + 1 : currentStep ));    
     const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
     
     const  form = useForm<IProjectDataValues>({
         mode: 'uncontrolled',
-
-        //validateInputOnBlur:true,
 
         initialValues: initialValues || { 
             _id : "",
@@ -276,10 +273,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     });
     
     // Buscar estados
-    useEffect(() => {    
-        
-        
-
+    useEffect(() => {   
         setprojectFormSubmissionType(initialValues!==undefined?EProjectFormSubmissionType.update:EProjectFormSubmissionType.Create)
     }, []);
         
@@ -619,7 +613,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     };
     
     const handleSubmit = async (isSketch:boolean) => {                 
-        alert("stop")
+        //alert("stop")
         setSaving(true);
         switch(form.getValues().status)
         {
@@ -666,14 +660,10 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     
     return (
         <>
-        {/* <Alert variant="filled" color="red" title="Atenção" withCloseButton icon={<IconInfoCircle size={30} />} radius="lg" onClose={()=>alert("Teste")}>
-            Este aviso serve para que você possar.
-        </Alert> */}
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
             onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
-        > 
-                   
+        >        
             <Stepper 
             active={activeStep} 
             onStepClick={setActiveStep} 
@@ -720,17 +710,14 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
 
                             /> 
                         </Grid.Col>
-                    </Grid>                 
-
-                </Stepper.Step>                
-                
+                    </Grid>
+                </Stepper.Step> 
                 <Stepper.Step 
                     label="Passo 2" 
                     description="Informações Básicas"
                     icon={<IconFileUpload size={18} />}
                 >
-                    <Grid mt="sm">                       
-                        
+                    <Grid mt="sm">
                         <Grid.Col span={12}>
                             <Tooltip label="Nome do cliente da conta onde será instalada a usina" position="top-start" offset={24}>
                             <TextInput
@@ -774,7 +761,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 required
                             />
                         </Grid.Col>
-                        
                         <Grid.Col span={2} >
                             <NumberInput
                                 label="Potência instalada de geração (kWp)"
@@ -866,14 +852,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             />
                         </Grid.Col>
                     </Grid> 
-                </Stepper.Step>            
-            
+                </Stepper.Step>
                 <Stepper.Step 
                     label="Passo 3" 
                     description="Compensação de Créditos"
                     icon={<IconExposure size={18} />}
-                > 
-                                    
+                >                  
                     <Table.ScrollContainer minWidth={900} type="native" mt="xl">
                     <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                         <Table.Tr>
@@ -1142,8 +1126,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             </form>  
         </>    
     );
-
-
 }
 
 

@@ -92,6 +92,12 @@ const moduleSchema = new mongoose.Schema({
   _id:false //excluir o _id do subdocumento
 });
 
+const fileSchema = new mongoose.Schema({
+  filename: String,
+  mimetype: String,
+  data: Buffer, // Armazena os arquivos diretamente no banco (melhor para pequenos arquivos)
+}, { timestamps: true });
+
 const projectSchema = new mongoose.Schema(
   {  
     project_type : { // Tipo de projeto
@@ -107,11 +113,11 @@ const projectSchema = new mongoose.Schema(
     consumerUnit: {type : [consumerUnitSchema], require : false }, // Lista de unidades consumidoras participantes do sistema de 
     inverters:{type : [inverterSchema], require : false}, // Lista de inversores usados no projeto
     modules:{type : [moduleSchema], default: []}, // Lista de módulos fotovoltaicos usados no projeto
-    path_meter_pole: { data: Buffer, contentType: String }, // Caminho para a foto do poste do medidor (opcional)
-    path_meter: { data: Buffer, contentType: String }, // Caminho para a foto do medidor (opcional)
-    path_bill: { data: Buffer, contentType: String }, // Caminho para a fatura de energia (opcional)
-    path_identity:{ data: Buffer, contentType: String }, // Caminho para a identidade do cliente (opcional)
-    path_procuration:{ data: Buffer, contentType: String }, // Caminho para o arquivo de procuração (opcional)
+    path_meter_pole: { type: fileSchema, require : false},// Caminho para a foto do poste do medidor (opcional)
+    path_meter: { type: fileSchema, require : false}, // Caminho para a foto do medidor (opcional)
+    path_bill: { type: fileSchema, require : false}, // Caminho para a fatura de energia (opcional)
+    path_identity:{ type: fileSchema, require : false}, // Caminho para a identidade do cliente (opcional)
+    path_procuration:{ type: fileSchema, require : false}, // Caminho para o arquivo de procuração (opcional)
     status : { // Status do projeto
       type: String , 
       enum :[

@@ -24,6 +24,7 @@
     "@tabler/icons-react": "^3.28.1",
     "@toolpad/core": "^0.12.0",
     "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
     "google-map-react": "^2.2.1",
     "next": "15.1.5",
     "react": "^18.3.1",
