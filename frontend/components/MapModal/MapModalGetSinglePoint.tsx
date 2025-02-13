@@ -142,7 +142,6 @@ const MapModalGetSinglePoint: React.FC<MapModalProps> = ({
               }}
             >
                 { markers.map((marker)=>
-                    <>
                       <Marker 
                         key={randomId()}
                         position={{ lat: marker.lat, lng: marker.lng }}
@@ -164,7 +163,6 @@ const MapModalGetSinglePoint: React.FC<MapModalProps> = ({
                         }}
                       >                
                       </Marker>
-                    </>
                 )}    
             </GoogleMap>
           ) : (

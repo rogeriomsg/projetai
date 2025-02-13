@@ -1,6 +1,6 @@
 import { IProjectDataValues } from "@/types/IProject";
 import { Button, Center, Modal, ScrollArea, Table } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { randomId, useDisclosure } from "@mantine/hooks";
 import { useEffect } from "react";
 
 
@@ -28,8 +28,7 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
     }, [isOpen, open, close]);
 
 
-    return(
-        <>
+    return(        
             <Modal 
                 size="xl"
                 opened={opened} 
@@ -113,7 +112,7 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                         </Table.Tr>                         
                         {valuesView?.consumerUnit?.map((uc, index) => (
                             <>
-                                <Table.Tr >
+                                <Table.Tr key={index}>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                 </Table.Tr> 
@@ -131,13 +130,13 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                                 </Table.Tr>
                             </>                            
                         ))}
-                        <Table.Tr >
+                        <Table.Tr  key={randomId()}>
                             <Table.Th bg={'var(--mantine-color-green-light)'}></Table.Th>
                             <Table.Th bg={'var(--mantine-color-green-light)'}>Inversor(es)</Table.Th>
                         </Table.Tr>   
                         {valuesView?.inverters.map((inverter, index) => (
                             <>
-                                <Table.Tr >
+                                <Table.Tr  key={index} >
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                 </Table.Tr> 
@@ -159,13 +158,13 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                                 </Table.Tr>
                             </>                            
                         ))}
-                        <Table.Tr >
+                        <Table.Tr key={randomId()}>
                             <Table.Th bg={'var(--mantine-color-green-light)'}></Table.Th>
                             <Table.Th bg={'var(--mantine-color-green-light)'}>Módulo(s)</Table.Th>
                         </Table.Tr> 
                         {valuesView?.modules.map((module, index) => (
                             <>
-                                <Table.Tr >
+                                <Table.Tr key={index}>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                 </Table.Tr> 
@@ -195,31 +194,15 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                                 </Table.Tr>
                             </>                            
                         ))}
-                        <Table.Tr >
+                        <Table.Tr key={randomId()} >
                             <Table.Th bg={'var(--mantine-color-green-light)'}></Table.Th>
                             <Table.Th bg={'var(--mantine-color-green-light)'}>Documentos</Table.Th>
                         </Table.Tr> 
                         
                         
-                        
-                        
-                        
                     </Table.Tbody>
                 </Table>
-            </Modal>
-
-            {
-                !noButton && (
-                    <>
-                        <Button justify={"center"} variant="default" onClick={open}>
-                            {labelButton || "Conferir"}
-                        </Button> 
-                    </>
-                     
-                )
-            }
-                    
-        </>
+            </Modal> 
     );    
 }  
 

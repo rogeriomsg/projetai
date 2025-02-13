@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.14.0",
     "@hookform/resolvers": "^3.10.0",
     "@mantine/core": "^7.16.2",
+    "@mantine/dropzone": "^7.16.3",
     "@mantine/form": "^7.16.3",
     "@mantine/hooks": "^7.16.2",
     "@mantine/modals": "^7.16.2",
