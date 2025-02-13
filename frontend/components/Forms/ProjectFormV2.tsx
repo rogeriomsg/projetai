@@ -1,8 +1,7 @@
 'use client';
-import { useForm } from '@mantine/form';
+
 import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space} from '@mantine/core';
 import { useForm ,} from '@mantine/form';
-import { Text,Table , Autocomplete, ActionIcon, Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol, FileInput, Center, Space, } from '@mantine/core';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -29,10 +28,6 @@ import {
 
 import Api, { Create, Update } from '@/api/project';
 import { useRouter } from 'next/navigation';
-import { EBranchSection, ECircuitBreaker,  EConnectionType, EDealership,  EProjectSchemaType, EProjectStatus, EProjectType,  ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
-import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
-import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
-import {  z } from 'zod';
 import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
 import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
@@ -47,6 +42,7 @@ interface FormProps {
 };
 
 const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissionType  }) =>{   
+
     const [saving, setSaving] = useState(false); 
     const [activeStep, setActiveStep] = useState(0); 
     const [checked, setChecked] = useState(false);
@@ -323,7 +319,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         //alert(JSON.stringify(item))
     })
     
-    const consumerUnits = form.getValues().consumerUnit?.map((item, index) => (   
+    
     const consumerUnits = form.getValues().consumerUnit?.map((item, index) => ( 
         <Table.Tr key={index} >
             <Table.Td >           
@@ -370,11 +366,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 </ActionIcon>             
                 </Group>
             </Table.Td>
-        </Table.Tr>             
-        </Table.Tr>
+        </Table.Tr>  
     ));
-
-    const invertersDataRows = form.getValues().inverters.map((item, index) => (        
+        
     const invertersDataRows = form.getValues().inverters.map((item, index) => (
         <Table.Tr key={index} >
             <Table.Td >           
@@ -457,8 +451,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 } 
                 </Group>
             </Table.Td>
-        </Table.Tr>               
-        </Table.Tr>
+        </Table.Tr>    
     ));
 
     const modulesDataRows = form.getValues().modules.map((item, index) => (
@@ -613,8 +606,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         
     const handleSubmit = async (isSketch:boolean) => {                 
         //alert("stop")
-        alert(JSON.stringify(form.getValues().path_bill))
-        return;
         setSaving(true);
         switch(form.getValues().status)
         {
@@ -659,8 +650,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         router.push("/project/list"); // Redireciona para a página de listagem"
     }
     
-    return (
-    return (        
+    return (      
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
             onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
@@ -862,7 +852,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Table.ScrollContainer minWidth={900} type="native" mt="xl">
                     <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                         <Table.Tr key={randomId()}>
-                        <Table.Tr key={1}>
                             <Table.Td>
                                 <Grid ml="lg" mr="md" >          
                                     <Grid.Col span={2}>  
@@ -926,7 +915,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Table.ScrollContainer minWidth={900} type="native">
                         <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                             <Table.Tr key={randomId()}>
-                            <Table.Tr key={2}>
                                 <Grid ml="sm" mr="md" >          
                                     <Grid.Col span={4}>  
                                     <Text fw={500}> Modelo </Text>
@@ -973,7 +961,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Table.ScrollContainer minWidth={900} type="native">
                         <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                             <Table.Tr key={randomId()}>
-                            <Table.Tr key={3}>
                             <Grid ml="sm" mr="md" >          
                                 <Grid.Col span={3}>  
                                 <Text ml="lg" fw={500}> Modelo </Text>
@@ -1130,7 +1117,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 )}
             </Group>    
         </form>
-        </form> 
     );
 }
 
