@@ -1,10 +1,11 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { LoadingOverlay } from "@mantine/core";
+import { Container, LoadingOverlay, Title } from "@mantine/core";
 import { Byid } from '@/api/project'
 import { EProjectStatus, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType } from '@/types/IUtils';
+import ProjectFormV2 from '@/components/Forms/ProjectFormV2';
 
 
 
@@ -60,8 +61,12 @@ export default function EditProject(){
     return <><LoadingOverlay visible={!projectData} zIndex={1} overlayProps={{ radius: "sm", blur: 2 }} /></>;
     }    
 
-    return(     
-        <ProjectFormV2 formSubmissionType={EProjectFormSubmissionType.update} initialValues={projectData}  />
+    return(  
+        <Container fluid size="responsive" h={50} >
+            <Title  order={2}>Edição de Projeto</Title>
+            <ProjectFormV2 formSubmissionType={EProjectFormSubmissionType.update} initialValues={projectData}  />
+        </Container>    
+        
     );
     
     

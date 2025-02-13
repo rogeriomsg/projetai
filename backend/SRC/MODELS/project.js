@@ -95,7 +95,7 @@ const moduleSchema = new mongoose.Schema({
 const fileSchema = new mongoose.Schema({
   filename: String,
   mimetype: String,
-  data: Buffer, // Armazena os arquivos diretamente no banco (melhor para pequenos arquivos)
+  data: String, // Armazena os arquivos diretamente no banco em Base64 (melhor para pequenos arquivos)
 }, { timestamps: true });
 
 const projectSchema = new mongoose.Schema(

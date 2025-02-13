@@ -1,6 +1,6 @@
 'use client';
 
-import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space} from '@mantine/core';
+import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space, Anchor, Flex} from '@mantine/core';
 import { useForm ,} from '@mantine/form';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
@@ -28,11 +28,12 @@ import {
 
 import Api, { Create, Update } from '@/api/project';
 import { useRouter } from 'next/navigation';
-import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
+import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IFile, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
 import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
 import { z } from 'zod';
 import ProjectViewV2 from './ProjectViewV2';
+import DownloadButton from '../DownloadButton';
 
 
 
@@ -41,7 +42,7 @@ interface FormProps {
     formSubmissionType?: EProjectFormSubmissionType
 };
 
-const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissionType  }) =>{   
+const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissionType  }) => {   
 
     const [saving, setSaving] = useState(false); 
     const [activeStep, setActiveStep] = useState(0); 
@@ -56,7 +57,11 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
     const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
 
-    const [file, setFile] = useState<File | null>(null);
+    const [path_meter_pole, setPath_meter_pole] = useState<File | null>(null);
+    const [path_meter, setPath_meter] = useState<File | null>(null);
+    const [path_bill, setPath_bill] = useState<File | null>(null);
+    const [path_identity, setPath_identity] = useState<File | null>(null);
+    const [path_procuration, setPath_procuration] = useState<File | null>(null);
 
     const [schemaType, setSchemaType] = useState<EProjectSchemaType>(EProjectSchemaType.stepInfoClient);
 
@@ -79,9 +84,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             dealership: "", // Nome da concessionária ou distribuidora (opcional)
             path_meter_pole: null, // Caminho para a foto do poste do medidor (opcional)
             path_meter: null, // Caminho para a foto do medidor (opcional)
-            path_bill: null, // Caminho para a fatura de energia (opcional)
-            path_identity:null, // Caminho para a identidade do cliente (opcional)
-            path_procuration:null, // Caminho para o arquivo de procuração (opcional)     
+            path_bill: null , // Caminho para a fatura de energia (opcional)
+            path_identity: null, // Caminho para a identidade do cliente (opcional)
+            path_procuration: null, // Caminho para o arquivo de procuração (opcional)     
             compensation_system:"", 
             client: {
                 client_code: 0,
@@ -169,7 +174,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             dealership: values.dealership, // Nome da concessionária ou distribuidora (opcional)
             path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
             path_meter: values.path_meter, // Caminho para a foto do medidor (opcional)
-            path_bill: values.path_bill, // Caminho para a fatura de energia (opcional)
+            path_bill:  values.path_bill, // Caminho para a fatura de energia (opcional)
             path_identity:values.path_identity, // Caminho para a identidade do cliente (opcional)
             path_procuration:values.path_procuration, // Caminho para o arquivo de procuração (opcional)   
             compensation_system: values.compensation_system,     
@@ -279,6 +284,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     
     // Buscar estados
     useEffect(() => {   
+        setPath_bill(convertIFileToFile(form.getValues().path_bill))
+        setPath_identity(convertIFileToFile(form.getValues().path_identity))
+        setPath_meter(convertIFileToFile(form.getValues().path_meter))
+        setPath_meter_pole(convertIFileToFile(form.getValues().path_meter_pole))
+        setPath_procuration(convertIFileToFile(form.getValues().path_procuration))
+
         setprojectFormSubmissionType(initialValues!==undefined?EProjectFormSubmissionType.update:EProjectFormSubmissionType.Create)
     }, []);
         
@@ -313,13 +324,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         })    
         setcolorSlider(_porcentagem!==100?"red":"green")
         setPorcentagem(_porcentagem!==100?false:true)
-    }   
-    
-    const consumerUnits1 = form.getValues().consumerUnit?.map((item, index) => {
-        //alert(JSON.stringify(item))
-    })
-    
-    
+    }       
+   
     const consumerUnits = form.getValues().consumerUnit?.map((item, index) => ( 
         <Table.Tr key={index} >
             <Table.Td >           
@@ -600,12 +606,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             }
         }
     };
-    
-    const handleSubmit = async (isSketch:boolean) => {  
-
         
-    const handleSubmit = async (isSketch:boolean) => {                 
-        //alert("stop")
+    const handleSubmit = async (isSketch:boolean) => {       
+
+        console.log(JSON.stringify(form.getValues().path_bill))
+        console.log(JSON.stringify(form.getValues().path_identity))
+
         setSaving(true);
         switch(form.getValues().status)
         {
@@ -625,11 +631,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 alert("Edição de sketch "+form.getValues().project_type)
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
-                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getValues());
+                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getTransformedValues());
                     if((responseUpdate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado salvo com sucesso")
                     }else{
-                        alert(isSketch?"Erro ao atualizar rascunho":"Erro ao salvar projeto editado")
+                        const message = (responseUpdate as IProjectResponse).message
+                        alert(isSketch?`Erro ao atualizar rascunho : ${message}`:`Erro ao salvar projeto editado: ${message}`)
                     }
                 }    
                 break;
@@ -637,11 +644,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 if(isSketch) return;
                 alert("Edição de projeto enviado")
                 if(validateForm(fullProjectSchema)){                    
-                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getValues());
+                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getTransformedValues());
                     if((responseUpdate as IProjectResponse).error === false){
                         alert("Projeto enviado atualizado com sucesso")
                     }else{
-                        alert("Erro ao atualizar projeto enviado")
+                        const message = (responseUpdate as IProjectResponse).message
+                        alert(`Erro ao atualizar projeto enviado: ${message}`)
                     }
                 }    
                 break;
@@ -649,7 +657,55 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         setSaving(false);
         router.push("/project/list"); // Redireciona para a página de listagem"
     }
-    
+
+    const convertFileToIFile = (file: File | null, callback: (result: IFile | null) => void) => {
+        if (!file) {
+          callback(null);
+          return;
+        }
+      
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          callback({
+            filename: file.name,
+            mimetype: file.type,
+            data: reader.result as string, // Base64
+          });
+        };
+        reader.onerror = () => {
+          console.error("Erro ao ler o arquivo.");
+          callback(null);
+        };
+    };
+
+    const handleFileChange = (file: File | null, field: keyof IProjectDataValues) => {
+        convertFileToIFile(file, (result) => form.setFieldValue(field, result));
+    };
+
+    const convertIFileToFile = (iFile: IFile | null): File | null => {
+        // Remover o prefixo "data:mimetype;base64," se existir
+        if(iFile){
+
+            const base64Data = iFile.data.includes(",") ? iFile.data.split(",")[1] : iFile.data;
+          
+            // Decodificar Base64 para um array de bytes
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length)
+              .fill(0)
+              .map((_, i) => byteCharacters.charCodeAt(i));
+            const byteArray = new Uint8Array(byteNumbers);
+          
+            // Criar um Blob com os dados do arquivo
+            const blob = new Blob([byteArray], { type: iFile.mimetype });
+          
+            // Criar um arquivo File
+            return new File([blob], iFile.filename, { type: iFile.mimetype });
+        }else{
+            return null
+        }
+    };
+
     return (      
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
@@ -1022,52 +1078,80 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     icon={<IconFileUpload size={18} />}
                 >
                     <Grid mt="xl">
-                        <GridCol >
-                            <FileInput 
-                                label="Foto da conta de energia do cliente" 
-                                placeholder="Upload de arquivos" 
-                                accept="image/png,image/jpeg,application/pdf" 
-                                key={form.key(`path_bill`)}
-                                {...form.getInputProps(`path_bill`)} 
-                                value={file}
-                                onChange={setFile}  
-                            /> 
+                        <GridCol span={6}>                           
+                            <FileInput
+                                accept="image/png,image/jpeg,application/pdf"
+                                label="Fatura de Energia"
+                                placeholder="Selecione um arquivo"
+                                value={path_bill} // Evita conflitos de estado
+                                onChange={(file) => {
+                                    setPath_bill(file)
+                                    handleFileChange(file, "path_bill")
+                                }}
+                            />                           
+
                         </GridCol>
-                        <GridCol >
-                            <FileInput 
-                                accept="image/png,image/jpeg,application/pdf" 
-                                label="Cópia do documento de identidade do cliente" 
-                                placeholder="Upload de arquivos" 
-                                key={form.key(`path_identity`)}
-                                {...form.getInputProps(`path_identity`)}   
-                            /> 
+                        <GridCol span={6} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_bill } />}
                         </GridCol>
-                        <GridCol >
-                            <FileInput 
-                                accept="image/png,image/jpeg" 
-                                label="Foto do padrão de entrada " 
-                                placeholder="Upload de arquivos" 
-                                key={form.key(`path_meter`)}
-                                {...form.getInputProps(`path_meter`)} 
-                            /> 
+                        <GridCol span={6} >
+                            <FileInput
+                                accept="image/png,image/jpeg,application/pdf"
+                                label="Identidade do Cliente"
+                                placeholder="Selecione um arquivo"
+                                value={path_identity}
+                                onChange={(file) => {
+                                    setPath_identity(file)
+                                    handleFileChange(file, "path_identity")
+                                }}
+                            />
                         </GridCol>
-                        <GridCol >
-                            <FileInput 
-                                accept="image/png,image/jpeg" 
-                                label="Foto do poste do padrão de entrada" 
-                                placeholder="Upload de arquivos" 
-                                key={form.key(`path_meter_pole`)}
-                                {...form.getInputProps(`path_meter_pole`)} 
-                            /> 
+                        <GridCol span={6} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_identity } />}
                         </GridCol>
-                        <GridCol >
+                        <GridCol span={6}>
+                            <FileInput
+                                accept="image/png,image/jpeg"
+                                label="Foto do Medidor"
+                                placeholder="Selecione um arquivo"
+                                value={path_meter}
+                                onChange={(file) => {
+                                    setPath_meter(file)
+                                    handleFileChange(file, "path_meter")
+                                }}
+                            />
+                        </GridCol>
+                        <GridCol span={6} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_meter } />}
+                        </GridCol>
+                        <GridCol span={6}>
+                            <FileInput
+                                accept="image/png,image/jpeg"
+                                label="Foto do Poste"
+                                placeholder="Selecione um arquivo"
+                                value={path_meter_pole}
+                                onChange={(file) => {
+                                    setPath_meter_pole(file)
+                                    handleFileChange(file, "path_meter_pole")
+                                }}
+                            />
+                        </GridCol>
+                        <GridCol span={6} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_meter_pole } />}
+                        </GridCol>
+                        <GridCol span={6}>
                             <FileInput 
                                 accept="image/png,image/jpeg,application/pdf" 
                                 label="Foto da procuração" 
                                 placeholder="Upload de arquivos" 
-                                key={form.key(`path_procuration`)}
-                                {...form.getInputProps(`path_procuration`)}                     
+                                onChange={(file) => {
+                                    setPath_procuration(file)
+                                    handleFileChange(file, "path_procuration")
+                                }}             
                             /> 
+                        </GridCol>
+                        <GridCol span={6} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_procuration} />}
                         </GridCol>
                     </Grid>
                 </Stepper.Step>
@@ -1119,6 +1203,5 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         </form>
     );
 }
-
 
 export default ProjectFormV2;

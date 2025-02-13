@@ -13,7 +13,7 @@ export default function CreateProject(){
    
     return(  
         <Container fluid size="responsive" h={50} {... demoProps}>
-            <Title  order={2}>Novo Projeto</Title>
+            <Title  order={2}>Novo Projeto </Title>            
             <ProjectFormV2  formSubmissionType={EProjectFormSubmissionType.Create} />
         </Container>   
     );

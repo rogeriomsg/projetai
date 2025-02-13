@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon, Center, Menu, useModalsStack, Modal, Loader } from '@mantine/core';
+import {  Text,  Table, LoadingOverlay, Group, GridCol, Button, Grid, ActionIcon, Center, Menu, useModalsStack, Modal, Loader, Container, Title } from '@mantine/core';
 import { Delete, Search } from '@/api/project';
 import { useRouter } from 'next/navigation';
 import { IconDots, IconDotsVertical, IconEdit, IconCopyCheck, IconPhoto, IconSearch, IconSun, IconTrash, IconCopy } from '@tabler/icons-react';
@@ -249,110 +249,111 @@ export default function ProjectsList() {
   ));
 
   return (
-    <>      
-        <Group justify="space-between"  mb="sm" mt="lg">
-          <Text fw={700} c="red" size='lg'>Listagem dos projetos</Text >        
-          <Button onClick={handleCreate}>Iniciar Novo Projeto</Button>
-        </Group>
+
+    <Container fluid size="responsive" h={50} >
+      <Title  order={2}>Projetos</Title> 
+
+      <Group justify="space-between"  mb="sm" mt="lg">
+        <Text fw={700} c="red" size='lg'>Listagem dos projetos</Text >        
+        <Button onClick={handleCreate}>Iniciar Novo Projeto</Button>
+      </Group>
         
-        <Table withTableBorder striped highlightOnHover>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th w={300}>Nome do projeto</Table.Th>
-              <Table.Th>Distribuidora</Table.Th>
-              <Table.Th>Potência de geração</Table.Th>
-              <Table.Th>Nome do titular</Table.Th>
-              <Table.Th>Local da usina</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Ações</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>{projectRows}</Table.Tbody>
-        </Table>      
-
-        <Group justify="space-between" mb="sm" mt="xl">
-          <Text fw={700} c="red" size='lg'>Rascunhos</Text >        
-          {/* <Button onClick={handleCreate}>Novo Projeto</Button> */}
-        </Group>
-
-        <Table withTableBorder striped highlightOnHover>
-          <Table.Thead>
-            <Table.Tr>
+      <Table withTableBorder striped highlightOnHover>
+        <Table.Thead>
+          <Table.Tr>
             <Table.Th w={300}>Nome do projeto</Table.Th>
-              <Table.Th>Distribuidora</Table.Th>
-              <Table.Th>Potência de geração</Table.Th>
-              <Table.Th>Nome do titular</Table.Th>
-              <Table.Th>Local da usina</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Ações</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>{sketchsRows}</Table.Tbody>
-        </Table>
+            <Table.Th>Distribuidora</Table.Th>
+            <Table.Th>Potência de geração</Table.Th>
+            <Table.Th>Nome do titular</Table.Th>
+            <Table.Th>Local da usina</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Ações</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>{projectRows}</Table.Tbody>
+      </Table>      
 
-        <Center h={200} >
-            <ProjectViewV2 noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
-        </Center>
+      <Group justify="space-between" mb="sm" mt="xl">
+      
+        <Text fw={700} c="red" size='lg'>Rascunhos</Text >        
+        {/* <Button onClick={handleCreate}>Novo Projeto</Button> */}
+      </Group>
 
-        {/* Modal de Confirmação */}
-        <Modal
-          opened={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          title="Confirmação de Exclusão"
-          c={"red"}
-          centered
+      <Table withTableBorder striped highlightOnHover>
+        <Table.Thead>
+          <Table.Tr>
+          <Table.Th w={300}>Nome do projeto</Table.Th>
+            <Table.Th>Distribuidora</Table.Th>
+            <Table.Th>Potência de geração</Table.Th>
+            <Table.Th>Nome do titular</Table.Th>
+            <Table.Th>Local da usina</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Ações</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>{sketchsRows}</Table.Tbody>
+      </Table>
+
+      <Center h={200} >
+          <ProjectViewV2 noButton isOpen={openProjectView} valuesView={projectView} onClose={()=>setOpenProjectView(false)}/> 
+      </Center>
+
+      {/* Modal de Confirmação */}
+      <Modal
+        opened={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmação de Exclusão"
+        c={"red"}
+        centered
+      >
+        <Text>
+          Tem certeza que deseja deletar o projeto{" "}
+          <strong>{selectedProject?.name}</strong>?
+        </Text>
+        <Group justify="center" mt="md">
+          <Button variant="default" onClick={() => setIsDeleteModalOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            color="red"
+            onClick={handleDelete}
+            disabled={loadingDelete}
+          >
+            {loadingDelete ? (
+              <Center>
+                <Loader size="sm" />
+              </Center>
+            ) : (
+              "Confirmar"
+            )}
+          </Button>
+        </Group>
+      </Modal>
+        
+      <Snackbar open={openMessageSuccess} autoHideDuration={5000} onClose={handleClose} anchorOrigin={ {vertical: 'top', horizontal: 'center'} } >
+        <Alert
+          onClose={handleClose}
+          severity="success"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          Deletado com sucesso!
+        </Alert>          
+      </Snackbar>
+
+      <Snackbar open={openMessageFail} autoHideDuration={5000} onClose={handleClose} anchorOrigin={ {vertical: 'top', horizontal: 'center'} }>
+        <Alert
+          onClose={handleClose}
+          severity="error"
+          variant="filled"
+          sx={{ width: '100%' }}            
         >
           <Text>
-            Tem certeza que deseja deletar o projeto{" "}
-            <strong>{selectedProject?.name}</strong>?
+            Falha ao tentar deletar!              
           </Text>
-          <Group justify="center" mt="md">
-            <Button variant="default" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              color="red"
-              onClick={handleDelete}
-              disabled={loadingDelete}
-            >
-              {loadingDelete ? (
-                <Center>
-                  <Loader size="sm" />
-                </Center>
-              ) : (
-                "Confirmar"
-              )}
-            </Button>
-          </Group>
-        </Modal>
-        
-        <Snackbar open={openMessageSuccess} autoHideDuration={5000} onClose={handleClose} anchorOrigin={ {vertical: 'top', horizontal: 'center'} } >
-          <Alert
-            onClose={handleClose}
-            severity="success"
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            Deletado com sucesso!
-          </Alert>          
-        </Snackbar>
-
-        <Snackbar open={openMessageFail} autoHideDuration={5000} onClose={handleClose} anchorOrigin={ {vertical: 'top', horizontal: 'center'} }>
-          <Alert
-            onClose={handleClose}
-            severity="error"
-            variant="filled"
-            sx={{ width: '100%' }}            
-          >
-            <Text>
-              Falha ao tentar deletar!              
-            </Text>
-          </Alert>
-        </Snackbar>
-
-      
-    </>
-    
+        </Alert>
+      </Snackbar>
+    </Container>     
   );
 }
 

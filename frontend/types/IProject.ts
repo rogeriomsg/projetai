@@ -13,7 +13,8 @@ export interface IProjectDataValues {
     path_meter: IFile | null; // Caminho para a foto do medidor (opcional)
     path_bill: IFile | null; // Caminho para a fatura de energia (opcional)
     path_identity:IFile | null; // Caminho para a identidade do cliente (opcional)
-    path_procuration:IFile | null; // Caminho para o arquivo de procuração (opcional)  
+    path_procuration:IFile | null ; // Caminho para o arquivo de procuração (opcional)  
+
     compensation_system: string;
     client: {
         client_code: number | "";
@@ -78,14 +79,9 @@ export interface IProjectDataValues {
 };
 
 export interface IFile {
-    filename: String;
-    mimetype: String;
-    data: Buffer;
-};
-export interface IFile {
-    filename: String;
-    mimetype: String;
-    data: Buffer; // Armazena os arquivos diretamente no banco (melhor para pequenos arquivos)
+    filename: string;
+    mimetype: string;
+    data: string; // Armazena os arquivos diretamente no banco em formato Base64 (melhor para pequenos arquivos)
 }
 
 export interface IProjectResponse {
