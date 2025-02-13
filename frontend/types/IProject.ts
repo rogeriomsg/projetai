@@ -8,11 +8,11 @@ export interface IProjectDataValues {
     name: string; // Nome do projeto (opcional)
     description: string; // Descrição do projeto (opcional)
     dealership: string; // Nome da concessionária ou distribuidora (opcional)
-    path_meter_pole: Buffer | null; // Caminho para a foto do poste do medidor (opcional)
-    path_meter: Buffer | null; // Caminho para a foto do medidor (opcional)
-    path_bill: Buffer | null; // Caminho para a fatura de energia (opcional)
-    path_identity:Buffer | null; // Caminho para a identidade do cliente (opcional)
-    path_procuration:Buffer | null; // Caminho para o arquivo de procuração (opcional)  
+    path_meter_pole: IFile | null; // Caminho para a foto do poste do medidor (opcional)
+    path_meter: IFile | null; // Caminho para a foto do medidor (opcional)
+    path_bill: IFile | null; // Caminho para a fatura de energia (opcional)
+    path_identity: IFile | null; // Caminho para a identidade do cliente (opcional)
+    path_procuration: IFile | null; // Caminho para o arquivo de procuração (opcional)  
     compensation_system: string;
     client: {
         client_code: number | "";
@@ -74,6 +74,12 @@ export interface IProjectDataValues {
         power: number | "";
         total_power : number | "";
     }[];
+};
+
+export interface IFile {
+    filename: String;
+    mimetype: String;
+    data: Buffer;
 };
 
 export interface IProjectResponse {
