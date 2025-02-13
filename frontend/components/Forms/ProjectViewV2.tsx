@@ -112,7 +112,7 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                         </Table.Tr>                         
                         {valuesView?.consumerUnit?.map((uc, index) => (
                             <>
-                                <Table.Tr key={index}>
+                                <Table.Tr key={index} >
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                 </Table.Tr> 
@@ -136,7 +136,7 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                         </Table.Tr>   
                         {valuesView?.inverters.map((inverter, index) => (
                             <>
-                                <Table.Tr  key={index} >
+                                <Table.Tr key={index} >
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
                                 </Table.Tr> 

@@ -1,6 +1,8 @@
 'use client';
 import { useForm } from '@mantine/form';
 import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space} from '@mantine/core';
+import { useForm ,} from '@mantine/form';
+import { Text,Table , Autocomplete, ActionIcon, Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol, FileInput, Center, Space, } from '@mantine/core';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -31,6 +33,10 @@ import { EBranchSection, ECircuitBreaker,  EConnectionType, EDealership,  EProje
 import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
 import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
 import {  z } from 'zod';
+import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
+import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
+import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
+import { z } from 'zod';
 import ProjectViewV2 from './ProjectViewV2';
 
 
@@ -318,6 +324,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     })
     
     const consumerUnits = form.getValues().consumerUnit?.map((item, index) => (   
+    const consumerUnits = form.getValues().consumerUnit?.map((item, index) => ( 
         <Table.Tr key={index} >
             <Table.Td >           
                 <Grid ml="lg" mr="md">          
@@ -364,9 +371,11 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 </Group>
             </Table.Td>
         </Table.Tr>             
+        </Table.Tr>
     ));
 
     const invertersDataRows = form.getValues().inverters.map((item, index) => (        
+    const invertersDataRows = form.getValues().inverters.map((item, index) => (
         <Table.Tr key={index} >
             <Table.Td >           
                 <Grid ml="md" mr="md" >          
@@ -449,6 +458,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 </Group>
             </Table.Td>
         </Table.Tr>               
+        </Table.Tr>
     ));
 
     const modulesDataRows = form.getValues().modules.map((item, index) => (
@@ -601,6 +611,10 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     const handleSubmit = async (isSketch:boolean) => {  
 
         
+    const handleSubmit = async (isSketch:boolean) => {                 
+        //alert("stop")
+        alert(JSON.stringify(form.getValues().path_bill))
+        return;
         setSaving(true);
         switch(form.getValues().status)
         {
@@ -646,6 +660,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     }
     
     return (
+    return (        
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
             onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
@@ -847,6 +862,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Table.ScrollContainer minWidth={900} type="native" mt="xl">
                     <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                         <Table.Tr key={randomId()}>
+                        <Table.Tr key={1}>
                             <Table.Td>
                                 <Grid ml="lg" mr="md" >          
                                     <Grid.Col span={2}>  
@@ -910,6 +926,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Table.ScrollContainer minWidth={900} type="native">
                         <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                             <Table.Tr key={randomId()}>
+                            <Table.Tr key={2}>
                                 <Grid ml="sm" mr="md" >          
                                     <Grid.Col span={4}>  
                                     <Text fw={500}> Modelo </Text>
@@ -956,6 +973,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Table.ScrollContainer minWidth={900} type="native">
                         <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
                             <Table.Tr key={randomId()}>
+                            <Table.Tr key={3}>
                             <Grid ml="sm" mr="md" >          
                                 <Grid.Col span={3}>  
                                 <Text ml="lg" fw={500}> Modelo </Text>
@@ -1018,20 +1036,10 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 >
                     <Grid mt="xl">
                         <GridCol >
-                            {file && (
-                                <section>
-                                File details:
-                                <ul>
-                                    <li>Name: {file.name}</li>
-                                    <li>Type: {file.type}</li>
-                                    <li>Size: {file.size} bytes</li>
-                                </ul>
-                                </section>
-                            )}
                             <FileInput 
-                                accept="image/png,image/jpeg,application/pdf" 
                                 label="Foto da conta de energia do cliente" 
                                 placeholder="Upload de arquivos" 
+                                accept="image/png,image/jpeg,application/pdf" 
                                 key={form.key(`path_bill`)}
                                 {...form.getInputProps(`path_bill`)} 
                                 value={file}
@@ -1122,6 +1130,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 )}
             </Group>    
         </form>
+        </form> 
     );
 }
 

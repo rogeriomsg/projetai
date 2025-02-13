@@ -225,14 +225,14 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
                 link_point:values.plant.geolocation.link_point
                 }, 
             },      
-            consumerUnit: values.consumerUnit.map((item)=>({   
+            consumerUnit: values.consumerUnit?.map((item)=>({   
                 ...item,      
                 consumer_unit_code: Number(item.consumer_unit_code) ,
                 name: item.name, 
                 description: item.description, 
                 percentage:  Number(item.percentage),
                 is_plant: Boolean(item.is_plant),
-            })),
+            })) || null,
             inverters: values.inverters.map((item)=>({
                 ...item, 
                 model: item.model,
@@ -386,7 +386,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
 
     const CheckPorcentagemConsumerUnit = ()=>{
         var _porcentagem = 0
-        form.getValues().consumerUnit.map((item,_index)=>{ 
+        form.getValues().consumerUnit?.map((item,_index)=>{ 
             const p = Number(item.percentage) 
             if(!isNaN(p))    
                 _porcentagem += p
@@ -402,7 +402,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
         }
     };  
     
-    const consumerUnits = form.getValues().consumerUnit.map((item, index) => (
+    const consumerUnits = form.getValues().consumerUnit?.map((item, index) => (
         <Table.Tr key={item.key} >
         <Table.Td >           
             <Grid ml="md" mr="md">          
