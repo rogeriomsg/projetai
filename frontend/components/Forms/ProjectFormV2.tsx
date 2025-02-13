@@ -1,6 +1,6 @@
 'use client';
-import { useForm ,hasLength, matches,isNotEmpty, FORM_INDEX, zodResolver,} from '@mantine/form';
-import { Checkbox,Select,Slider,SegmentedControl,Tabs,Text,Table , Autocomplete, ActionIcon,Switch,Stepper, Button, Group, NumberInput, TextInput, LoadingOverlay,Grid,InputBase,Tooltip, GridCol, Textarea, Box, Loader, Divider, SimpleGrid, FileInput, Center, Space, Alert,} from '@mantine/core';
+import { useForm ,} from '@mantine/form';
+import { Text,Table , Autocomplete, ActionIcon, Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol, FileInput, Center, Space, } from '@mantine/core';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
 import { randomId } from '@mantine/hooks';
@@ -22,15 +22,12 @@ import {
   IconActivity,
 } from '@tabler/icons-react';
 
-import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalGetSinglePoint';
 import Api, { Create, Update } from '@/api/project';
-import { FetchMunicipalities, FetchStates, FetchZipCode } from '@/api/utils';
 import { useRouter } from 'next/navigation';
-import ProjectView from './ProjectView';
 import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IProjectDataValues, IProjectResponse } from '@/types/IProject';
-import { EProjectFormSubmissionType, IStatesDataValues, IZipCodeDataValues } from '@/types/IUtils';
-import { fullProjectSchema, getSchemaFromActiveStep, projectBasicsSchema, projectMainSchema} from '@/validations/project';
-import { number, object, z } from 'zod';
+import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
+import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
+import { z } from 'zod';
 import ProjectViewV2 from './ProjectViewV2';
 
 
@@ -308,21 +305,13 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         })    
         setcolorSlider(_porcentagem!==100?"red":"green")
         setPorcentagem(_porcentagem!==100?false:true)
-    }    
-
-    const handleSalvepointPlant = (selecteds:IMarker[]) => {
-        if (selecteds.length>0) {
-            form.setFieldValue("plant.geolocation.lat", selecteds[0].lat);
-            form.setFieldValue("plant.geolocation.lng", selecteds[0].lng);
-        }
-    }; 
+    }   
     
     const consumerUnits1 = form.getValues().consumerUnit?.map((item, index) => {
         //alert(JSON.stringify(item))
     })
     
-    const consumerUnits = form.getValues().consumerUnit?.map((item, index) => (   
-        <>
+    const consumerUnits = form.getValues().consumerUnit?.map((item, index) => ( 
         <Table.Tr key={index} >
             <Table.Td >           
                 <Grid ml="lg" mr="md">          
@@ -369,11 +358,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 </Group>
             </Table.Td>
         </Table.Tr>
-        </>        
     ));
 
     const invertersDataRows = form.getValues().inverters.map((item, index) => (
-        <>
         <Table.Tr key={index} >
             <Table.Td >           
                 <Grid ml="md" mr="md" >          
@@ -456,11 +443,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 </Group>
             </Table.Td>
         </Table.Tr>
-        </>        
     ));
 
     const modulesDataRows = form.getValues().modules.map((item, index) => (
-        <>
         <Table.Tr key={index} >
             <Table.Td >           
                 <Grid ml="md" mr="md" >          
@@ -589,7 +574,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 </Group>
             </Table.Td>
         </Table.Tr>
-        </>       
     ));
 
     const validateForm = (schema: z.ZodSchema<any>) => {
@@ -614,6 +598,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     
     const handleSubmit = async (isSketch:boolean) => {                 
         //alert("stop")
+        alert(JSON.stringify(form.getValues().path_bill))
+        return;
         setSaving(true);
         switch(form.getValues().status)
         {
@@ -658,8 +644,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         router.push("/project/list"); // Redireciona para a página de listagem"
     }
     
-    return (
-        <>
+    return (        
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
             onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
@@ -860,7 +845,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 >                  
                     <Table.ScrollContainer minWidth={900} type="native" mt="xl">
                     <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                        <Table.Tr>
+                        <Table.Tr key={1}>
                             <Table.Td>
                                 <Grid ml="lg" mr="md" >          
                                     <Grid.Col span={2}>  
@@ -923,7 +908,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Text fw={700} size="xl" tt="capitalize" mb="lg" mt="xl"> Inversores </Text>
                     <Table.ScrollContainer minWidth={900} type="native">
                         <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                            <Table.Tr>
+                            <Table.Tr key={2}>
                                 <Grid ml="sm" mr="md" >          
                                     <Grid.Col span={4}>  
                                     <Text fw={500}> Modelo </Text>
@@ -952,14 +937,14 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             //variant="subtle" 
                             size="xl" 
                             onClick={() => {
-                            form.insertListItem('inverters', { 
-                                key: randomId(),
-                                model: "",
-                                manufacturer: "",
-                                power: 0,
-                                quantity: 1,
-                                total_power : 0,
-                            })              
+                                form.insertListItem('inverters', { 
+                                    key: randomId(),
+                                    model: "",
+                                    manufacturer: "",
+                                    power: 0,
+                                    quantity: 1,
+                                    total_power : 0,
+                                })              
                             }} 
                         >
                             <IconPlus  size={28} stroke={1.5} />
@@ -969,7 +954,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Text fw={700} size="xl" tt="capitalize" mb="lg"> Módulos </Text>
                     <Table.ScrollContainer minWidth={900} type="native">
                         <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                            <Table.Tr>
+                            <Table.Tr key={3}>
                             <Grid ml="sm" mr="md" >          
                                 <Grid.Col span={3}>  
                                 <Text ml="lg" fw={500}> Modelo </Text>
@@ -1033,9 +1018,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     <Grid mt="xl">
                         <GridCol >
                             <FileInput 
-                                accept="image/png,image/jpeg,application/pdf" 
                                 label="Foto da conta de energia do cliente" 
                                 placeholder="Upload de arquivos" 
+                                accept="image/png,image/jpeg,application/pdf" 
                                 key={form.key(`path_bill`)}
                                 {...form.getInputProps(`path_bill`)}   
                             /> 
@@ -1123,8 +1108,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     </Button>
                 )}
             </Group>    
-            </form>  
-        </>    
+        </form> 
     );
 }
 

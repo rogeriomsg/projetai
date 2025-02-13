@@ -141,30 +141,30 @@ const MapModalGetSinglePoint: React.FC<MapModalProps> = ({
                 styles: style1, // Insira aqui o JSON de estilo do mapa            
               }}
             >
-                { markers.map((marker)=>
-                    <>
-                      <Marker 
-                        key={randomId()}
-                        position={{ lat: marker.lat, lng: marker.lng }}
-                        //animation={google.maps.Animation.DROP} // Ativa a animação de "cair"
-                        clickable={marker.clickable || true}
-                        onClick={() => handleMarkerClick(marker)}
-                        draggable={marker.draggable || false}
-                        onDragEnd={(e)=>handleMarkerDrag(marker,e)}
-                        icon={{
-                          path: "M0 26.016q0 2.496 1.76 4.224t4.256 1.76h20q2.464 0 4.224-1.76t1.76-4.224v-20q0-2.496-1.76-4.256t-4.224-1.76h-1.12q1.824 2.048 2.56 4.672 0.544 0.576 0.544 1.344v20q0 0.832-0.576 1.408t-1.408 0.576h-20q-0.832 0-1.44-0.576t-0.576-1.408v-20q0-0.768 0.544-1.344 0.736-2.624 2.56-4.672h-1.088q-2.496 0-4.256 1.76t-1.76 4.256v20zM8 8q0 1.248 0.832 3.36t1.984 4.224 2.368 4.064 2.016 3.136l0.8 1.216q0.32-0.448 0.864-1.248t1.92-3.072 2.432-4.16 1.92-4.096 0.864-3.424q0-3.296-2.336-5.632t-5.664-2.368-5.664 2.368-2.336 5.632zM12 8q0-1.632 1.184-2.816t2.816-1.184 2.816 1.184 1.184 2.816-1.184 2.848-2.816 1.152-2.816-1.152-1.184-2.848z",
-                          scale: 2,
-                          fillColor: !marker.available
-                            ? "gray"
-                            : isSelected(marker.id)
-                            ? "green"
-                            : "blue",
-                          fillOpacity: 0.5,
-                          strokeWeight: 1,
-                        }}
-                      >                
-                      </Marker>
-                    </>
+                { markers.map((marker)=>(                    
+                    <Marker 
+                      key={randomId()}
+                      position={{ lat: marker.lat, lng: marker.lng }}
+                      //animation={google.maps.Animation.DROP} // Ativa a animação de "cair"
+                      clickable={marker.clickable || true}
+                      onClick={() => handleMarkerClick(marker)}
+                      draggable={marker.draggable || false}
+                      onDragEnd={(e)=>handleMarkerDrag(marker,e)}
+                      icon={{
+                        path: "M0 26.016q0 2.496 1.76 4.224t4.256 1.76h20q2.464 0 4.224-1.76t1.76-4.224v-20q0-2.496-1.76-4.256t-4.224-1.76h-1.12q1.824 2.048 2.56 4.672 0.544 0.576 0.544 1.344v20q0 0.832-0.576 1.408t-1.408 0.576h-20q-0.832 0-1.44-0.576t-0.576-1.408v-20q0-0.768 0.544-1.344 0.736-2.624 2.56-4.672h-1.088q-2.496 0-4.256 1.76t-1.76 4.256v20zM8 8q0 1.248 0.832 3.36t1.984 4.224 2.368 4.064 2.016 3.136l0.8 1.216q0.32-0.448 0.864-1.248t1.92-3.072 2.432-4.16 1.92-4.096 0.864-3.424q0-3.296-2.336-5.632t-5.664-2.368-5.664 2.368-2.336 5.632zM12 8q0-1.632 1.184-2.816t2.816-1.184 2.816 1.184 1.184 2.816-1.184 2.848-2.816 1.152-2.816-1.152-1.184-2.848z",
+                        scale: 2,
+                        fillColor: !marker.available
+                          ? "gray"
+                          : isSelected(marker.id)
+                          ? "green"
+                          : "blue",
+                        fillOpacity: 0.5,
+                        strokeWeight: 1,
+                      }}
+                    >                
+                    </Marker>
+                  )
+                    
                 )}    
             </GoogleMap>
           ) : (
