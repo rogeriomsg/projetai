@@ -197,7 +197,27 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                         <Table.Tr key={randomId()} >
                             <Table.Th bg={'var(--mantine-color-green-light)'}></Table.Th>
                             <Table.Th bg={'var(--mantine-color-green-light)'}>Documentos</Table.Th>
-                        </Table.Tr> 
+                        </Table.Tr>                         
+                        <Table.Tr >
+                            <Table.Th>Conta do cliente</Table.Th> {/* Substitua "property1" pela chave real */}
+                            <Table.Td>{valuesView?.path_identity?.filename}</Table.Td> {/* Substitua "property2" pela chave real */}
+                        </Table.Tr>
+                        <Table.Tr >
+                            <Table.Th>Documento identidade</Table.Th> {/* Substitua "property1" pela chave real */}
+                            <Table.Td>{valuesView?.path_bill?.filename}</Table.Td> {/* Substitua "property2" pela chave real */}
+                        </Table.Tr>
+                        <Table.Tr >
+                            <Table.Th>Foto do medido</Table.Th> {/* Substitua "property1" pela chave real */}
+                            <Table.Td>{valuesView?.path_meter?.filename}</Table.Td> {/* Substitua "property2" pela chave real */}
+                        </Table.Tr>
+                        <Table.Tr >
+                            <Table.Th>Foto do poste</Table.Th> {/* Substitua "property1" pela chave real */}
+                            <Table.Td>{valuesView?.path_meter_pole?.filename}</Table.Td> {/* Substitua "property2" pela chave real */}
+                        </Table.Tr>
+                        <Table.Tr >
+                            <Table.Th>Procuração</Table.Th> {/* Substitua "property1" pela chave real */}
+                            <Table.Td>{valuesView?.path_procuration?.filename}</Table.Td> {/* Substitua "property2" pela chave real */}
+                        </Table.Tr>
                         
                         
                     </Table.Tbody>

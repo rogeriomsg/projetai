@@ -217,7 +217,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose, 
                             <Table.Th bg={'var(--mantine-color-green-light)'}></Table.Th>
                             <Table.Th bg={'var(--mantine-color-green-light)'}>Sistema de Compensação</Table.Th>
                         </Table.Tr>                         
-                        {valuesView?.consumerUnit.map((uc, index) => (
+                        {valuesView?.consumerUnit?.map((uc, index) => (
                             <>
                                 <Table.Tr >
                                     <Table.Th bg={'var(--mantine-color-orange-light)'}></Table.Th>
@@ -307,23 +307,23 @@ const ProjectView: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose, 
                         </Table.Tr> 
                         <Table.Tr >
                             <Table.Th>Documento 1</Table.Th> {/* Substitua "property1" pela chave real */}
-                            <Table.Td>{valuesView?.path_identity} kW</Table.Td> {/* Substitua "property2" pela chave real */}
+                            <Table.Td>{valuesView?.path_identity?.filename} kW</Table.Td> {/* Substitua "property2" pela chave real */}
                         </Table.Tr>
                         <Table.Tr >
                             <Table.Th>Documento 2</Table.Th> {/* Substitua "property1" pela chave real */}
-                            <Table.Td>{valuesView?.path_bill} kW</Table.Td> {/* Substitua "property2" pela chave real */}
+                            <Table.Td>{valuesView?.path_bill?.filename} kW</Table.Td> {/* Substitua "property2" pela chave real */}
                         </Table.Tr>
                         <Table.Tr >
                             <Table.Th>Documento 3</Table.Th> {/* Substitua "property1" pela chave real */}
-                            <Table.Td>{valuesView?.path_meter} kW</Table.Td> {/* Substitua "property2" pela chave real */}
+                            <Table.Td>{valuesView?.path_meter?.filename} kW</Table.Td> {/* Substitua "property2" pela chave real */}
                         </Table.Tr>
                         <Table.Tr >
                             <Table.Th>Documento 4</Table.Th> {/* Substitua "property1" pela chave real */}
-                            <Table.Td>{valuesView?.path_meter_pole} kW</Table.Td> {/* Substitua "property2" pela chave real */}
+                            <Table.Td>{valuesView?.path_meter_pole?.filename} kW</Table.Td> {/* Substitua "property2" pela chave real */}
                         </Table.Tr>
                         <Table.Tr >
                             <Table.Th>Documento 3</Table.Th> {/* Substitua "property1" pela chave real */}
-                            <Table.Td>{valuesView?.path_procuration} kW</Table.Td> {/* Substitua "property2" pela chave real */}
+                            <Table.Td>{valuesView?.path_procuration?.filename} kW</Table.Td> {/* Substitua "property2" pela chave real */}
                         </Table.Tr>
                     </Table.Tbody>
                 </Table>

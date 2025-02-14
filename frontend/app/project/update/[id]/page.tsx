@@ -6,14 +6,13 @@ import { Byid } from '@/api/project'
 import { EProjectStatus, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType } from '@/types/IUtils';
 import ProjectFormV2 from '@/components/Forms/ProjectFormV2';
-
-
+import { useRouter } from 'next/navigation';
 
 export default function EditProject(){
     const { id } = useParams<{ id: string }>(); // Captura o ID da URL 
+    const router = useRouter();
     
     const [searchParams] = useSearchParams();
-
    
     const isMounted = useRef(false);
     const [projectData, setProjectData] = useState<IProjectDataValues | null>(null);
@@ -61,10 +60,21 @@ export default function EditProject(){
     return <><LoadingOverlay visible={!projectData} zIndex={1} overlayProps={{ radius: "sm", blur: 2 }} /></>;
     }    
 
+    function handleRedirect(): void {
+        router.push("/project/list"); // Redireciona para a página de listagem"        
+    }
+
     return(  
         <Container fluid size="responsive" h={50} >
             <Title  order={2}>Edição de Projeto</Title>
-            <ProjectFormV2 formSubmissionType={EProjectFormSubmissionType.update} initialValues={projectData}  />
+            <ProjectFormV2 
+                formSubmissionType={EProjectFormSubmissionType.update} 
+                initialValues={projectData} 
+                onCancel={handleRedirect} 
+                onUpdate={handleRedirect}
+                onSave={handleRedirect}
+                onError={handleRedirect}
+            />
         </Container>    
         
     );

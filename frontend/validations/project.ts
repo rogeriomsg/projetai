@@ -20,12 +20,18 @@ const addressSchema = z.object({
     }
 });
 
+const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/; // (11) 98223-0290
+const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/; // 000.000.000-00
+const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/; // 00.000.000/0000-00
+
 const clientSchema = z.object({
     client_code: z.number(),
     name: z.string().min(2, { message: "O nome do cliente deve ser informado" }),
-    cpf: z.string().min(14, { message: "O deve ser informado corretamente" }),
+    cpf: z.string().refine(value => cpfRegex.test(value) || cnpjRegex.test(value), {
+        message: "CPF ou CNPJ inválido. Use CPF (000.000.000-00) ou CNPJ (00.000.000/0000-00).",
+    }),
     email: z.string().email({ message: 'E-mail cliente inválido.' }),
-    phone: z.string().min(15, { message: "Informe um número para contato" }) ,
+    phone: z.string().regex(phoneRegex, { message: "O telefone deve estar no formato (11) 98223-0290" }),
 });
 
 const geolocationSchema = z.object({
@@ -120,24 +126,26 @@ export const projectEquipamentsSchema = z.object({
     modules: z.array(modulesSchema).min(1, "Pelo menos um módulo deve ser fornecido."),   
 });
 
-export const projectDocumentsSchema = z.object({
-    // path_meter_pole: z.instanceof(File).refine((file) => file.size > 0, {
-    //     message: "O arquivo não pode estar vazio.",
-    // }), // Caminho para a foto do poste do medidor (opcional)
-    // path_meter: z.instanceof(File).refine((file) => file.size > 0, {
-    //     message: "O arquivo não pode estar vazio.",
-    // }), // Caminho para a foto do medidor (opcional)
-    // path_bill: z.instanceof(File).refine((file) => file.size > 0, {
-    //     message: "O arquivo não pode estar vazio.",
-    // }), // Caminho para a fatura de energia (opcional)
-    // path_identity:z.instanceof(File).refine((file) => file.size > 0, {
-    //     message: "O arquivo não pode estar vazio.",
-    // }), // Caminho para a identidade do cliente (opcional)
-    // path_procuration:z.instanceof(File).refine((file) => file.size > 0, {
-    //     message: "O arquivo não pode estar vazio.",
-    // }), // Caminho para o arquivo de procuração (opcional)    
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+
+// Validação do arquivo
+const fileSchema = z.object({
+    filename: z.string().min(1, "O nome do arquivo é obrigatório."),
+    mimetype: z.string().refine(type => ALLOWED_MIME_TYPES.includes(type), {
+        message: "Apenas arquivos PDF e imagens (JPG, PNG) são permitidos.",
+    }),
+    size: z.number().max(MAX_FILE_SIZE, "O arquivo deve ter no máximo 5MB."),
+    data: z.string().min(1, "O arquivo não pode estar vazio."), // Base64 obrigatório
 });
 
+export const projectDocumentsSchema = z.object({
+    path_bill: fileSchema.nullable(), // Permite null se não for obrigatório, // Caminho para a fatura de energia (opcional)
+    path_identity:fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para a identidade do cliente (opcional)
+    path_meter_pole: fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para a foto do poste do medidor (opcional)
+    path_meter:fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para a foto do medidor (opcional)
+    path_procuration:fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para o arquivo de procuração (opcional)    
+});
 
 export const fullProjectSchema = z.union([
     projectMainSchema,
@@ -146,7 +154,6 @@ export const fullProjectSchema = z.union([
     projectEquipamentsSchema,
     projectDocumentsSchema,
 ])
-
 
 export const getSchemaFromActiveStep = (activestep:number) => {
     //alert(activestep)

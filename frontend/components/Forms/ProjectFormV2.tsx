@@ -25,9 +25,7 @@ import {
   IconX
 } from '@tabler/icons-react';
 
-
 import Api, { Create, Update } from '@/api/project';
-import { useRouter } from 'next/navigation';
 import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IFile, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
 import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
@@ -35,25 +33,22 @@ import { z } from 'zod';
 import ProjectViewV2 from './ProjectViewV2';
 import DownloadButton from '../DownloadButton';
 
-
-
 interface FormProps {
     initialValues?: IProjectDataValues | null; // Valores iniciais para edição
-    formSubmissionType?: EProjectFormSubmissionType
+    formSubmissionType?: EProjectFormSubmissionType;
+    onSave?: ()=>void ;
+    onUpdate?: ()=>void ;
+    onCancel?: ()=>void;
+    onError?: (error:string | {message:string}) =>void;
 };
 
-const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissionType  }) => {   
+const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissionType , onSave, onUpdate,onCancel , onError}) => {   
 
     const [saving, setSaving] = useState(false); 
     const [activeStep, setActiveStep] = useState(0); 
-    const [checked, setChecked] = useState(false);
     const [colorSlider, setcolorSlider] = useState("green");
     const [porcentagem, setPorcentagem] = useState(false);
-    const [states, setStates] = useState<IStatesDataValues[] | null>(null); // Lista de estados
-    const [municipalities, setMunicipalities] = useState<any[]>([]); // Lista de municípios   
-    const [loadingStates, setLoadingStates] = useState<boolean>(false); // Carregamento de estados
-    const [loadingMunicipalities, setLoadingMunicipalities] = useState<boolean>(false); // Carregamento de municípios
-    const [loadingZipCode, setLoadingZipCode] = useState<boolean>(false); // Carregamento de estados
+   
     const [noNumberClient, setNoNumberClient] = useState<boolean>(false);
     const [noNumberPlant, setNoNumberPlant] = useState<boolean>(false);
 
@@ -63,10 +58,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     const [path_identity, setPath_identity] = useState<File | null>(null);
     const [path_procuration, setPath_procuration] = useState<File | null>(null);
 
-    const [schemaType, setSchemaType] = useState<EProjectSchemaType>(EProjectSchemaType.stepInfoClient);
-
     const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<EProjectFormSubmissionType>(EProjectFormSubmissionType.Create); //
-    const router = useRouter();
+    
     
     const nextStep = () => setActiveStep((currentStep) => (validateForm(getSchemaFromActiveStep(currentStep)) ? currentStep + 1 : currentStep ));    
     const prevStep = () => setActiveStep((currentStep) => (currentStep > 0 ? currentStep - 1 : currentStep));
@@ -607,10 +600,55 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         }
     };
         
+    
+    const convertFileToIFile = (file: File | null, callback: (result: IFile | null) => void) => {
+        if (!file) {
+            callback(null);
+            return;
+        }        
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            callback({
+                filename: file.name,
+                mimetype: file.type,
+                size: file.size,
+                data: reader.result as string, // Base64
+            });
+        };
+        reader.onerror = () => {
+            console.error("Erro ao ler o arquivo.");
+            callback(null);
+        };
+    };
+    
+    const convertIFileToFile = (iFile: IFile | null): File | null => {
+        // Remover o prefixo "data:mimetype;base64," se existir
+        if(iFile){            
+            const base64Data = iFile.data.includes(",") ? iFile.data.split(",")[1] : iFile.data;            
+            // Decodificar Base64 para um array de bytes
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length)
+              .fill(0)
+              .map((_, i) => byteCharacters.charCodeAt(i));
+            const byteArray = new Uint8Array(byteNumbers);          
+            // Criar um Blob com os dados do arquivo
+            const blob = new Blob([byteArray], { type: iFile.mimetype });            
+            // Criar um arquivo File
+            return new File([blob], iFile.filename, { type: iFile.mimetype });
+        }else{
+            return null
+        };
+    }
+    
+    const handleFileChange = (file: File | null, field: keyof IProjectDataValues) => {
+        convertFileToIFile(file, (result) => form.setFieldValue(field, result));
+    };
+    
     const handleSubmit = async (isSketch:boolean) => {       
 
-        console.log(JSON.stringify(form.getValues().path_bill))
-        console.log(JSON.stringify(form.getValues().path_identity))
+        //console.log(JSON.stringify(form.getValues().path_bill))
+        //console.log(JSON.stringify(form.getValues().path_identity))
 
         setSaving(true);
         switch(form.getValues().status)
@@ -619,97 +657,60 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 alert("Criação de projeto ou rascunho")            
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
-                    const responseCreate = await Create(form.getTransformedValues());
-                    if((responseCreate as IProjectResponse).error === false){
-                        alert(isSketch?"Rascunho salvo com sucesso":"Projeto salvo com sucesso")
-                    }else{
-                        alert(isSketch?"Erro ao salvar rascunho":"Erro ao salvar projeto")
-                    }
+                    Create(form.getTransformedValues()).then(res =>{
+                        setSaving(false);
+                        if((res as IProjectResponse).error === false){
+                            alert(isSketch?"Rascunho salvo com sucesso":"Projeto salvo com sucesso")
+                        }else{
+                            const message = (res as IProjectResponse).message
+                            alert(isSketch?`Erro ao salvar rascunho: ${message}`:`Erro ao salvar projeto: ${message}`)
+                        }
+                    });
+                    
                 } 
                 break;
             case EProjectStatus.EmCadastro: //Edição de sketch que pode virar projeto enviado
                 alert("Edição de sketch "+form.getValues().project_type)
                 if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
-                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getTransformedValues());
-                    if((responseUpdate as IProjectResponse).error === false){
-                        alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado salvo com sucesso")
-                    }else{
-                        const message = (responseUpdate as IProjectResponse).message
-                        alert(isSketch?`Erro ao atualizar rascunho : ${message}`:`Erro ao salvar projeto editado: ${message}`)
-                    }
+                    Update(form.getTransformedValues()._id,form.getTransformedValues()).then(res=>{
+                        setSaving(false);
+                        if((res as IProjectResponse).error === false){
+                            alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado atualizado com sucesso")
+                            onUpdate?.();
+                        }else{
+                            const message = (res as IProjectResponse).message
+                            alert(isSketch?`Erro ao atualizar rascunho : ${message}`:`Erro ao atualizar projeto editado: ${message}`)
+                            onUpdate?.()
+                        }
+                    });                    
                 }    
                 break;
             case EProjectStatus.RecebidoPelaProjetai:
                 if(isSketch) return;
                 alert("Edição de projeto enviado")
                 if(validateForm(fullProjectSchema)){                    
-                    const responseUpdate = await Update(form.getTransformedValues()._id,form.getTransformedValues());
-                    if((responseUpdate as IProjectResponse).error === false){
-                        alert("Projeto enviado atualizado com sucesso")
-                    }else{
-                        const message = (responseUpdate as IProjectResponse).message
-                        alert(`Erro ao atualizar projeto enviado: ${message}`)
-                    }
+                    Update(form.getTransformedValues()._id,form.getTransformedValues()).then(res=>{
+                        setSaving(false);
+                        if((res as IProjectResponse).error === false){
+                            alert("Projeto enviado atualizado com sucesso")
+                            onUpdate?.();
+                        }else{
+                            const message = (res as IProjectResponse).message
+                            alert(`Erro ao atualizar projeto enviado: ${message}`)
+                            onUpdate?.();
+                        }
+                    });
+                    
                 }    
                 break;
         } 
-        setSaving(false);
-        router.push("/project/list"); // Redireciona para a página de listagem"
     }
-
-    const convertFileToIFile = (file: File | null, callback: (result: IFile | null) => void) => {
-        if (!file) {
-          callback(null);
-          return;
-        }
-      
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-          callback({
-            filename: file.name,
-            mimetype: file.type,
-            data: reader.result as string, // Base64
-          });
-        };
-        reader.onerror = () => {
-          console.error("Erro ao ler o arquivo.");
-          callback(null);
-        };
-    };
-
-    const handleFileChange = (file: File | null, field: keyof IProjectDataValues) => {
-        convertFileToIFile(file, (result) => form.setFieldValue(field, result));
-    };
-
-    const convertIFileToFile = (iFile: IFile | null): File | null => {
-        // Remover o prefixo "data:mimetype;base64," se existir
-        if(iFile){
-
-            const base64Data = iFile.data.includes(",") ? iFile.data.split(",")[1] : iFile.data;
-          
-            // Decodificar Base64 para um array de bytes
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length)
-              .fill(0)
-              .map((_, i) => byteCharacters.charCodeAt(i));
-            const byteArray = new Uint8Array(byteNumbers);
-          
-            // Criar um Blob com os dados do arquivo
-            const blob = new Blob([byteArray], { type: iFile.mimetype });
-          
-            // Criar um arquivo File
-            return new File([blob], iFile.filename, { type: iFile.mimetype });
-        }else{
-            return null
-        }
-    };
 
     return (      
         <form 
             //onSubmit={form.onSubmit((values,event)=>handleSubmit(values,event!))}  
-            onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
+            //onSubmit={(e) => e.preventDefault()} // Impede a submissão padrão
         >        
             <Stepper 
             active={activeStep} 
@@ -754,7 +755,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 key={form.key("name")}
                                 {...form.getInputProps("name")} 
                                 required 
-
                             /> 
                         </Grid.Col>
                     </Grid>
@@ -1083,13 +1083,13 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 accept="image/png,image/jpeg,application/pdf"
                                 label="Fatura de Energia"
                                 placeholder="Selecione um arquivo"
-                                value={path_bill} // Evita conflitos de estado
+                                value={path_bill} 
                                 onChange={(file) => {
                                     setPath_bill(file)
                                     handleFileChange(file, "path_bill")
                                 }}
-                            />                           
-
+                                error={form.errors.path_bill?.toString()}
+                            />   
                         </GridCol>
                         <GridCol span={6} mt="xl">
                             { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_bill } />}
@@ -1104,6 +1104,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                     setPath_identity(file)
                                     handleFileChange(file, "path_identity")
                                 }}
+                                error={form.errors.path_identity?.toString()}
                             />
                         </GridCol>
                         <GridCol span={6} mt="xl">
@@ -1119,6 +1120,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                     setPath_meter(file)
                                     handleFileChange(file, "path_meter")
                                 }}
+                                error={form.errors.path_meter?.toString()}
                             />
                         </GridCol>
                         <GridCol span={6} mt="xl">
@@ -1134,6 +1136,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                     setPath_meter_pole(file)
                                     handleFileChange(file, "path_meter_pole")
                                 }}
+                                error={form.errors.path_meter_pole?.toString()}
                             />
                         </GridCol>
                         <GridCol span={6} mt="xl">
@@ -1144,10 +1147,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 accept="image/png,image/jpeg,application/pdf" 
                                 label="Foto da procuração" 
                                 placeholder="Upload de arquivos" 
+                                value={path_procuration}
                                 onChange={(file) => {
                                     setPath_procuration(file)
                                     handleFileChange(file, "path_procuration")
-                                }}             
+                                }}  
+                                error={form.errors.path_procuration?.toString()}           
                             /> 
                         </GridCol>
                         <GridCol span={6} mt="xl">
@@ -1167,12 +1172,17 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     </Center>                
                 </Stepper.Completed>
             </Stepper>
-            <Group justify="right" mt="xl" mr="xl">        
+            <Group justify="right" mt="xl" mr="xl">  
+                     
                 {activeStep > 0 && (
-                <>
                     <Button variant="default" onClick={prevStep}>
                         Voltar
-                    </Button>
+                    </Button>  
+                )} 
+                <Button c="red" variant="default" onClick={()=>onCancel?.()}>
+                        Cancelar
+                </Button> 
+                {activeStep > 0 && (               
                     <Button 
                         variant="default" 
                         disabled={form.getValues().status!==EProjectStatus.None&&form.getValues().status!==EProjectStatus.EmCadastro}
@@ -1180,15 +1190,14 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     >
                         Salvar e editar depois
                     </Button>
-                </>          
                 )}        
                 {activeStep < 5 && (
-                <Button 
-                    onClick={nextStep} 
-                    color='green' 
-                >
-                    {activeStep === 4 ? "Conferir tudo" : "Próximo passo"}
-                </Button>
+                    <Button 
+                        onClick={nextStep} 
+                        color='green' 
+                    >
+                        {activeStep === 4 ? "Conferir tudo" : "Próximo passo"}
+                    </Button>
                 )} 
                 {activeStep === 5 && (
                     //<Button type='submit'>{projectFormSubmissionType==='update'?"Salvar Alterações":"Enviar para análise"}</Button>

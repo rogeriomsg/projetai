@@ -81,6 +81,7 @@ export interface IProjectDataValues {
 export interface IFile {
     filename: string;
     mimetype: string;
+    size: number;
     data: string; // Armazena os arquivos diretamente no banco em formato Base64 (melhor para pequenos arquivos)
 }
 

@@ -84,6 +84,7 @@ export default function ProjectsList() {
     if(response.error === false)
     {      
       setProjects((prev) => prev.filter((p) => p._id !== selectedProject._id));
+      setSketchs((prev) => prev.filter((p) => p._id !== selectedProject._id));
       setalertProp({severity:'success',children:"Deletado com sucesso!"})
       setOpenMessageSuccess(true);
     }
