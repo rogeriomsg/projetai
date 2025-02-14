@@ -53,7 +53,7 @@ export const Byid = async (id:string) => {
     }
 };
 
-export const Create = async (projectDataCreate:IProjectDataValues) => {
+export const Create = async (projectDataCreate:Partial<IProjectDataValues>) => {
 
     try {
         const response = await Api.post(`/`,projectDataCreate);
@@ -80,7 +80,7 @@ export const CreateSketch = async (projectDataCreate:IProjectDataValues) => {
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
         const data = response.data as IProjectResponse
         return(data)
-    } catch (err:any) {
+    } catch (err:any) {        
         let msg = ""
         if (err.response) {
             msg = `data: ${err.response.data}, status: ${err.response.status}, header: ${err.response.headers}`
@@ -96,13 +96,9 @@ export const CreateSketch = async (projectDataCreate:IProjectDataValues) => {
 export const Update = async (id:string , projectdataUpdate:Partial<IProjectDataValues>) => {
 
     try {
-       
-        console.log(JSON.stringify(projectdataUpdate))
-
         const response = await Api.patch(`/${id}`,projectdataUpdate);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
 
-        alert("depois")
         const data = response.data as IProjectResponse
         return(data)
 

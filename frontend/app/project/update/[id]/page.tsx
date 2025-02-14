@@ -67,6 +67,7 @@ export default function EditProject(){
     return(  
         <Container fluid size="responsive" h={50} >
             <Title  order={2}>Edição de Projeto</Title>
+            <Title  order={5} c="dimmed">{`#${projectData.name}# (${projectData.status})`} </Title>
             <ProjectFormV2 
                 formSubmissionType={EProjectFormSubmissionType.update} 
                 initialValues={projectData} 

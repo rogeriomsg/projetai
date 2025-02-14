@@ -8,7 +8,7 @@ import MapModalGetSinglePoint, { IMarker } from '@/components/MapModal/MapModalG
 import ProjectView from '@/components/Forms/ProjectView';
 import { notifications, showNotification} from "@mantine/notifications";
 import { modals, openConfirmModal } from '@mantine/modals';
-import { IProjectDataValues, IProjectResponse } from '@/types/IProject';
+import { EProjectStatus, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import ProjectViewV2 from '@/components/Forms/ProjectViewV2';
@@ -105,7 +105,7 @@ export default function ProjectsList() {
 
   const fetchProjects = async () => {
     setLoading(true);
-    const response = await Search('filter={ "status": { "$nin": ["Em cadastro"] } }');
+    const response = await Search(`filter={ "status": { "$nin": ["${EProjectStatus.Rascunho}"] } }`);
     
     if((response as IProjectResponse).error === false)
     {
@@ -116,7 +116,7 @@ export default function ProjectsList() {
 
   const fetchSketchs = async () => {
     setLoading(true);
-    const response = await Search('filter={ "status": { "$in": ["Em cadastro"] } }');
+    const response = await Search(`filter={ "status": { "$in": ["${EProjectStatus.Rascunho}"] } }`);
     //alert(JSON.stringify(response.data))
     if((response as IProjectResponse).error === false)
     {
@@ -202,7 +202,7 @@ export default function ProjectsList() {
       <Table.Td>{element.dealership}</Table.Td>
       <Table.Td>{element.plant.installed_power?`${element.plant.installed_power} kWp`:""}</Table.Td>
       <Table.Td>{element.client?.name}</Table.Td>
-      <Table.Td>
+      {/* <Table.Td>
         <MapModalGetSinglePoint
           centerDefault={{lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}}          
           zoom={18}
@@ -210,8 +210,8 @@ export default function ProjectsList() {
             {available:true,selected:true,clickable:false,id:"0",lat:Number(element.plant.geolocation.lat),lng:Number(element.plant.geolocation.lng)}
           ]}           
         />
-      </Table.Td>
-      <Table.Td>{element.status}</Table.Td>
+      </Table.Td> */}
+      {/* <Table.Td>{element.status}</Table.Td> */}
       <Table.Td>  
         <Menu shadow="md" width={200} position="left-start" withArrow arrowPosition="center" trigger="hover" openDelay={100} closeDelay={200}>
           <Menu.Target>
@@ -287,8 +287,8 @@ export default function ProjectsList() {
             <Table.Th>Distribuidora</Table.Th>
             <Table.Th>Potência de geração</Table.Th>
             <Table.Th>Nome do titular</Table.Th>
-            <Table.Th>Local da usina</Table.Th>
-            <Table.Th>Status</Table.Th>
+            {/* <Table.Th>Local da usina</Table.Th>
+            <Table.Th>Status</Table.Th> */}
             <Table.Th>Ações</Table.Th>
           </Table.Tr>
         </Table.Thead>

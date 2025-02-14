@@ -89,8 +89,7 @@ const modulesSchema = z.object({
 
 // Definindo o esquema de validação do cliente
 export const projectConsumerUnitSchema = z.object({
-    consumerUnit: z.array(consumerUnitSchema)
-   
+    consumerUnit: z.array(consumerUnitSchema)   
 }).superRefine((data, ctx) => {
     // Calcular o somatório dos percentuais
     if( data.consumerUnit.length > 0) {
@@ -126,7 +125,8 @@ export const projectEquipamentsSchema = z.object({
     modules: z.array(modulesSchema).min(1, "Pelo menos um módulo deve ser fornecido."),   
 });
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+//const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 ; // 5MB
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
 
 // Validação do arquivo
@@ -140,11 +140,11 @@ const fileSchema = z.object({
 });
 
 export const projectDocumentsSchema = z.object({
-    path_bill: fileSchema.nullable(), // Permite null se não for obrigatório, // Caminho para a fatura de energia (opcional)
-    path_identity:fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para a identidade do cliente (opcional)
-    path_meter_pole: fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para a foto do poste do medidor (opcional)
-    path_meter:fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para a foto do medidor (opcional)
-    path_procuration:fileSchema.nullable(), // Permite null se não for obrigatório // Caminho para o arquivo de procuração (opcional)    
+    path_bill: fileSchema, // Permite null se não for obrigatório, // Caminho para a fatura de energia (opcional)
+    path_identity:fileSchema, // Permite null se não for obrigatório // Caminho para a identidade do cliente (opcional)
+    path_meter_pole: fileSchema, // Permite null se não for obrigatório // Caminho para a foto do poste do medidor (opcional)
+    path_meter:fileSchema, // Permite null se não for obrigatório // Caminho para a foto do medidor (opcional)
+    path_procuration:fileSchema, // Permite null se não for obrigatório // Caminho para o arquivo de procuração (opcional)    
 });
 
 export const fullProjectSchema = z.union([

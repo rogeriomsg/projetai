@@ -9,11 +9,12 @@ export interface IProjectDataValues {
     description: string; // Descrição do projeto (opcional)
     dealership: string; // Nome da concessionária ou distribuidora (opcional)
     
-    path_meter_pole: IFile | null; // Caminho para a foto do poste do medidor (opcional)
-    path_meter: IFile | null; // Caminho para a foto do medidor (opcional)
-    path_bill: IFile | null; // Caminho para a fatura de energia (opcional)
-    path_identity:IFile | null; // Caminho para a identidade do cliente (opcional)
-    path_procuration:IFile | null ; // Caminho para o arquivo de procuração (opcional)  
+    path_meter_pole: IFile | null; // Caminho para a foto do poste do medidor
+    path_meter: IFile | null; // Caminho para a foto do medidor
+    path_bill: IFile | null; // Caminho para a fatura de energia
+    path_identity:IFile | null; // Caminho para a identidade do cliente
+    path_procuration:IFile | null ; // Caminho para o arquivo de procuração
+    path_optional:IFile | null ; // Caminho para o arquivo de procuração (opcional)  
 
     compensation_system: string;
     client: {
@@ -104,7 +105,7 @@ export enum EProjectSchemaType {
 
 export enum EProjectStatus {
     None = "None",
-    EmCadastro = "Em cadastro",
+    Rascunho = "Rascunho",
     AguardandoPagamento = "Aguardando pagamento",
     RecebidoPelaProjetai = "Recebido pela Projetai",
 };

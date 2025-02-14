@@ -118,20 +118,9 @@ const projectSchema = new mongoose.Schema(
     path_bill: { type: fileSchema, require : false}, // Caminho para a fatura de energia (opcional)
     path_identity:{ type: fileSchema, require : false}, // Caminho para a identidade do cliente (opcional)
     path_procuration:{ type: fileSchema, require : false}, // Caminho para o arquivo de procuração (opcional)
+    path_optional:{ type: fileSchema, require : false}, // Caminho para o arquivo de procuração (opcional)
     status : { // Status do projeto
-      type: String , 
-      enum :[
-        'Em cadastro', 
-        'Recebido pela Projetai', 
-        'Em análise pela Projetai', 
-        'Recebido pela distribuidora', 
-        'Em análise na distribuidora', 
-        'Aprovado pela distribuidora',
-        'Projeto sendo executado',
-        'Solicitado troca do medidor',
-        'Medido trocado',
-        'Usina gerando',
-      ], 
+      type: String ,       
       require : false
     },
   },

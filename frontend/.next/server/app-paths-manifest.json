@@ -1,6 +1,7 @@
 {
-  "/project/list/page": "app/project/list/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/project/update/[id]/page": "app/project/update/[id]/page.js",
   "/page": "app/page.js",
-  "/project/create/page": "app/project/create/page.js",
-  "/project/update/[id]/page": "app/project/update/[id]/page.js"
+  "/project/list/page": "app/project/list/page.js",
+  "/project/create/page": "app/project/create/page.js"
 }

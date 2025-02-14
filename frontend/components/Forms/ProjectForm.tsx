@@ -697,7 +697,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
             case EProjectStatus.None:  //Criação de projeto enviado ou rascunho    
                 alert("Criação de projeto ou rascunho")            
                 if(validateForm(isSketch?projectBasicsSchema:fullProjectSchema)){
-                    form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
+                    form.setFieldValue("status",isSketch?EProjectStatus.Rascunho:EProjectStatus.RecebidoPelaProjetai)
                     const responseCreate = await Create(form.getTransformedValues());
                     if((responseCreate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho salvo com sucesso":"Projeto salvo com sucesso")
@@ -707,10 +707,10 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
                 }              
                 
                 break;
-            case EProjectStatus.EmCadastro: //Edição de sketch que pode virar projeto enviado
+            case EProjectStatus.Rascunho: //Edição de sketch que pode virar projeto enviado
                 alert("Edição de sketch "+form.getValues().project_type)
                 if(validateForm(isSketch?projectBasicsSchema:fullProjectSchema)){
-                    form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
+                    form.setFieldValue("status",isSketch?EProjectStatus.Rascunho:EProjectStatus.RecebidoPelaProjetai)
                     const responseUpdate = await Update(form.getTransformedValues()._id,form.getValues());
                     if((responseUpdate as IProjectResponse).error === false){
                         alert(isSketch?"Rascunho atualizado com sucesso":"Projeto enviado salvo com sucesso")
@@ -1547,7 +1547,7 @@ const ProjectForm: React.FC<FormProps> = ({ initialValues = null, formSubmission
                 </Button>
                 <Button 
                     variant="default" 
-                    disabled={form.getValues().status!==EProjectStatus.None&&form.getValues().status!==EProjectStatus.EmCadastro}
+                    disabled={form.getValues().status!==EProjectStatus.None&&form.getValues().status!==EProjectStatus.Rascunho}
                     onClick={() => handleSubmit(true)}
                 >
                     Salvar e editar depois

@@ -4,17 +4,14 @@ const router = require("./ROUTERS")
 const { errors } = require('celebrate');
 const { ValidationErrorMessage } = require('./MIDDLEWARES/message');
 const cors = require('cors');
-
 var bodyParser = require('body-parser')
 
 // Habilitar CORS
 app.use(cors());
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: true }))
-
-// parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: '30mb' })); // Ajuste conforme necessário
+app.use(bodyParser.urlencoded({ limit: '30mb', extended: true }));
 
 //app.use(express.json())
 app.use("/user",router.User)

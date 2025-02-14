@@ -57,6 +57,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     const [path_bill, setPath_bill] = useState<File | null>(null);
     const [path_identity, setPath_identity] = useState<File | null>(null);
     const [path_procuration, setPath_procuration] = useState<File | null>(null);
+    const [path_optional, setPath_optional] = useState<File | null>(null);
 
     const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<EProjectFormSubmissionType>(EProjectFormSubmissionType.Create); //
     
@@ -75,11 +76,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             name: "", // Nome do projeto (opcional)
             description: "", // Descrição do projeto (opcional)
             dealership: "", // Nome da concessionária ou distribuidora (opcional)
-            path_meter_pole: null, // Caminho para a foto do poste do medidor (opcional)
-            path_meter: null, // Caminho para a foto do medidor (opcional)
-            path_bill: null , // Caminho para a fatura de energia (opcional)
-            path_identity: null, // Caminho para a identidade do cliente (opcional)
-            path_procuration: null, // Caminho para o arquivo de procuração (opcional)     
+            path_meter_pole: null, // Caminho para a foto do poste do medidor
+            path_meter: null, // Caminho para a foto do medidor
+            path_bill: null , // Caminho para a fatura de energia
+            path_identity: null, // Caminho para a identidade do cliente
+            path_procuration: null, // Caminho para o arquivo de procuração 
+            path_optional: null, // Caminho para o arquivo de procuração (opcional)     
             compensation_system:"", 
             client: {
                 client_code: 0,
@@ -165,11 +167,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             name: values.name, // Nome do projeto (opcional)
             description: values.description, // Descrição do projeto (opcional)
             dealership: values.dealership, // Nome da concessionária ou distribuidora (opcional)
-            path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor (opcional)
-            path_meter: values.path_meter, // Caminho para a foto do medidor (opcional)
-            path_bill:  values.path_bill, // Caminho para a fatura de energia (opcional)
-            path_identity:values.path_identity, // Caminho para a identidade do cliente (opcional)
-            path_procuration:values.path_procuration, // Caminho para o arquivo de procuração (opcional)   
+            path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor
+            path_meter: values.path_meter, // Caminho para a foto do medidor 
+            path_bill:  values.path_bill, // Caminho para a fatura de energia
+            path_identity:values.path_identity, // Caminho para a identidade do cliente
+            path_procuration:values.path_procuration, // Caminho para o arquivo de procuração
+            path_optional:values.path_optional, // Caminho para o arquivo de opcional (opcional)   
             compensation_system: values.compensation_system,     
             client: {
                 client_code: Number(values.client.client_code),
@@ -320,91 +323,71 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     }       
    
     const consumerUnits = form.getValues().consumerUnit?.map((item, index) => ( 
-        <Table.Tr key={index} >
-            <Table.Td >           
-                <Grid ml="lg" mr="md">          
-                    <Grid.Col span={2}>  
-                        <NumberInput
-                            placeholder="Código da UC"
-                            allowDecimal={false}
-                            hideControls={true}
-                            allowLeadingZeros={false}
-                            min={1}
-                            key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
-                            {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)} 
-                            required
-                        />
-                    </Grid.Col>
-                    <Grid.Col span={2}>   
-                        <NumberInput
-                            placeholder="Código da UC"
-                            allowDecimal={false}
-                            min={0}
-                            max={100}              
-                            key={form.key(`consumerUnit.${index}.percentage`)}
-                            {...form.getInputProps(`consumerUnit.${index}.percentage`)}
-                            required
-                        />
-                    </Grid.Col> 
-                    <Grid.Col span={8} >
-                        <TextInput
-                            placeholder="Digite um nome para essa unidade, por ex.: Sitio da família"
-                            key={form.key(`consumerUnit.${index}.name`)}
-                            {...form.getInputProps(`consumerUnit.${index}.name`)}
-                        />
-                    </Grid.Col>                                         
-                </Grid>
+        <Table.Tr key={index} >              
+            <Table.Td>
+                <NumberInput
+                    placeholder="Código da UC"
+                    allowDecimal={false}
+                    hideControls={true}
+                    allowLeadingZeros={false}
+                    min={1}
+                    key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
+                    {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)} 
+                    required
+                />                
+            </Table.Td>
+            <Table.Td>
+            <NumberInput
+                    placeholder="Código da UC"
+                    allowDecimal={false}
+                    min={0}
+                    max={100}              
+                    key={form.key(`consumerUnit.${index}.percentage`)}
+                    {...form.getInputProps(`consumerUnit.${index}.percentage`)}
+                    required
+                />                 
+            </Table.Td>
+            <Table.Td>
+                <TextInput
+                    placeholder="Digite um nome para essa unidade, por ex.: Sitio da família"
+                    key={form.key(`consumerUnit.${index}.name`)}
+                    {...form.getInputProps(`consumerUnit.${index}.name`)}
+                />
             </Table.Td>
             <Table.Td>
                 <Group justify="flex-end">           
-                <ActionIcon color="red" variant="subtle" onClick={() => {
-                    form.removeListItem('consumerUnit', index)
-                    }} 
-                >
-                    <IconTrash size={27} stroke={1.6}/>
-                </ActionIcon>             
-                </Group>
+                    <ActionIcon color="red" variant="subtle" onClick={() => {
+                        form.removeListItem('consumerUnit', index)
+                        }} 
+                    >
+                        <IconTrash size={27} stroke={1.6}/>
+                    </ActionIcon>             
+                </Group>                
             </Table.Td>
         </Table.Tr>  
     ));
         
     const invertersDataRows = form.getValues().inverters.map((item, index) => (
-        <Table.Tr key={index} >
-            <Table.Td >           
-                <Grid ml="md" mr="md" >          
-                <Grid.Col span={4}>  
-                    <TextInput
+        <Table.Tr key={index} >           
+            <Table.Td>
+            <TextInput
                     placeholder="Modelo do inversor"
                     key={form.key(`inverters.${index}.model`)}
                     {...form.getInputProps(`inverters.${index}.model`)}
                     required
                     />
-                </Grid.Col>
-                <Grid.Col span={4}>  
-                    <TextInput
+
+            </Table.Td>
+            <Table.Td>
+                <TextInput
                     placeholder="Fabricante do inversor"
                     key={form.key(`inverters.${index}.manufacturer`)}
                     {...form.getInputProps(`inverters.${index}.manufacturer`)}
                     required
-                    />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                    placeholder="Potência em kw"              
-                    min={0}
-                    allowLeadingZeros={false}
-                    allowedDecimalSeparators={['.',',']}
-                    key={form.key(`inverters.${index}.power`)}
-                    {...form.getInputProps(`inverters.${index}.power`)}
-                    onBlur={(e)=>{
-                        form.setFieldValue(`inverters.${index}.power`,Number(e.target.value))
-                        calculatesTotalPowerInverters(index)
-                    }} 
-                    required           
-                    />
-                </Grid.Col> 
-                <Grid.Col span={1}>
-                    <NumberInput
+                />                
+            </Table.Td>
+            <Table.Td>
+                <NumberInput
                     placeholder="Quantidade de inversores"
                     allowDecimal={false}
                     allowLeadingZeros={false}
@@ -416,65 +399,78 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         calculatesTotalPowerInverters(index)
                     }} 
                     required           
-                    />
-                </Grid.Col> 
-                <Grid.Col span={1}>
-                    <NumberInput
+                />                
+            </Table.Td>
+            <Table.Td>
+                <NumberInput
+                    placeholder="Potência em kw"              
+                    min={0}
+                    allowLeadingZeros={false}
+                    allowedDecimalSeparators={['.',',']}
+                    key={form.key(`inverters.${index}.power`)}
+                    {...form.getInputProps(`inverters.${index}.power`)}
+                    onBlur={(e)=>{
+                        form.setFieldValue(`inverters.${index}.power`,Number(e.target.value))
+                        calculatesTotalPowerInverters(index)
+                    }} 
+                    required           
+                />                
+            </Table.Td>
+            
+            <Table.Td>
+                <NumberInput
                     decimalScale={3}
                     key={form.key(`inverters.${index}.total_power`)}
                     {...form.getInputProps(`inverters.${index}.total_power`)} 
                     readOnly
-                    />
-                </Grid.Col>                           
-                </Grid>
+                />                
             </Table.Td>
             <Table.Td>
                 <Group justify="flex-end"> 
-                {
-                    index===0 &&(
-                    <>
-                    <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)} disabled >
-                        <IconTrash size={27} stroke={1.6}/>
-                    </ActionIcon>
-                    </>
-                    ) 
-                }
-                {
-                    index!==0 &&(
-                    <>
-                    <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)}>
-                        <IconTrash size={27} stroke={1.6}/>
-                    </ActionIcon>
-                    </>
-                    ) 
-                } 
+                    {
+                        index===0 &&(
+                        <>
+                        <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)} disabled >
+                            <IconTrash size={27} stroke={1.6}/>
+                        </ActionIcon>
+                        </>
+                        ) 
+                    }
+                    {
+                        index!==0 &&(
+                        <>
+                        <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('inverters', index)}>
+                            <IconTrash size={27} stroke={1.6}/>
+                        </ActionIcon>
+                        </>
+                        ) 
+                    } 
                 </Group>
+                
             </Table.Td>
         </Table.Tr>    
     ));
 
     const modulesDataRows = form.getValues().modules.map((item, index) => (
-        <Table.Tr key={index} >
-            <Table.Td >           
-                <Grid ml="md" mr="md" >          
-                <Grid.Col span={3}>  
-                    <TextInput
+        <Table.Tr key={index} >            
+            <Table.Td>
+            <TextInput
                     placeholder="Modelo do módulo fotovoltaico"
                     key={form.key(`modules.${index}.model`)}
                     {...form.getInputProps(`modules.${index}.model`)}
                     required
                     />
-                </Grid.Col>
-                <Grid.Col span={3}>  
-                    <TextInput
+            </Table.Td>
+            <Table.Td>
+            <TextInput
                         placeholder="Marca do módulo fotovoltaico"
                         key={form.key(`modules.${index}.manufacturer`)}
                         {...form.getInputProps(`modules.${index}.manufacturer`)}
                         required
                     />
-                </Grid.Col>
-                <Grid.Col span={1}>
-                    <NumberInput
+            </Table.Td>
+            <Table.Td>
+            <NumberInput
                         placeholder="Quantidade de inversores"
                         min={1}
                         allowLeadingZeros={false}
@@ -489,9 +485,10 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         }}
                         required           
                     />
-                </Grid.Col> 
-                <Grid.Col span={1}>  
-                    <NumberInput
+                
+            </Table.Td>
+            <Table.Td>
+            <NumberInput
                     placeholder="Largura"
                     min={0}
                     allowLeadingZeros={false}
@@ -506,9 +503,10 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     }}
                     required
                     />
-                </Grid.Col>
-                <Grid.Col span={1}>  
-                    <NumberInput
+                
+            </Table.Td>
+            <Table.Td>
+            <NumberInput
                     placeholder="Altura"
                     min={0}
                     allowedDecimalSeparators={['.',',']}
@@ -523,44 +521,38 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     }}
                     required
                     />
-                </Grid.Col>
-                <Grid.Col span={1}>  
-                    <NumberInput
+                
+            </Table.Td>
+            <Table.Td>
+            <NumberInput
                     placeholder="Área"
                     decimalScale={2}
                     key={form.key(`modules.${index}.total_area`)}
                     {...form.getInputProps(`modules.${index}.total_area`)}
                     readOnly
                     />
-                </Grid.Col>
-                <Grid.Col span={1}>
-                    <NumberInput
-                    min={0}
-                    allowLeadingZeros={false}
-                    allowedDecimalSeparators={['.',',']}
-                    key={form.key(`modules.${index}.power`)}
-                    hideControls={true}
-                    {...form.getInputProps(`modules.${index}.power`)} 
-                    onBlur={(e)=>{ 
-                        // Atualiza o campo modificado no estado do form
-                        form.setFieldValue(`modules.${index}.power`, Number(e.target.value)); 
-                        calculatesTotalPowerModules(index)
-                    }}
-                    required         
-                    />
-                </Grid.Col>  
-                <Grid.Col span={1}>
-                    <NumberInput
+                
+            </Table.Td>
+            <Table.Td>
+            <NumberInput
                     decimalScale={3}
                     key={form.key(`modules.${index}.total_power`)}
                     {...form.getInputProps(`modules.${index}.total_power`)}               
                     readOnly  
                     />
-                </Grid.Col>                           
-                </Grid>        
+                
             </Table.Td>
             <Table.Td>
-                <Group justify="flex-end"> 
+            <NumberInput
+                    decimalScale={3}
+                    key={form.key(`modules.${index}.total_power`)}
+                    {...form.getInputProps(`modules.${index}.total_power`)}               
+                    readOnly  
+                    />
+                
+            </Table.Td>
+            <Table.Td>
+            <Group justify="flex-end"> 
                 {
                     index===0 &&(                    
                     <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem('modules', index)} disabled >
@@ -598,8 +590,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             return false;
             }
         }
-    };
-        
+    };       
     
     const convertFileToIFile = (file: File | null, callback: (result: IFile | null) => void) => {
         if (!file) {
@@ -655,8 +646,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         {
             case EProjectStatus.None:  //Criação de projeto enviado ou rascunho    
                 alert("Criação de projeto ou rascunho")            
-                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
-                    form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
+                //if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                    form.setFieldValue("status",isSketch?EProjectStatus.Rascunho:EProjectStatus.AguardandoPagamento)
                     Create(form.getTransformedValues()).then(res =>{
                         setSaving(false);
                         if((res as IProjectResponse).error === false){
@@ -667,12 +658,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         }
                     });
                     
-                } 
+                //} 
                 break;
-            case EProjectStatus.EmCadastro: //Edição de sketch que pode virar projeto enviado
+            case EProjectStatus.Rascunho: //Edição de sketch que pode virar projeto enviado
                 alert("Edição de sketch "+form.getValues().project_type)
-                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
-                    form.setFieldValue("status",isSketch?EProjectStatus.EmCadastro:EProjectStatus.RecebidoPelaProjetai)
+                //if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                    form.setFieldValue("status",isSketch?EProjectStatus.Rascunho:EProjectStatus.AguardandoPagamento)
                     Update(form.getTransformedValues()._id,form.getTransformedValues()).then(res=>{
                         setSaving(false);
                         if((res as IProjectResponse).error === false){
@@ -684,12 +675,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             onUpdate?.()
                         }
                     });                    
-                }    
+                //}    
                 break;
             case EProjectStatus.RecebidoPelaProjetai:
                 if(isSketch) return;
                 alert("Edição de projeto enviado")
-                if(validateForm(fullProjectSchema)){                    
+                //if(validateForm(fullProjectSchema)){                    
                     Update(form.getTransformedValues()._id,form.getTransformedValues()).then(res=>{
                         setSaving(false);
                         if((res as IProjectResponse).error === false){
@@ -702,7 +693,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         }
                     });
                     
-                }    
+                //}    
                 break;
         } 
     }
@@ -810,7 +801,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         </Grid.Col>
                         <Grid.Col span={2} >
                             <NumberInput
-                                label="Potência instalada de geração (kWp)"
+                                label="Potência de geração (kWp)"
                                 placeholder="Digite"
                                 decimalScale={3}
                                 allowLeadingZeros={false}
@@ -844,7 +835,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         </Grid.Col>  
                         <Grid.Col span={2}>
                             <Autocomplete
-                                label="Tipo de ramal do padrão de entrada"
+                                label="Tipo de ramal de entrada"
                                 placeholder="Selecione"
                                 data={Object.values(ETypeBranch)}
                                 key={form.key(`plant.type_branch`)}
@@ -904,45 +895,52 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     label="Passo 3" 
                     description="Compensação de Créditos"
                     icon={<IconExposure size={18} />}
-                >                  
+                >                                 
                     <Table.ScrollContainer minWidth={900} type="native" mt="xl">
-                    <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                        <Table.Tr key={randomId()}>
-                            <Table.Td>
-                                <Grid ml="lg" mr="md" >          
-                                    <Grid.Col span={2}>  
-                                        <Text fw={700}> Código da UC </Text>
-                                    </Grid.Col>
-                                    <Grid.Col span={2}>  
-                                        <Text fw={700} c={colorSlider}> Porcentagem {porcentagem} </Text>
-                                    </Grid.Col>
-                                    <Grid.Col span={8}>
-                                        <Text fw={700}> Nome da Unidade consumidora</Text>
-                                    </Grid.Col>                                          
-                                </Grid>
-                            </Table.Td>
-                            <Table.Td w={30}>
-                                <Group justify="flex-end">           
-                                    <ActionIcon color="gray"> </ActionIcon>             
-                                </Group>                               
-                            </Table.Td>
-                        </Table.Tr >
-                        <Table.Tbody >{consumerUnits}</Table.Tbody>
-                    </Table>
+                        <Table verticalSpacing="sm" highlightOnHover >
+                            <Table.Thead >
+                                <Table.Tr>
+                                    <Table.Th w={160}>
+                                        Código da UC 
+                                        {/* <Text fw={700}> Código da UC </Text> */}
+                                    </Table.Th>
+                                    <Table.Th w={160}>
+                                        Porcentagem {porcentagem} 
+                                        {/* <Text fw={700} c={colorSlider}> Porcentagem {porcentagem} </Text> */}
+                                    </Table.Th>
+                                    <Table.Th>
+                                        Nome da Unidade consumidora
+                                        {/* <Text fw={700}> Nome da Unidade consumidora</Text> */}
+                                    </Table.Th>
+                                    <Table.Th w={30}>                                        
+                                        <ActionIcon color="write"> </ActionIcon>    
+                                    </Table.Th>
+
+                                </Table.Tr>
+                                {/* <Table.Th>
+                                    <Grid ml="lg" mr="md" >          
+                                        <Grid.Col span={2}>  
+                                            <Text fw={700}> Código da UC </Text>
+                                        </Grid.Col>
+                                        <Grid.Col span={2}>  
+                                            <Text fw={700} c={colorSlider}> Porcentagem {porcentagem} </Text>
+                                        </Grid.Col>
+                                        <Grid.Col span={8}>
+                                            <Text fw={700}> Nome da Unidade consumidora</Text>
+                                        </Grid.Col>                                          
+                                    </Grid>
+                                </Table.Th>
+                                <Table.Th w={30}>
+                                    <Group justify="flex-end">           
+                                        <ActionIcon color="gray"> </ActionIcon>             
+                                    </Group>                               
+                                </Table.Th> */}
+                            </Table.Thead >
+                            <Table.Tbody >{consumerUnits}</Table.Tbody>
+                        </Table>
                     </Table.ScrollContainer>         
 
-                    <Group justify="right" mt="md"> 
-                        {/* <ActionIcon 
-                            color="green" 
-                            //variant="subtle" 
-                            size="xl" 
-                            onClick={() => {
-                                validateForm(getSchemaFromActiveStep(activeStep))
-                            }} 
-                        >
-                            <IconCheck  size={28} stroke={1.5} />
-                        </ActionIcon> */}
-
+                    <Group justify="right" mt="md">                        
                         <ActionIcon 
                             color="orange" 
                             //variant="subtle" 
@@ -967,28 +965,34 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     description="Equipamentos"
                     icon={<IconFileUpload size={18} />}
                 >
-                    <Text fw={700} size="xl" tt="capitalize" mb="lg" mt="xl"> Inversores </Text>
+                    <Text fw={700} size="xl"> Inversores (String ou Microinversores) </Text>
+                    {/* <Text ml="sm" fw={700} c="dimmed"> Inversores (String ou Microinversores) </Text> */}
                     <Table.ScrollContainer minWidth={900} type="native">
-                        <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                            <Table.Tr key={randomId()}>
-                                <Grid ml="sm" mr="md" >          
-                                    <Grid.Col span={4}>  
-                                    <Text fw={500}> Modelo </Text>
-                                    </Grid.Col>
-                                    <Grid.Col span={4}>  
-                                    <Text fw={500}> Fabricante </Text>
-                                    </Grid.Col>
-                                    <Grid.Col span={2}>
-                                    <Text fw={500}> Potência (kW) </Text>
-                                    </Grid.Col> 
-                                    <Grid.Col span={1}>
-                                    <Text fw={500}> Quantidade </Text>
-                                    </Grid.Col> 
-                                    <Grid.Col span={1}>
-                                    <Text fw={500}> Total (kW) </Text>
-                                    </Grid.Col>                           
-                                </Grid>
-                            </Table.Tr >
+                        <Table verticalSpacing="sm" highlightOnHover>
+                            <Table.Thead>
+                                <Table.Tr key={randomId()}>                                
+                                    <Table.Th >
+                                    Modelo 
+                                    </Table.Th>
+                                    <Table.Th>
+                                    Fabricante
+                                    </Table.Th>
+                                    <Table.Th w={50}>
+                                    Quantidade 
+                                    </Table.Th>
+                                    <Table.Th w={150}>
+                                    Potência (kW)
+                                    </Table.Th>                                
+                                    <Table.Th w={150}>
+                                    Total (kW)
+                                    </Table.Th>
+                                    <Table.Th w={30}>
+                                        <Group justify="flex-end">           
+                                            <ActionIcon color="write"> </ActionIcon>             
+                                        </Group>  
+                                    </Table.Th>
+                                </Table.Tr >
+                            </Table.Thead>                            
                             <Table.Tbody>{invertersDataRows}</Table.Tbody>
                         </Table>
                     </Table.ScrollContainer>         
@@ -1013,37 +1017,42 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         </ActionIcon>
                     </Group>
 
-                    <Text fw={700} size="xl" tt="capitalize" mb="lg"> Módulos </Text>
+                    <Text fw={700} size="xl" tt="capitalize"> Módulos fotovoltaicos (placas)</Text>
                     <Table.ScrollContainer minWidth={900} type="native">
-                        <Table verticalSpacing="sm" highlightOnHover withColumnBorders>
-                            <Table.Tr key={randomId()}>
-                            <Grid ml="sm" mr="md" >          
-                                <Grid.Col span={3}>  
-                                <Text ml="lg" fw={500}> Modelo </Text>
-                                </Grid.Col>
-                                <Grid.Col span={3}>  
-                                <Text ml="sm"   fw={500}> Fabricante </Text>
-                                </Grid.Col>
-                                <Grid.Col span={1}>
-                                <Text fw={500}> Quantidade </Text>
-                                </Grid.Col> 
-                                <Grid.Col span={1}>  
-                                <Text fw={500}> Largura (m) </Text>
-                                </Grid.Col>
-                                <Grid.Col span={1}>  
-                                <Text fw={500}> Altura (m) </Text>
-                                </Grid.Col>
-                                <Grid.Col span={1}>  
-                                <Text fw={500}> Área total (m) </Text>
-                                </Grid.Col>
-                                <Grid.Col span={1}>
-                                <Text fw={500}> Potência (kW) </Text>
-                                </Grid.Col>                             
-                                <Grid.Col span={1}>
-                                <Text fw={500}> Total (kW) </Text>
-                                </Grid.Col>                           
-                            </Grid>
-                            </Table.Tr >
+                        <Table verticalSpacing="sm" highlightOnHover >
+                            <Table.Thead>
+                                <Table.Tr key={randomId()}>                                    
+                                    <Table.Th>
+                                        Modelo 
+                                    </Table.Th>
+                                    <Table.Th>
+                                        Fabricante 
+                                    </Table.Th>
+                                    <Table.Th w={30}>
+                                        Quantidade 
+                                    </Table.Th>
+                                    <Table.Th w={100}>
+                                        Largura (m) 
+                                    </Table.Th >
+                                    <Table.Th w={100}>
+                                        Altura (m) 
+                                    </Table.Th>
+                                    <Table.Th w={150}>
+                                        Área total (m) 
+                                    </Table.Th>
+                                    <Table.Th w={150}>
+                                        Potência (kW) 
+                                    </Table.Th>
+                                    <Table.Th w={150}>
+                                        Total (kW)  
+                                    </Table.Th>
+                                    <Table.Th w={30}>
+                                        <Group justify="flex-end">           
+                                            <ActionIcon color="write"> </ActionIcon>             
+                                        </Group>   
+                                    </Table.Th>
+                                </Table.Tr >
+                            </Table.Thead>                                
                             <Table.Tbody>{modulesDataRows}</Table.Tbody>
                         </Table>
                     </Table.ScrollContainer>         
@@ -1083,16 +1092,24 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 accept="image/png,image/jpeg,application/pdf"
                                 label="Fatura de Energia"
                                 placeholder="Selecione um arquivo"
+                                key={form.key(`path_bill`)}
+                                {...form.getInputProps(`path_bill`)} 
                                 value={path_bill} 
                                 onChange={(file) => {
                                     setPath_bill(file)
                                     handleFileChange(file, "path_bill")
                                 }}
-                                error={form.errors.path_bill?.toString()}
                             />   
                         </GridCol>
-                        <GridCol span={6} mt="xl">
-                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_bill } />}
+                        <GridCol span={1} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_bill } />}                            
+                        </GridCol>                        
+                        <GridCol span={1} mt="xl">
+                            {path_bill && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_bill(null); form.setFieldValue("path_bill",null) }} >
+                                    <IconTrash  size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
                         </GridCol>
                         <GridCol span={6} >
                             <FileInput
@@ -1107,12 +1124,19 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 error={form.errors.path_identity?.toString()}
                             />
                         </GridCol>
-                        <GridCol span={6} mt="xl">
+                        <GridCol span={1} mt="xl">
                             { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_identity } />}
                         </GridCol>
-                        <GridCol span={6}>
+                        <GridCol span={1} mt="xl">
+                            {path_identity && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_identity(null); form.setFieldValue("path_identity",null) }} >
+                                    <IconTrash   size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
+                        </GridCol>
+                        {/* <GridCol span={6}>
                             <FileInput
-                                accept="image/png,image/jpeg"
+                                accept="image/png,image/jpeg,application/pdf"
                                 label="Foto do Medidor"
                                 placeholder="Selecione um arquivo"
                                 value={path_meter}
@@ -1123,13 +1147,20 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 error={form.errors.path_meter?.toString()}
                             />
                         </GridCol>
-                        <GridCol span={6} mt="xl">
+                        <GridCol span={1} mt="xl">
                             { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_meter } />}
                         </GridCol>
+                        <GridCol span={1} mt="xl">
+                            {path_meter && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_meter(null); form.setFieldValue("path_meter",null) }} >
+                                    <IconTrash  size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
+                        </GridCol> */}
                         <GridCol span={6}>
                             <FileInput
-                                accept="image/png,image/jpeg"
-                                label="Foto do Poste"
+                                accept="image/png,image/jpeg,application/pdf"
+                                label="Foto do Poste e medidor"
                                 placeholder="Selecione um arquivo"
                                 value={path_meter_pole}
                                 onChange={(file) => {
@@ -1139,8 +1170,15 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 error={form.errors.path_meter_pole?.toString()}
                             />
                         </GridCol>
-                        <GridCol span={6} mt="xl">
+                        <GridCol span={1} mt="xl">
                             { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_meter_pole } />}
+                        </GridCol>
+                        <GridCol span={1} mt="xl">
+                            {path_meter_pole && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_meter_pole(null); form.setFieldValue("path_meter_pole",null) }} >
+                                    <IconTrash  size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
                         </GridCol>
                         <GridCol span={6}>
                             <FileInput 
@@ -1155,10 +1193,40 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 error={form.errors.path_procuration?.toString()}           
                             /> 
                         </GridCol>
-                        <GridCol span={6} mt="xl">
+                        <GridCol span={1} mt="xl">
                             { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_procuration} />}
                         </GridCol>
+                        <GridCol span={1} mt="xl">
+                            {path_procuration && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_procuration(null); form.setFieldValue("path_procuration",null) }} >
+                                    <IconTrash  size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
+                        </GridCol>
+                        <GridCol span={6}>
+                            <FileInput 
+                                accept="image/png,image/jpeg,application/pdf" 
+                                label="Arquivo Opcional" 
+                                placeholder="Upload de arquivos" 
+                                value={path_optional}
+                                onChange={(file) => {
+                                    setPath_optional(file)
+                                    handleFileChange(file, "path_optional")
+                                }}        
+                            /> 
+                        </GridCol>
+                        <GridCol span={1} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_optional} />}
+                        </GridCol>
+                        <GridCol span={1} mt="xl">
+                            {path_optional && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_optional(null); form.setFieldValue("path_optional",null) }} >
+                                    <IconTrash  size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
+                        </GridCol>
                     </Grid>
+                    
                 </Stepper.Step>
                 <Stepper.Completed>
                     <Space h="xl"> </Space>
@@ -1185,7 +1253,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 {activeStep > 0 && (               
                     <Button 
                         variant="default" 
-                        disabled={form.getValues().status!==EProjectStatus.None&&form.getValues().status!==EProjectStatus.EmCadastro}
+                        disabled={form.getValues().status!==EProjectStatus.None&&form.getValues().status!==EProjectStatus.Rascunho}
                         onClick={() => handleSubmit(true)}
                     >
                         Salvar e editar depois
