@@ -96,8 +96,12 @@ export const CreateSketch = async (projectDataCreate:IProjectDataValues) => {
 export const Update = async (id:string , projectdataUpdate:IProjectDataValues) => {
 
     try {
+       
+        alert("antes")
         const response = await Api.patch(`/${id}`,projectdataUpdate);
         // Certifique-se de que `response.data` é um array e tem ao menos um elemento
+
+        alert("depois")
         const data = response.data as IProjectResponse
         return(data)
 

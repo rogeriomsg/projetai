@@ -199,7 +199,7 @@ exports.byId = async (req, res) => {
 
 exports.create = async (req, res) => {
     console.log("Recebendo dados para criação de projeto:", req.body);
-  
+
     try {
         // Validação básica (pode ser expandida)
         if (!req.body.name || !req.body.client || !req.body.plant) {
@@ -207,6 +207,7 @@ exports.create = async (req, res) => {
         }
 
         const { _id, ...data } = req.body; // Exclui _id de req.body
+       
         // Criar o projeto diretamente no banco
         const newProject = await Models.Project.create(data);
 
@@ -258,9 +259,12 @@ exports.delete = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    const {id} = req.params ;      
+    const {id} = req.params ;   
+    console.log(`Recebendo dados para atualização de projeto:`, req.body);
 
-    await Models.Project.findByIdAndUpdate(id, req.body , {new: true}).then(data => {        
+
+    await Models.Project.findByIdAndUpdate(id, req.body , {new: true}).then(data => {   
+        console.log("Projeto atualizado com sucesso:", data);     
         res
             .status(Services.HTTPStatus.RECORD_UPDATED_SUCCESSFULLY.code)
             .json({ 

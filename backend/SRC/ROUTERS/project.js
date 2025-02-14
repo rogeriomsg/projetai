@@ -13,7 +13,7 @@ router.get(`/`,Controllers.Project.search);
 
 router.get(`/:id`,Controllers.Project.byId);
 
-router.post(`/`,  Controllers.Project.create );
+router.post(`/`, Controllers.Project.create );
 
 router.patch(`/:id`,  Controllers.Project.update );
 
