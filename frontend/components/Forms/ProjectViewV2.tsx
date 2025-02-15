@@ -1,4 +1,4 @@
-import { IProjectDataValues } from "@/types/IProject";
+import { EPerson, IProjectDataValues } from "@/types/IProject";
 import { Button, Center, Modal, ScrollArea, Table } from "@mantine/core";
 import { randomId, useDisclosure } from "@mantine/hooks";
 import { useEffect } from "react";
@@ -62,8 +62,11 @@ const ProjectViewV2: React.FC<ProjectViewProps> = ({ valuesView, isOpen, onClose
                             <Table.Td>{valuesView?.client.name || "Não informado"}</Table.Td>
                         </Table.Tr>
                         <Table.Tr>
-                            <Table.Th>CPF/CNPJ</Table.Th>
-                            <Table.Td>{valuesView?.client.cpf || "Não informado"}</Table.Td>
+                            <Table.Th>{valuesView?.client.person===EPerson.cpf?"CPF":"CNPJ"}</Table.Th>
+                            <Table.Td>{valuesView?.client.person===EPerson.cpf?
+                                                    valuesView?.client.cpf?
+                                                        valuesView?.client.cpf:"Não informado":
+                                                            valuesView?.client.cnpj?valuesView?.client.cnpj:"Não informado"}</Table.Td>
                         </Table.Tr>                        
                         <Table.Tr>
                             <Table.Th>E-mail</Table.Th>

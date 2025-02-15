@@ -20,7 +20,9 @@ export interface IProjectDataValues {
     client: {
         client_code: number | "";
         name: string;
-        cpf: string;
+        person : EPerson ,
+        cpf: string ;
+        cnpj: string;
         identity: string;
         identity_issuer:string;
         email: string;
@@ -79,6 +81,10 @@ export interface IProjectDataValues {
     }[];
 };
 
+export enum EPerson {
+    cpf = "cpf",
+    cnpj = "cnpj",
+}
 export interface IFile {
     filename: string;
     mimetype: string;
@@ -142,16 +148,17 @@ export enum ESubgroup{
 };
 
 export enum EVoltageskV{
-    V0_22 = '0.22',
-    V0_38 = '0.38', 
-    V1 = '1',
-    V6_9 = '6.9',
-    V13_8 = '13.8',
+    V120_240 = '120/240V',
+    V127_220 = '127/220V', 
+    V220_380 = '220/380V',
+    V440 = '440V',
+    V13800 = '13800V',
+    V34500 = '34500V',
 };
 
 export enum ETypeBranch{
-    aerial = "Aérea",
-    underground = "Subterrânea"
+    aerial = "Aéreo",
+    underground = "Subterrâneo"
 };
 
 export enum EBranchSection{
@@ -163,9 +170,9 @@ export enum EBranchSection{
 };
 
 export enum EConnectionType{
-    SinglePhase = "Monofásica",
-    TwoPhase = "Bifásica",
-    ThreePhase = "Trifásica"
+    SinglePhase = "Monofásico",
+    TwoPhase = "Bifásico",
+    ThreePhase = "Trifásico"
 };
 export enum ECircuitBreaker{
     CB10 = "20",

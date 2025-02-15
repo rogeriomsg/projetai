@@ -1,6 +1,6 @@
 'use client';
 
-import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space, Anchor, Flex} from '@mantine/core';
+import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space, Anchor, Flex, Radio} from '@mantine/core';
 import { useForm ,} from '@mantine/form';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
@@ -26,7 +26,7 @@ import {
 } from '@tabler/icons-react';
 
 import Api, { Create, Update } from '@/api/project';
-import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IFile, IProjectDataValues, IProjectResponse } from '@/types/IProject';
+import { EBranchSection, ECircuitBreaker, EClassUC, EConnectionType, EDealership, EGenerationType, EPerson, EProjectSchemaType, EProjectStatus, EProjectType, ESubgroup, ETypeBranch, EVoltageskV, IFile, IProjectDataValues, IProjectResponse } from '@/types/IProject';
 import { EProjectFormSubmissionType, IStatesDataValues } from '@/types/IUtils';
 import { fullProjectSchema, getSchemaFromActiveStep, projectMainSchema} from '@/validations/project';
 import { z } from 'zod';
@@ -59,6 +59,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     const [path_procuration, setPath_procuration] = useState<File | null>(null);
     const [path_optional, setPath_optional] = useState<File | null>(null);
 
+    const [cpfCnpj, setcpfCnpj] = useState('cpf');
+
     const [projectFormSubmissionType, setprojectFormSubmissionType] = useState<EProjectFormSubmissionType>(EProjectFormSubmissionType.Create); //
     
     
@@ -86,6 +88,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             client: {
                 client_code: 0,
                 name: "",
+                person : EPerson.cpf,
+                cnpj:"",
                 cpf: "",
                 identity: "",
                 identity_issuer:"",
@@ -170,14 +174,16 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
             path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor
             path_meter: values.path_meter, // Caminho para a foto do medidor 
             path_bill:  values.path_bill, // Caminho para a fatura de energia
-            path_identity:values.path_identity, // Caminho para a identidade do cliente
-            path_procuration:values.path_procuration, // Caminho para o arquivo de procuração
-            path_optional:values.path_optional, // Caminho para o arquivo de opcional (opcional)   
+            path_identity: values.path_identity, // Caminho para a identidade do cliente
+            path_procuration: values.path_procuration, // Caminho para o arquivo de procuração
+            path_optional: values.path_optional, // Caminho para o arquivo de opcional (opcional)   
             compensation_system: values.compensation_system,     
             client: {
                 client_code: Number(values.client.client_code),
                 name: values.client.name,
-                cpf: values.client.cpf,
+                person: values.client.person,
+                cnpj : values.client.person===EPerson.cnpj?values.client.cnpj:"",
+                cpf: values.client.person===EPerson.cpf?values.client.cpf:"",
                 identity: values.client.identity,
                 identity_issuer:values.client.identity_issuer,
                 email: values.client.email,
@@ -285,6 +291,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         setPath_meter(convertIFileToFile(form.getValues().path_meter))
         setPath_meter_pole(convertIFileToFile(form.getValues().path_meter_pole))
         setPath_procuration(convertIFileToFile(form.getValues().path_procuration))
+        setPath_optional(convertIFileToFile(form.getValues().path_optional))
+        setcpfCnpj(form.getValues().client.person)
 
         setprojectFormSubmissionType(initialValues!==undefined?EProjectFormSubmissionType.update:EProjectFormSubmissionType.Create)
     }, []);
@@ -573,8 +581,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     ));
 
     const validateForm = (schema: z.ZodSchema<any>) => {
+        //alert(JSON.stringify(form.getTransformedValues().client))
         try {
-            
+            form.clearErrors();
             schema.parse(form.getTransformedValues());
             return true;
         } catch (err) {
@@ -585,7 +594,9 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 acc[path] = error.message;
                 return acc;
             }, {} as Record<string, string>);
+
             //alert(JSON.stringify(errors))
+
             form.setErrors(errors);
             return false;
             }
@@ -731,7 +742,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 label="Tipo de projeto"
                                 placeholder="Tipo de projeto"
                                 rightSection={<IconDeviceComputerCamera></IconDeviceComputerCamera>}
-                                //data={[ 'Até 10kWp', 'Maior que 10kWp', 'Maior que 75kWp',]}
                                 data={Object.values(EProjectType)}
                                 key={form.key("project_type")}
                                 {...form.getInputProps("project_type")} 
@@ -767,7 +777,25 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             />
                             </Tooltip>
                         </Grid.Col> 
+                        <Grid.Col span={1}>                            
+                            <Radio.Group
+                                value={cpfCnpj}
+                                key={form.key("client.person")}
+                                {...form.getInputProps("client.person")}        
+                                onChange={(value)=>{
+                                    form.setFieldValue("client.person",value as EPerson)
+                                    setcpfCnpj(value)
+                                }} 
+                            >
+                                <Group>
+                                    <Radio label="CPF" value="cpf" />
+                                    <Radio label="CNPJ" value="cnpj" />                                
+                                </Group>
+                            </Radio.Group>
+                        </Grid.Col>
+                        
                         <Grid.Col span={2}>
+                        {cpfCnpj==='cpf'?(
                             <InputBase
                                 label="CPF"
                                 component={IMaskInput}
@@ -775,9 +803,19 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 key={form.key("client.cpf")}
                                 {...form.getInputProps("client.cpf")}
                                 required
+                            />                            
+                        ):(
+                            <InputBase
+                                label="CNPJ"
+                                component={IMaskInput}
+                                mask="00.000.000/0000-00"
+                                key={form.key("client.cnpj")}
+                                {...form.getInputProps("client.cnpj")}
+                                required
                             />
+                        )}                            
                         </Grid.Col>
-                        <Grid.Col span={10}>
+                        <Grid.Col span={8}>
 
                         </Grid.Col>
                         <Grid.Col span={2}>
@@ -1092,13 +1130,14 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 accept="image/png,image/jpeg,application/pdf"
                                 label="Fatura de Energia"
                                 placeholder="Selecione um arquivo"
-                                key={form.key(`path_bill`)}
+                                //key={form.key(`path_bill`)}
                                 {...form.getInputProps(`path_bill`)} 
                                 value={path_bill} 
                                 onChange={(file) => {
                                     setPath_bill(file)
                                     handleFileChange(file, "path_bill")
                                 }}
+                                //error={form.errors.path_bill?.toString()}
                             />   
                         </GridCol>
                         <GridCol span={1} mt="xl">
@@ -1106,7 +1145,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                         </GridCol>                        
                         <GridCol span={1} mt="xl">
                             {path_bill && (
-                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_bill(null); form.setFieldValue("path_bill",null) }} >
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_bill(null); form.setFieldValue("path_bill",null ) }} >
                                     <IconTrash  size={28} stroke={1.5} />
                                 </ActionIcon>    
                             )}                            
@@ -1116,12 +1155,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 accept="image/png,image/jpeg,application/pdf"
                                 label="Identidade do Cliente"
                                 placeholder="Selecione um arquivo"
+                                {...form.getInputProps(`path_identity`)} 
                                 value={path_identity}
                                 onChange={(file) => {
                                     setPath_identity(file)
                                     handleFileChange(file, "path_identity")
                                 }}
-                                error={form.errors.path_identity?.toString()}
                             />
                         </GridCol>
                         <GridCol span={1} mt="xl">
@@ -1134,40 +1173,18 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 </ActionIcon>    
                             )}                            
                         </GridCol>
-                        {/* <GridCol span={6}>
-                            <FileInput
-                                accept="image/png,image/jpeg,application/pdf"
-                                label="Foto do Medidor"
-                                placeholder="Selecione um arquivo"
-                                value={path_meter}
-                                onChange={(file) => {
-                                    setPath_meter(file)
-                                    handleFileChange(file, "path_meter")
-                                }}
-                                error={form.errors.path_meter?.toString()}
-                            />
-                        </GridCol>
-                        <GridCol span={1} mt="xl">
-                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_meter } />}
-                        </GridCol>
-                        <GridCol span={1} mt="xl">
-                            {path_meter && (
-                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_meter(null); form.setFieldValue("path_meter",null) }} >
-                                    <IconTrash  size={28} stroke={1.5} />
-                                </ActionIcon>    
-                            )}                            
-                        </GridCol> */}
+                        
                         <GridCol span={6}>
                             <FileInput
                                 accept="image/png,image/jpeg,application/pdf"
                                 label="Foto do Poste e medidor"
                                 placeholder="Selecione um arquivo"
+                                {...form.getInputProps(`path_meter_pole`)} 
                                 value={path_meter_pole}
                                 onChange={(file) => {
                                     setPath_meter_pole(file)
                                     handleFileChange(file, "path_meter_pole")
                                 }}
-                                error={form.errors.path_meter_pole?.toString()}
                             />
                         </GridCol>
                         <GridCol span={1} mt="xl">
@@ -1185,12 +1202,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 accept="image/png,image/jpeg,application/pdf" 
                                 label="Foto da procuração" 
                                 placeholder="Upload de arquivos" 
+                                {...form.getInputProps(`path_procuration`)}
                                 value={path_procuration}
                                 onChange={(file) => {
                                     setPath_procuration(file)
                                     handleFileChange(file, "path_procuration")
-                                }}  
-                                error={form.errors.path_procuration?.toString()}           
+                                }}       
                             /> 
                         </GridCol>
                         <GridCol span={1} mt="xl">
@@ -1204,10 +1221,34 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             )}                            
                         </GridCol>
                         <GridCol span={6}>
+                            <FileInput
+                                accept="image/png,image/jpeg,application/pdf"
+                                label="Arquivo opcional"
+                                placeholder="Selecione um arquivo"
+                                {...form.getInputProps(`path_meter`)} 
+                                value={path_meter}
+                                onChange={(file) => {
+                                    setPath_meter(file)
+                                    handleFileChange(file, "path_meter")
+                                }}
+                            />
+                        </GridCol>
+                        <GridCol span={1} mt="xl">
+                            { formSubmissionType===EProjectFormSubmissionType.update && <DownloadButton file={form.getValues().path_meter } />}
+                        </GridCol>
+                        <GridCol span={1} mt="xl">
+                            {path_meter && (
+                                <ActionIcon color="red" variant="subtle" onClick={() => { setPath_meter(null); form.setFieldValue("path_meter",null) }} >
+                                    <IconTrash  size={28} stroke={1.5} />
+                                </ActionIcon>    
+                            )}                            
+                        </GridCol>
+                        {/* <GridCol span={6}>
                             <FileInput 
                                 accept="image/png,image/jpeg,application/pdf" 
                                 label="Arquivo Opcional" 
                                 placeholder="Upload de arquivos" 
+                                {...form.getInputProps(`path_optional`)}
                                 value={path_optional}
                                 onChange={(file) => {
                                     setPath_optional(file)
@@ -1224,7 +1265,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                     <IconTrash  size={28} stroke={1.5} />
                                 </ActionIcon>    
                             )}                            
-                        </GridCol>
+                        </GridCol> */}
                     </Grid>
                     
                 </Stepper.Step>

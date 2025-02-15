@@ -1,4 +1,4 @@
-import { EProjectSchemaType } from '@/types/IProject';
+import { EPerson, EProjectSchemaType, IFile } from '@/types/IProject';
 import { z } from 'zod';
 
 const addressSchema = z.object({
@@ -26,13 +26,32 @@ const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/; // 00.000.000/0000-00
 
 const clientSchema = z.object({
     client_code: z.number(),
+    person : z.custom<EPerson>(),
     name: z.string().min(2, { message: "O nome do cliente deve ser informado" }),
-    cpf: z.string().refine(value => cpfRegex.test(value) || cnpjRegex.test(value), {
-        message: "CPF ou CNPJ inválido. Use CPF (000.000.000-00) ou CNPJ (00.000.000/0000-00).",
-    }),
+    cpf: z.string(),
+    cnpj: z.string(),
     email: z.string().email({ message: 'E-mail cliente inválido.' }),
     phone: z.string().regex(phoneRegex, { message: "O telefone deve estar no formato (11) 98223-0290" }),
-});
+}).superRefine((data, ctx) => {   
+    if( data.person === EPerson.cpf) {
+        if(!cpfRegex.test(data.cpf)){
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `CPF inválido`,
+                path: ['cpf'], // Deixar o path vazio para indicar erro geral        
+            }); 
+        }
+    }   
+    if( data.person === EPerson.cnpj) {
+        if(!cnpjRegex.test(data.cnpj)){
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `CNPJ inválido`,
+                path: ['cnpj'], // Deixar o path vazio para indicar erro geral        
+            });
+        }
+    }  
+  });
 
 const geolocationSchema = z.object({
     lat: z.number() ,
@@ -125,26 +144,25 @@ export const projectEquipamentsSchema = z.object({
     modules: z.array(modulesSchema).min(1, "Pelo menos um módulo deve ser fornecido."),   
 });
 
-//const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_FILE_SIZE = 5 ; // 5MB
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png","application/pdf"];
 
-// Validação do arquivo
-const fileSchema = z.object({
-    filename: z.string().min(1, "O nome do arquivo é obrigatório."),
-    mimetype: z.string().refine(type => ALLOWED_MIME_TYPES.includes(type), {
-        message: "Apenas arquivos PDF e imagens (JPG, PNG) são permitidos.",
-    }),
-    size: z.number().max(MAX_FILE_SIZE, "O arquivo deve ter no máximo 5MB."),
-    data: z.string().min(1, "O arquivo não pode estar vazio."), // Base64 obrigatório
-});
+const pathSchema = z
+  .custom<IFile>((file) => file !== null, { message: 'O arquivo é obrigatório' }) // Garante que o campo não seja nulo
+  .refine((file) => file.size <= MAX_FILE_SIZE, {
+    message: 'O arquivo deve ter no máximo 5MB.',
+  })
+  .refine((file) => ALLOWED_MIME_TYPES.includes(file.mimetype), {
+    message: 'Apenas imagens JPG e PNG são permitidas.',
+  });
 
 export const projectDocumentsSchema = z.object({
-    path_bill: fileSchema, // Permite null se não for obrigatório, // Caminho para a fatura de energia (opcional)
-    path_identity:fileSchema, // Permite null se não for obrigatório // Caminho para a identidade do cliente (opcional)
-    path_meter_pole: fileSchema, // Permite null se não for obrigatório // Caminho para a foto do poste do medidor (opcional)
-    path_meter:fileSchema, // Permite null se não for obrigatório // Caminho para a foto do medidor (opcional)
-    path_procuration:fileSchema, // Permite null se não for obrigatório // Caminho para o arquivo de procuração (opcional)    
+    path_bill: pathSchema, // Caminho para a fatura de energia (opcional)
+    path_identity : pathSchema,// Permite null se não for obrigatório // Caminho para a identidade do cliente (opcional)
+    path_meter_pole: pathSchema,// Permite null se não for obrigatório // Caminho para a foto do poste do medidor (opcional)
+    path_procuration: pathSchema,// Permite null se não for obrigatório // Caminho para o arquivo de procuração (opcional)    
+    path_meter: pathSchema.nullable(),
+    //path_optional: pathSchema.nullable() ,// Permite null se não for obrigatório // Caminho para o arquivo de procuração (opcional)  
 });
 
 export const fullProjectSchema = z.union([
@@ -171,7 +189,7 @@ export const getSchemaFromActiveStep = (activestep:number) => {
         case 3: //informações dos equipamentos
             schema = projectEquipamentsSchema
             break;
-        case 4: //informações dos documentos
+        case 4: //informações dos documentos        
             schema = projectDocumentsSchema
             break;
         default: //informações do projeto
