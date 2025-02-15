@@ -18,7 +18,12 @@ const addressSchema = new mongoose.Schema({
 const clientSchema = new mongoose.Schema({   
   client_code : { type : Number , require : false  }, // Código único do cliente
   name: {type : String , require : false}, // Nome do cliente
+  person : {type: String , enum : [
+    'cpf',
+    'cnpj'
+  ] , require : false}, // Nome do cliente
   cpf: {type : String , require : false}, // CPF do cliente (opcional)
+  cnpj:{type : String , require : false},
   identity :{type : String , require : false}, // Documento de identidade do cliente (opcional)
   identity_issuer : {type : String , require : false}, //Emissor do documento de identidade
   email: {type : String , require : false}, // E-mail do cliente (opcional)
