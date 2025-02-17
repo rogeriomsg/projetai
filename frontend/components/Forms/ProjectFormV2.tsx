@@ -1,6 +1,6 @@
 'use client';
 
-import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space, Anchor, Flex, Radio} from '@mantine/core';
+import { Text,Table , Autocomplete, ActionIcon,Stepper, Button, Group, NumberInput, TextInput, Grid,InputBase,Tooltip, GridCol,  FileInput, Center, Space, Anchor, Flex, Radio, Textarea, Divider} from '@mantine/core';
 import { useForm ,} from '@mantine/form';
 import React , { useEffect, useState } from 'react';
 import { IMaskInput } from 'react-imask';
@@ -107,7 +107,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 },
             },
             plant: { 
-                consumer_unit_code: 0 , 
+                consumer_unit_code: "", 
                 name: '', 
                 description: '',
                 class:"",
@@ -115,11 +115,11 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 connection_type:"",
                 generation_type:"",
                 type_branch:"",
-                branch_section: 0, 
-                circuit_breaker: 0,
+                branch_section: "", 
+                circuit_breaker: "",
                 installed_load: 0,
-                    installed_power: 0,
-                    service_voltage: 0,        
+                installed_power: "",
+                service_voltage: "",        
                 address: { 
                     street: "",
                     complement:"",
@@ -131,14 +131,13 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                     zip: ""
                 },
                 geolocation: {
-                    lat: 0,
-                    lng: 0,
+                    lat: "",
+                    lng: "",
                     link_point:""
                 }, 
             },
             consumerUnit: [], 
             inverters: [{
-                key: randomId(),
                 model: "",
                 manufacturer: "",
                 power: 0,
@@ -147,7 +146,6 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 description: ""
             }],
             modules: [{
-                key: randomId(),
                 model: "",
                 manufacturer: "",
                 description: "",
@@ -163,94 +161,54 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
 
         validate: {},
 
-        transformValues: (values) => ({
-            _id: values._id,
-            status : values.status,
-            project_type : values.project_type,
+        transformValues: (values) => ( {
+            ...values,
             is_active: true, // Indica se o projeto está ativo
-            name: values.name, // Nome do projeto (opcional)
-            description: values.description, // Descrição do projeto (opcional)
-            dealership: values.dealership, // Nome da concessionária ou distribuidora (opcional)
-            path_meter_pole: values.path_meter_pole, // Caminho para a foto do poste do medidor
-            path_meter: values.path_meter, // Caminho para a foto do medidor 
-            path_bill:  values.path_bill, // Caminho para a fatura de energia
-            path_identity: values.path_identity, // Caminho para a identidade do cliente
-            path_procuration: values.path_procuration, // Caminho para o arquivo de procuração
-            path_optional: values.path_optional, // Caminho para o arquivo de opcional (opcional)   
-            compensation_system: values.compensation_system,     
             client: {
+                ...values.client, 
                 client_code: Number(values.client.client_code),
-                name: values.client.name,
-                person: values.client.person,
                 cnpj : values.client.person===EPerson.cnpj?values.client.cnpj:"",
                 cpf: values.client.person===EPerson.cpf?values.client.cpf:"",
-                identity: values.client.identity,
-                identity_issuer:values.client.identity_issuer,
-                email: values.client.email,
-                phone: values.client.phone,        
                 address: {  
-                street: values.client.address.street,
-                complement:values.client.address.complement,
-                no_number: Boolean(values.client.address.no_number),          
-                district:values.client.address.district,
-                state: values.client.address.state,
-                city: values.client.address.city,                 
-                number: Number(values.client.address.number),          
-                zip: Number(values.client.address.zip),
+                    ...values.client.address,
+                    no_number: Boolean(values.client.address.no_number),  
+                    number: Number(values.client.address.number),          
+                    zip: Number(values.client.address.zip),
                 },
             },
-            plant: { 
+            plant: {
+                ...values.plant, 
                 consumer_unit_code: Number(values.plant.consumer_unit_code) ,
-                name: values.plant.name, 
-                description: values.plant.description,
-                class:values.plant.class,
-                subgroup:values.plant.subgroup,
-                connection_type:values.plant.connection_type,
-                generation_type:values.plant.generation_type,
-                type_branch:values.plant.type_branch,  
                 circuit_breaker: Number(values.plant.circuit_breaker),
                 installed_load: Number(values.plant.installed_load),
                 installed_power: Number(values.plant.installed_power),
-                service_voltage: Number(values.plant.service_voltage),
                 branch_section: Number(values.plant.branch_section), 
-                address: { 
-                street: values.plant.address.street,
-                complement:values.plant.address.complement,
-                no_number: Boolean(values.plant.address.no_number),          
-                district:values.plant.address.district,
-                state: values.plant.address.state,
-                city: values.plant.address.city,                 
-                number: Number(values.plant.address.number),          
-                zip: Number(values.plant.address.zip),
+                address: {  
+                    ...values.plant.address,                
+                    no_number: Boolean(values.plant.address.no_number), 
+                    number: Number(values.plant.address.number),          
+                    zip: Number(values.plant.address.zip),
                 },
-                geolocation: {          
-                lat: Number(values.plant.geolocation.lat),
-                lng: Number(values.plant.geolocation.lng),
-                link_point:values.plant.geolocation.link_point
+                geolocation: { 
+                    ...values.plant.geolocation,         
+                    lat: Number(values.plant.geolocation.lat),
+                    lng: Number(values.plant.geolocation.lng),
                 }, 
             },      
             consumerUnit: values.consumerUnit?.map((item)=>({   
                 ...item,      
                 consumer_unit_code: Number(item.consumer_unit_code) ,
-                name: item.name, 
-                description: item.description, 
                 percentage:  Number(item.percentage),
                 is_plant: Boolean(item.is_plant),
             })) || null,
             inverters: values.inverters.map((item)=>({
                 ...item, 
-                model: item.model,
-                manufacturer: item.manufacturer, 
-                description: item.description,
                 power: Number(item.power),
                 quantity: Number(item.quantity),
                 total_power : Number(item.total_power),
             })),      
             modules: values.modules.map((item)=>({
-                ...item, 
-                model: item.model,
-                manufacturer: item.manufacturer,
-                description: item.description,        
+                ...item,    
                 quantity: Number(item.quantity),
                 width: Number(item.width),
                 height : Number(item.height),
@@ -331,48 +289,51 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     }       
    
     const consumerUnits = form.getValues().consumerUnit?.map((item, index) => ( 
-        <Table.Tr key={index} >              
-            <Table.Td>
+        
+            <Table.Tr key={randomId()} >              
+                <Table.Td>
+                    <NumberInput
+                        placeholder="Código da UC"
+                        allowDecimal={false}
+                        hideControls={true}
+                        allowLeadingZeros={false}
+                        min={1}
+                        key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
+                        {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)} 
+                        required
+                    />                
+                </Table.Td>
+                <Table.Td>
                 <NumberInput
-                    placeholder="Código da UC"
-                    allowDecimal={false}
-                    hideControls={true}
-                    allowLeadingZeros={false}
-                    min={1}
-                    key={form.key(`consumerUnit.${index}.consumer_unit_code`)}
-                    {...form.getInputProps(`consumerUnit.${index}.consumer_unit_code`)} 
-                    required
-                />                
-            </Table.Td>
-            <Table.Td>
-            <NumberInput
-                    placeholder="Código da UC"
-                    allowDecimal={false}
-                    min={0}
-                    max={100}              
-                    key={form.key(`consumerUnit.${index}.percentage`)}
-                    {...form.getInputProps(`consumerUnit.${index}.percentage`)}
-                    required
-                />                 
-            </Table.Td>
-            <Table.Td>
-                <TextInput
-                    placeholder="Digite um nome para essa unidade, por ex.: Sitio da família"
-                    key={form.key(`consumerUnit.${index}.name`)}
-                    {...form.getInputProps(`consumerUnit.${index}.name`)}
-                />
-            </Table.Td>
-            <Table.Td>
-                <Group justify="flex-end">           
-                    <ActionIcon color="red" variant="subtle" onClick={() => {
-                        form.removeListItem('consumerUnit', index)
-                        }} 
-                    >
-                        <IconTrash size={27} stroke={1.6}/>
-                    </ActionIcon>             
-                </Group>                
-            </Table.Td>
-        </Table.Tr>  
+                        placeholder="Código da UC"
+                        allowDecimal={false}
+                        min={0}
+                        max={100}              
+                        key={form.key(`consumerUnit.${index}.percentage`)}
+                        {...form.getInputProps(`consumerUnit.${index}.percentage`)}
+                        required
+                    />                 
+                </Table.Td>
+                <Table.Td>
+                    <TextInput
+                        placeholder="Digite um nome para essa unidade, por ex.: Sitio da família (opcional)"
+                        key={form.key(`consumerUnit.${index}.name`)}
+                        {...form.getInputProps(`consumerUnit.${index}.name`)}
+                    />
+                </Table.Td>
+                <Table.Td>
+                    <Group justify="flex-end">           
+                        <ActionIcon color="red" variant="subtle" onClick={() => {
+                            form.removeListItem('consumerUnit', index)
+                            }} 
+                        >
+                            <IconTrash size={27} stroke={1.6}/>
+                        </ActionIcon>             
+                    </Group>                
+                </Table.Td>
+            </Table.Tr> 
+            
+        
     ));
         
     const invertersDataRows = form.getValues().inverters.map((item, index) => (
@@ -581,10 +542,11 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
     ));
 
     const validateForm = (schema: z.ZodSchema<any>) => {
-        //alert(JSON.stringify(form.getTransformedValues().client))
+        //alert(JSON.stringify(form.getTransformedValues()))
         try {
             form.clearErrors();
-            schema.parse(form.getTransformedValues());
+            //schema.parse(form.getTransformedValues());
+            schema.parse(form.getValues());
             return true;
         } catch (err) {
             if (err instanceof z.ZodError) {
@@ -595,7 +557,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                 return acc;
             }, {} as Record<string, string>);
 
-            //alert(JSON.stringify(errors))
+            alert(JSON.stringify(errors))
 
             form.setErrors(errors);
             return false;
@@ -657,7 +619,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
         {
             case EProjectStatus.None:  //Criação de projeto enviado ou rascunho    
                 alert("Criação de projeto ou rascunho")            
-                //if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.Rascunho:EProjectStatus.AguardandoPagamento)
                     Create(form.getTransformedValues()).then(res =>{
                         setSaving(false);
@@ -667,13 +629,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             const message = (res as IProjectResponse).message
                             alert(isSketch?`Erro ao salvar rascunho: ${message}`:`Erro ao salvar projeto: ${message}`)
                         }
-                    });
-                    
-                //} 
+                    });                    
+                } 
                 break;
             case EProjectStatus.Rascunho: //Edição de sketch que pode virar projeto enviado
                 alert("Edição de sketch "+form.getValues().project_type)
-                //if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
+                if(validateForm(isSketch?projectMainSchema:fullProjectSchema)){
                     form.setFieldValue("status",isSketch?EProjectStatus.Rascunho:EProjectStatus.AguardandoPagamento)
                     Update(form.getTransformedValues()._id,form.getTransformedValues()).then(res=>{
                         setSaving(false);
@@ -686,12 +647,12 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             onUpdate?.()
                         }
                     });                    
-                //}    
+                }    
                 break;
             case EProjectStatus.RecebidoPelaProjetai:
                 if(isSketch) return;
                 alert("Edição de projeto enviado")
-                //if(validateForm(fullProjectSchema)){                    
+                if(validateForm(fullProjectSchema)){                    
                     Update(form.getTransformedValues()._id,form.getTransformedValues()).then(res=>{
                         setSaving(false);
                         if((res as IProjectResponse).error === false){
@@ -702,9 +663,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             alert(`Erro ao atualizar projeto enviado: ${message}`)
                             onUpdate?.();
                         }
-                    });
-                    
-                //}    
+                    });                    
+                }    
                 break;
         } 
     }
@@ -737,7 +697,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 required
                             />
                         </Grid.Col>  
-                        <Grid.Col span={2}>
+                        {/*<Grid.Col span={2}>
                             <Autocomplete
                                 label="Tipo de projeto"
                                 placeholder="Tipo de projeto"
@@ -747,8 +707,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 {...form.getInputProps("project_type")} 
                                 required
                             />
-                        </Grid.Col>
-                        <Grid.Col span={7}>
+                        </Grid.Col> */}
+                        <Grid.Col span={9}>
                             <TextInput
                                 label="Nome do projeto"
                                 placeholder="Nome do projeto"
@@ -905,7 +865,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             <NumberInput
                                 label="Latitude da UC"
                                 placeholder=""
-                                min={1}
+                                min={-90}
+                                max={90}
                                 decimalScale={8}
                                 allowedDecimalSeparators={['.',',']}
                                 hideControls={true}
@@ -918,7 +879,8 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                             <NumberInput
                                 label="Longitude da UC"
                                 placeholder=""
-                                min={1}
+                                min={-180}
+                                max={180}
                                 decimalScale={8}
                                 allowedDecimalSeparators={['.',',']}
                                 hideControls={true}
@@ -1132,7 +1094,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 placeholder="Selecione um arquivo"
                                 //key={form.key(`path_bill`)}
                                 {...form.getInputProps(`path_bill`)} 
-                                value={path_bill} 
+                                //value={path_bill||""} 
                                 onChange={(file) => {
                                     setPath_bill(file)
                                     handleFileChange(file, "path_bill")
@@ -1156,7 +1118,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 label="Identidade do Cliente"
                                 placeholder="Selecione um arquivo"
                                 {...form.getInputProps(`path_identity`)} 
-                                value={path_identity}
+                                //value={path_identity}
                                 onChange={(file) => {
                                     setPath_identity(file)
                                     handleFileChange(file, "path_identity")
@@ -1180,7 +1142,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 label="Foto do Poste e medidor"
                                 placeholder="Selecione um arquivo"
                                 {...form.getInputProps(`path_meter_pole`)} 
-                                value={path_meter_pole}
+                                //value={path_meter_pole}
                                 onChange={(file) => {
                                     setPath_meter_pole(file)
                                     handleFileChange(file, "path_meter_pole")
@@ -1203,7 +1165,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 label="Foto da procuração" 
                                 placeholder="Upload de arquivos" 
                                 {...form.getInputProps(`path_procuration`)}
-                                value={path_procuration}
+                                //value={path_procuration}
                                 onChange={(file) => {
                                     setPath_procuration(file)
                                     handleFileChange(file, "path_procuration")
@@ -1226,7 +1188,7 @@ const ProjectFormV2: React.FC<FormProps> = ({ initialValues = null, formSubmissi
                                 label="Arquivo opcional"
                                 placeholder="Selecione um arquivo"
                                 {...form.getInputProps(`path_meter`)} 
-                                value={path_meter}
+                                //value={path_meter}
                                 onChange={(file) => {
                                     setPath_meter(file)
                                     handleFileChange(file, "path_meter")

@@ -5,16 +5,16 @@ const addressSchema = z.object({
     street: z.string().min(1,{message:"O logradouro deve ser informado"})  ,
     complement:z.string() ,
     no_number: z.boolean() , 
-    number: z.number(),
+    number: z.string(),
     district:z.string().min(1,{message:"O bairro deve ser informado"})  ,
     state: z.string().min(1,{message:"O estado deve ser selecionado"})  ,
     city: z.string().min(1,{message:"O município deve ser selecionado"})  ,
-    zip: z.number().min(1,{message:"O CEP deve ser especificado"}) ,
+    zip: z.string().min(1,{message:"O CEP deve ser especificado"}) ,
 }).superRefine((data, ctx) => {    
-    if (data.no_number===false && data.number===0) {
+    if (data.no_number===false && data.number==="") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "O numero deve ser fornecido",
+        message: "O número deve ser fornecido",
         path: ["number"], // Deixar o path vazio para indicar erro geral
       });
     }
@@ -30,7 +30,7 @@ const clientSchema = z.object({
     name: z.string().min(2, { message: "O nome do cliente deve ser informado" }),
     cpf: z.string(),
     cnpj: z.string(),
-    email: z.string().email({ message: 'E-mail cliente inválido.' }),
+    email: z.string().email({ message: 'E-mail cliente inválido.' }).min(3, { message: "O email do cliente deve ser informado" }),
     phone: z.string().regex(phoneRegex, { message: "O telefone deve estar no formato (11) 98223-0290" }),
 }).superRefine((data, ctx) => {   
     if( data.person === EPerson.cpf) {
@@ -54,8 +54,12 @@ const clientSchema = z.object({
   });
 
 const geolocationSchema = z.object({
-    lat: z.number() ,
-    lng: z.number() ,
+    lat: z.number().refine((val) => isNaN(val), {
+        message: "A latitude deve ser um número válido",
+    }),
+    lng: z.number().refine((val) => isNaN(val), {
+        message: "A longitude deve ser um número válido",
+    }),
     link_point:z.string() ,
 });
 
@@ -69,10 +73,10 @@ const plantSchema = z.object({
     generation_type:z.string()  ,
     type_branch:z.string().min(1,{message:"Tipo de ramal deve ser selecionado"})  ,
     branch_section: z.number().min(1,{message:"Seção do ramal de entrada deve ser especificado"})  , 
-    circuit_breaker: z.number().min(1,{message:"Disjuntor padrão de entrada deve ser especificado"}) ,
+    circuit_breaker: z.number().min(1,{message:"Disjuntor padrão de entrada deve ser informado"}) ,
     installed_load: z.number() ,
-    installed_power: z.number() ,
-    service_voltage: z.number().gte(0,{message:"Tensão de fornecimento deve ser selecionada"})   ,//(0.1,{message:"Tensão deve ser selecionada"})  , 
+    installed_power: z.number().min(0.3,{message:"A potência de geração deve ser informada. No mínimo 0.3 kWp"}) ,
+    service_voltage: z.string().min(1,{message:"Tensão de fornecimento deve ser selecionada"})   ,//(0.1,{message:"Tensão deve ser selecionada"})  , 
     geolocation: geolocationSchema,
 });
 
@@ -80,7 +84,7 @@ const consumerUnitSchema = z.object({
     consumer_unit_code: z.number().min(2, { message: 'Código da UC deve ser informado' }) , 
     name: z.string() ,
     description: z.string(),         
-    percentage: z.number().min(0).max(100),
+    percentage: z.string(),
     is_plant: z.boolean(),
 });
 
@@ -112,7 +116,7 @@ export const projectConsumerUnitSchema = z.object({
 }).superRefine((data, ctx) => {
     // Calcular o somatório dos percentuais
     if( data.consumerUnit.length > 0) {
-        const totalPercentage = data.consumerUnit.reduce((sum, unit) => sum + unit.percentage, 0);  
+        const totalPercentage = data.consumerUnit.reduce((sum, unit) => sum + Number(unit.percentage), 0);  
         // Se o total não for exatamente 100, adicionar um erro geral
         if (totalPercentage !== 100) {
         ctx.addIssue({
@@ -135,7 +139,7 @@ export const projectMainSchema = z.object({
     status : z.string(),
     is_active: z.boolean() , // Indica se o projeto está ativo
     dealership: z.string().min(2, { message: 'O nome da distribuidora deve ser informado' }) , // Nome da concessionária ou distribuidora (opcional)     
-    project_type : z.string().min(2, { message: 'Tipo do projeto deve ser informado' }) ,
+    //project_type : z.string().min(2, { message: 'Tipo do projeto deve ser informado' }) ,
     name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),       
 });
 

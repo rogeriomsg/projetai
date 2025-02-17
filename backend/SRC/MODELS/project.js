@@ -47,7 +47,7 @@ const plantSchema = new mongoose.Schema({
   circuit_breaker : { type : Number ,  require : false }, // Valor do disjuntor em amperes do padrão de entrada da unidade consumidora 
   installed_load : { type : Number ,  require : false }, //Carga instalada - refere-se a carga instalada na residência 
   installed_power : { type : Number ,  require : false }, // Potência instalada da usina em kW - geralmente é a potência total máxima dos módulos 
-  service_voltage : { type : Number ,  require : false }, // Tensão de serviço em kV
+  service_voltage : { type : String ,  require : false }, // Tensão de serviço em kV
   address:{type: addressSchema, require:false}, // Endereço da usina( é o mesmo da unidade consumidora principal e endereço do cliente ) 
   geolocation:  { // Geolocalização da usina
     lat: { type : Number , require : false  }, // Latitude

@@ -3,11 +3,11 @@ import { IAddress } from "./IUtils";
 export interface IProjectDataValues {
     _id:string ,
     status : EProjectStatus | "",
-    project_type : string;
+    project_type : string | String | "";
     is_active: boolean; // Indica se o projeto está ativo
-    name: string; // Nome do projeto (opcional)
-    description: string; // Descrição do projeto (opcional)
-    dealership: string; // Nome da concessionária ou distribuidora (opcional)
+    name: string | String | ""; // Nome do projeto (opcional)
+    description: string | String | ""; // Descrição do projeto (opcional)
+    dealership: string | String | ""; // Nome da concessionária ou distribuidora (opcional)
     
     path_meter_pole: IFile | null; // Caminho para a foto do poste do medidor
     path_meter: IFile | null; // Caminho para a foto do medidor
@@ -16,62 +16,59 @@ export interface IProjectDataValues {
     path_procuration:IFile | null ; // Caminho para o arquivo de procuração
     path_optional:IFile | null ; // Caminho para o arquivo de procuração (opcional)  
 
-    compensation_system: string;
+    compensation_system: string | String | "";
     client: {
         client_code: number | "";
-        name: string;
+        name: string | String | "";
         person : EPerson ,
-        cpf: string ;
-        cnpj: string;
-        identity: string;
-        identity_issuer:string;
-        email: string;
-        phone: string;
+        cpf: string | String | "" ;
+        cnpj: string | String | "";
+        identity: string | String | ""; 
+        identity_issuer:string | String | "";
+        email: string | String | "";
+        phone: string | String | "";
         address: IAddress
     };
     plant: { 
         consumer_unit_code: number | ""; 
-        name: string; 
-        description: string;
-        class:string;
-        subgroup:string;
-        connection_type:string;
-        generation_type:string;
-        type_branch:string;
+        name: string | String | ""; 
+        description: string | String | "";
+        class: string | String | "";
+        subgroup: string | String | "";
+        connection_type:string | String | "";
+        generation_type:string | String | "";
+        type_branch: string | String | "";
         branch_section: number | ""; 
         circuit_breaker: number | "";
         installed_load: number | "";
-            installed_power: number | "";
-            service_voltage: number | "";        
+        installed_power: number | "";
+        service_voltage: string | "";        
         address: IAddress
         geolocation: {
             lat: number | "";
             lng: number | "";
-            link_point:string;
+            link_point: string | String | "";
         }; 
     };
     consumerUnit: { 
-        key:string;
         consumer_unit_code: number | ""; 
-        name: string; 
-        description: string;         
+        name: string | String | ""; 
+        description: string | String | "";         
         percentage: number | "";
         is_plant: Boolean;
-    }[] | null; 
+    }[] | [] | null; 
     inverters: {
-        key:string;
-        model: string;
-        manufacturer: string;
+        model: string | String | "";
+        manufacturer: string | String | "";
         power: number | "";
         quantity: number | "";
         total_power : number | "";
-        description: string
+        description: string | String | "";
     }[];
     modules: {
-        key:string;
         model: string;
-        manufacturer: string;
-        description: string;
+        manufacturer: string | String | "";
+        description: string | String | "";
         quantity: number | "";
         width: number | "";
         height: number | "";
